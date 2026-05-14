@@ -21,7 +21,7 @@ export default function WeekView() {
 
       {weeklyMoments.map((dayData, dayIndex) => (
         <motion.div
-          key={dayData.day}
+          key={dayData.date}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: dayIndex * 0.07, duration: 0.4, ease: [0.25, 1, 0.5, 1] }}

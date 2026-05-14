@@ -15,10 +15,16 @@ import type { VoiceResult } from "@/lib/voice/transcriptParser";
 type Tab = "today" | "week" | "favorites";
 
 const tabs: { label: string; value: Tab }[] = [
-  { label: "Today", value: "today" },
-  { label: "This Week", value: "week" },
+  { label: "Today",     value: "today"     },
+  { label: "This Week", value: "week"       },
   { label: "Favorites", value: "favorites" },
 ];
+
+const dateStr = new Date().toLocaleDateString("en-US", {
+  weekday: "long",
+  month:   "long",
+  day:     "numeric",
+});
 
 export default function MemoryPage() {
   const [tab, setTab] = useState<Tab>("today");
@@ -26,10 +32,10 @@ export default function MemoryPage() {
   async function handleVoiceSave(result: VoiceResult) {
     if (result.type !== "memory") return;
     await supabase.from("memory_events").insert({
-      type: "note",
-      content: result.content,
-      category: result.category,
-      child_id: "default",
+      type:       "note",
+      content:    result.content,
+      category:   result.category,
+      child_id:   "default",
       created_by: "nanny",
       created_at: new Date().toISOString(),
     });
@@ -37,21 +43,22 @@ export default function MemoryPage() {
 
   return (
     <div className="min-h-screen bg-surface-page">
-      {/* Sticky header */}
+
+      {/* Header */}
       <div
-        className="px-5 pt-7 pb-4 sticky top-0 z-10 border-b border-soft backdrop-blur-2xl"
+        className="px-5 pt-8 pb-4 sticky top-0 z-10 backdrop-blur-2xl"
         style={{ background: "var(--surface-header)" }}
       >
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between mb-5">
           <div>
-            <h1 className="text-[26px] font-extrabold text-foreground tracking-tight">
-              Journal
-            </h1>
-            <p className="text-[12px] text-muted-foreground mt-0.5 font-medium">
-              Mateo&rsquo;s story, day by day
+            <p className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest mb-1.5">
+              Mateo&rsquo;s Journal
             </p>
+            <h1 className="text-[26px] font-extrabold text-foreground tracking-tight leading-none">
+              {dateStr}
+            </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mt-1">
             <VoiceRecorder context="memory" onSave={handleVoiceSave} className="w-9 h-9" />
             <PhotoUploader />
           </div>
@@ -83,7 +90,7 @@ export default function MemoryPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
+          transition={{ duration: 0.16 }}
           className="pt-5"
         >
           {tab === "today" && (
@@ -92,7 +99,7 @@ export default function MemoryPage() {
               <TodayJournal />
             </div>
           )}
-          {tab === "week" && <WeekView />}
+          {tab === "week"      && <WeekView />}
           {tab === "favorites" && <FavoritesView />}
         </motion.div>
       </AnimatePresence>

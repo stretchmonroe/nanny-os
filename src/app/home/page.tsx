@@ -3,6 +3,7 @@ import AICard from "@/components/home/AICard";
 import TimelineFeed from "@/components/home/TimelineFeed";
 import QuickActions from "@/components/home/QuickActions";
 import MomentsCarousel from "@/components/home/MomentsCarousel";
+import InsightStrip from "@/components/home/InsightStrip";
 
 export default function HomePage() {
   return (
@@ -13,6 +14,7 @@ export default function HomePage() {
         <QuickActions />
         <MomentsCarousel />
         <TimelineFeed />
+        <InsightStrip />
         <div className="h-2" />
       </div>
     </div>

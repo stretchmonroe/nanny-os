@@ -79,11 +79,12 @@
 - [x] `child` — Mateo Rivera, 18 months, born Nov 14 2024; `family` export with Elena Chen + Rivera parents
 - [x] `schedule` — 8 items: 3 done (breakfast/park/snack), 1 active (sensory bin), 4 upcoming (lunch/nap/snack/reading)
 - [x] `moments` — 6 emotionally rich carousel entries for today
-- [x] `groceryItems` — 14 items: 6 completed, 8 pending (avocado, banana, yogurt, etc.)
-- [x] `weeklyMoments` — 6 days (May 8–14) with 3–4 moments each; real milestones per day
-- [x] `recentMemories` — 31 entries covering May 1–14 with photos, notes, milestones
-- [x] `dailySummaries` — 5 past-day summaries (May 8–13) with headlines + highlights
-- [x] `supabase/seed.sql` — full schema (`children`, `memory_events`, `schedule_items`, `grocery_items`, `ai_summaries`) + all data inserts
+- [x] `groceryItems` — 14 items (6 done, 8 pending); `pastGroceryItems` — 12 fully completed items from last week
+- [x] `weeklyMoments` — 7 days (May 8–14 including Sunday May 10 family day); correct day labels throughout
+- [x] `recentMemories` — 49 entries covering May 1–14 across all 14 days; mixed nanny + parent voices, unique picsum seeds
+- [x] `dailySummaries` — 13 past-day summaries (May 1–13); includes harder days, family Sundays, developmental arc
+- [x] `favoriteMemories` — 9 entries spanning April 2025–March 2026 (first food, first bath, first Mama, first steps, etc.)
+- [x] `supabase/seed.sql` — full schema + 49 memory events, 13 AI summaries, 26 grocery items, all idempotent
 - [x] `supabase/seed.ts` — TypeScript runner using service role key; `npx tsx supabase/seed.ts`
 
 ### Voice Input Layer (`src/hooks/`, `src/lib/voice/`, `src/components/voice/`)

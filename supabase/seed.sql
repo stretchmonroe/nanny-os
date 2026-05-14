@@ -4,16 +4,20 @@
 
 -- ── Schema ───────────────────────────────────────────────────────────────────
 
+-- households and household_members are created by rls.sql.
+-- Run rls.sql first, then this seed.
+
 CREATE TABLE IF NOT EXISTS children (
-  id          TEXT PRIMARY KEY,
-  name        TEXT NOT NULL,
-  full_name   TEXT,
-  birth_date  DATE,
-  emoji       TEXT DEFAULT '🧒',
-  focus       TEXT,
-  mood        TEXT,
-  mood_label  TEXT,
-  created_at  TIMESTAMPTZ DEFAULT NOW()
+  id           TEXT PRIMARY KEY,
+  name         TEXT NOT NULL,
+  full_name    TEXT,
+  birth_date   DATE,
+  emoji        TEXT DEFAULT '🧒',
+  focus        TEXT,
+  mood         TEXT,
+  mood_label   TEXT,
+  household_id UUID,  -- populated below; FK added by rls.sql
+  created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS memory_events (
@@ -60,9 +64,21 @@ CREATE TABLE IF NOT EXISTS ai_summaries (
   created_at     TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ── Demo household ───────────────────────────────────────────────────────────
+-- Fixed UUID so the seed is idempotent and household_members can reference it.
+-- After creating auth users, run:
+--   INSERT INTO household_members (user_id, household_id, role) VALUES
+--     ('<sofia-uuid>',  '11111111-1111-1111-1111-111111111111', 'parent'),
+--     ('<marco-uuid>',  '11111111-1111-1111-1111-111111111111', 'parent'),
+--     ('<elena-uuid>',  '11111111-1111-1111-1111-111111111111', 'nanny');
+
+INSERT INTO households (id, name)
+VALUES ('11111111-1111-1111-1111-111111111111', 'Rivera Family')
+ON CONFLICT (id) DO NOTHING;
+
 -- ── Child ────────────────────────────────────────────────────────────────────
 
-INSERT INTO children (id, name, full_name, birth_date, emoji, focus, mood, mood_label)
+INSERT INTO children (id, name, full_name, birth_date, emoji, focus, mood, mood_label, household_id)
 VALUES (
   'default',
   'Mateo',
@@ -71,7 +87,8 @@ VALUES (
   '🧒',
   'Fine Motor Skills',
   '😄',
-  'Happy'
+  'Happy',
+  '11111111-1111-1111-1111-111111111111'
 ) ON CONFLICT (id) DO NOTHING;
 
 -- ── Today's Schedule (May 14, 2026) ─────────────────────────────────────────

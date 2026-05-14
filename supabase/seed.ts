@@ -21,7 +21,20 @@ if (!url || !key) {
 
 const db = createClient(url, key);
 
+const DEMO_HOUSEHOLD_ID = "11111111-1111-1111-1111-111111111111";
+
 async function run() {
+  // ── Household ──────────────────────────────────────────────────────────────
+  // Requires rls.sql to have been run first (households table must exist).
+  // household_members must be inserted manually after auth users are created:
+  //   INSERT INTO household_members (user_id, household_id, role) VALUES
+  //     ('<sofia-uuid>',  DEMO_HOUSEHOLD_ID, 'parent'),
+  //     ('<marco-uuid>',  DEMO_HOUSEHOLD_ID, 'parent'),
+  //     ('<elena-uuid>',  DEMO_HOUSEHOLD_ID, 'nanny');
+  await upsert("households", [
+    { id: DEMO_HOUSEHOLD_ID, name: "Rivera Family" },
+  ]);
+
   // ── Child ──────────────────────────────────────────────────────────────────
   await upsert("children", [
     {
@@ -33,6 +46,7 @@ async function run() {
       focus: "Fine Motor Skills",
       mood: "😄",
       mood_label: "Happy",
+      household_id: DEMO_HOUSEHOLD_ID,
     },
   ]);
 

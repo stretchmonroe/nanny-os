@@ -8,6 +8,9 @@ import TodayJournal from "@/components/memory/TodayJournal";
 import WeekView from "@/components/memory/WeekView";
 import FavoritesView from "@/components/memory/FavoritesView";
 import PhotoUploader from "@/components/memory/PhotoUploader";
+import VoiceInput from "@/components/voice/VoiceInput";
+import { supabase } from "@/lib/supabase/client";
+import type { VoiceResult } from "@/lib/voice/parser";
 
 type Tab = "today" | "week" | "favorites";
 
@@ -19,6 +22,18 @@ const tabs: { label: string; value: Tab }[] = [
 
 export default function MemoryPage() {
   const [tab, setTab] = useState<Tab>("today");
+
+  async function handleVoiceSave(result: VoiceResult) {
+    if (result.type !== "memory") return;
+    await supabase.from("memory_events").insert({
+      type: "note",
+      content: result.content,
+      category: result.category,
+      child_id: "default",
+      created_by: "nanny",
+      created_at: new Date().toISOString(),
+    });
+  }
 
   return (
     <div className="min-h-screen bg-surface-page">
@@ -36,7 +51,10 @@ export default function MemoryPage() {
               Mateo&rsquo;s story, day by day
             </p>
           </div>
-          <PhotoUploader />
+          <div className="flex items-center gap-2">
+            <VoiceInput context="memory" onSave={handleVoiceSave} className="w-9 h-9" />
+            <PhotoUploader />
+          </div>
         </div>
 
         {/* Tab pills */}

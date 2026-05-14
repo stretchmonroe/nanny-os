@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase/client";
 import { groceryItems as demoItems } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
 import { ArrowUp } from "lucide-react";
+import VoiceInput from "@/components/voice/VoiceInput";
+import type { VoiceResult } from "@/lib/voice/parser";
 
 type Item = { id: string; name: string; completed: boolean };
 
@@ -26,15 +28,23 @@ export default function ListsPage() {
     setLoading(false);
   }
 
-  async function addItem() {
-    const name = input.trim();
-    if (!name) return;
-    const newItem: Item = { id: Date.now().toString(), name, completed: false };
+  async function addItem(name?: string) {
+    const n = (name ?? input).trim();
+    if (!n) return;
+    const newItem: Item = { id: Date.now().toString() + Math.random(), name: n, completed: false };
     setItems((prev) => [...prev, newItem]);
-    setInput("");
+    if (!name) setInput("");
     await supabase
       .from("grocery_items")
-      .insert({ name, child_id: "default", created_by: "parent" });
+      .insert({ name: n, child_id: "default", created_by: "parent" });
+  }
+
+  function handleVoiceSave(result: VoiceResult) {
+    if (result.type === "grocery") {
+      result.items.forEach((name, i) => {
+        setTimeout(() => addItem(name), i * 80);
+      });
+    }
   }
 
   async function toggle(id: string) {
@@ -97,21 +107,28 @@ export default function ListsPage() {
         className="sticky bottom-[80px] px-4 pb-3 pt-2.5 border-t border-soft"
         style={{ background: "var(--surface-header)" }}
       >
-        <div className="flex items-center gap-2 bg-surface-card border-soft rounded-2xl px-4 py-2.5 shadow-card">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addItem()}
-            placeholder="Add item…"
-            className="flex-1 text-[14px] bg-transparent text-foreground placeholder:text-muted-foreground/50 outline-none font-medium"
+        <div className="flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-2 bg-surface-card border-soft rounded-2xl px-4 py-2.5 shadow-card">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addItem()}
+              placeholder="Add item…"
+              className="flex-1 text-[14px] bg-transparent text-foreground placeholder:text-muted-foreground/50 outline-none font-medium"
+            />
+            <button
+              onClick={() => addItem()}
+              disabled={!input.trim()}
+              className="w-8 h-8 rounded-xl bg-foreground text-background flex items-center justify-center disabled:opacity-25 transition-all active:scale-90 duration-150"
+            >
+              <ArrowUp size={14} strokeWidth={2.5} />
+            </button>
+          </div>
+          <VoiceInput
+            context="grocery"
+            onSave={handleVoiceSave}
+            className="w-11 h-11"
           />
-          <button
-            onClick={addItem}
-            disabled={!input.trim()}
-            className="w-8 h-8 rounded-xl bg-foreground text-background flex items-center justify-center disabled:opacity-25 transition-all active:scale-90 duration-150"
-          >
-            <ArrowUp size={14} strokeWidth={2.5} />
-          </button>
         </div>
       </div>
     </div>

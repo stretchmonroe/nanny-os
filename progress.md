@@ -75,6 +75,19 @@
 
 ---
 
+### Seeded Demo Environment (`src/lib/data/demo.ts`, `supabase/`)
+- [x] `child` — Mateo Rivera, 18 months, born Nov 14 2024; `family` export with Elena Chen + Rivera parents
+- [x] `schedule` — 8 items: 3 done (breakfast/park/snack), 1 active (sensory bin), 4 upcoming (lunch/nap/snack/reading)
+- [x] `moments` — 6 emotionally rich carousel entries for today
+- [x] `groceryItems` — 14 items: 6 completed, 8 pending (avocado, banana, yogurt, etc.)
+- [x] `weeklyMoments` — 6 days (May 8–14) with 3–4 moments each; real milestones per day
+- [x] `recentMemories` — 31 entries covering May 1–14 with photos, notes, milestones
+- [x] `dailySummaries` — 5 past-day summaries (May 8–13) with headlines + highlights
+- [x] `supabase/seed.sql` — full schema (`children`, `memory_events`, `schedule_items`, `grocery_items`, `ai_summaries`) + all data inserts
+- [x] `supabase/seed.ts` — TypeScript runner using service role key; `npx tsx supabase/seed.ts`
+
+---
+
 ## Known / Deferred
 
 - [ ] Real authentication (Supabase Auth) — currently `child_id: "default"` everywhere

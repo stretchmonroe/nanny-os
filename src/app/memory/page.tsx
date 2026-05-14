@@ -91,7 +91,7 @@ export default function MemoryPage() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.16 }}
-          className="pt-5"
+          className="pt-3"
         >
           {tab === "today" && (
             <div className="space-y-4">

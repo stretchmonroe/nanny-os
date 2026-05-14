@@ -11,28 +11,25 @@ const catEmoji: Record<string, string> = {
   outdoor: "🌳", learning: "🧠", play: "🎈", meal: "🍽️", nap: "💤",
 };
 
-function PhotoCard({ moment, priority = false }: { moment: JournalMoment; priority?: boolean }) {
+function HeroPhoto({ moment }: { moment: JournalMoment }) {
   return (
-    <div
-      className="relative w-full rounded-[2rem] overflow-hidden bg-muted shadow-elevated"
-      style={{ aspectRatio: "4/5" }}
-    >
+    <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: "3/4" }}>
       {moment.imageUrl && (
         <Image
           src={moment.imageUrl}
           alt={moment.content}
           fill
-          priority={priority}
+          priority
           className="object-cover"
           sizes="(max-width: 448px) 100vw, 448px"
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-6">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-white/50 mb-2">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 px-7 pb-9">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-white/45 mb-3">
           {catEmoji[moment.category]} {moment.time}
         </p>
-        <p className="text-[18px] font-bold text-white leading-snug tracking-tight">
+        <p className="text-[22px] font-extrabold text-white leading-snug tracking-tight">
           {moment.content}
         </p>
       </div>
@@ -40,34 +37,60 @@ function PhotoCard({ moment, priority = false }: { moment: JournalMoment; priori
   );
 }
 
-function MilestoneCard({ moment }: { moment: JournalMoment }) {
+function InsetPhoto({ moment }: { moment: JournalMoment }) {
   return (
-    <div
-      className="rounded-[2rem] overflow-hidden shadow-elevated"
-      style={{ background: "linear-gradient(135deg, #F59E0B 0%, #F97316 100%)" }}
-    >
-      <div className="p-7">
-        <div className="text-[22px] mb-5 text-amber-900/60">✦</div>
-        <p className="text-[22px] font-extrabold text-amber-950 leading-snug tracking-tight mb-4">
-          {moment.content}
-        </p>
-        <p className="text-[11px] font-bold text-amber-900/50 uppercase tracking-widest">
-          {moment.time}
-        </p>
+    <div className="px-4 py-4">
+      <div
+        className="relative w-full rounded-[1.5rem] overflow-hidden bg-muted shadow-elevated"
+        style={{ aspectRatio: "4/3" }}
+      >
+        {moment.imageUrl && (
+          <Image
+            src={moment.imageUrl}
+            alt={moment.content}
+            fill
+            className="object-cover"
+            sizes="(max-width: 416px) 100vw, 416px"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-5">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-white/45 mb-2">
+            {catEmoji[moment.category]} {moment.time}
+          </p>
+          <p className="text-[17px] font-bold text-white leading-snug tracking-tight">
+            {moment.content}
+          </p>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function MilestonePanel({ moment }: { moment: JournalMoment }) {
+  return (
+    <div className="px-7 py-14 text-center">
+      <div className="text-[36px] text-amber-400 dark:text-amber-500 mb-5 leading-none">✦</div>
+      <p className="text-[26px] font-extrabold text-foreground leading-snug tracking-tight mb-4 max-w-[280px] mx-auto">
+        {moment.content}
+      </p>
+      <p className="text-[11px] font-bold text-muted-foreground/55 uppercase tracking-widest">
+        {moment.time}
+      </p>
     </div>
   );
 }
 
 function NoteCard({ moment }: { moment: JournalMoment }) {
   return (
-    <div className="rounded-[2rem] bg-[#FBF8F2] dark:bg-surface-raised p-7 shadow-card border border-amber-100/60 dark:border-amber-900/20">
-      <p className="text-[17px] font-medium text-foreground leading-[1.7] mb-5">
+    <div className="px-7 py-8">
+      <p className="text-[56px] leading-[0.7] text-amber-300 dark:text-amber-700 font-serif mb-4">&ldquo;</p>
+      <p className="text-[19px] font-medium text-foreground leading-[1.65] mb-5">
         {moment.content}
       </p>
-      <div className="flex items-center gap-2.5">
-        <div className="w-6 h-6 rounded-full bg-amber-200/80 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
-          <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300">E</span>
+      <div className="flex items-center gap-2">
+        <div className="w-5 h-5 rounded-full bg-amber-200/80 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
+          <span className="text-[9px] font-bold text-amber-800 dark:text-amber-300">E</span>
         </div>
         <p className="text-[12px] text-muted-foreground font-semibold">
           Elena · {moment.time}
@@ -78,8 +101,10 @@ function NoteCard({ moment }: { moment: JournalMoment }) {
 }
 
 export default function TodayJournal() {
+  const firstPhotoId = today.moments.find((m) => m.type === "photo")?.id;
+
   return (
-    <div className="px-4 pb-8 space-y-4">
+    <div className="pb-8">
       {today.moments.map((moment, i) => (
         <motion.div
           key={moment.id}
@@ -87,9 +112,10 @@ export default function TodayJournal() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.04 + i * 0.09, duration: 0.55, ease: [0.25, 1, 0.5, 1] }}
         >
-          {moment.type === "photo"     && <PhotoCard     moment={moment} priority={i === 0} />}
-          {moment.type === "milestone" && <MilestoneCard moment={moment} />}
-          {moment.type === "note"      && <NoteCard      moment={moment} />}
+          {moment.type === "photo" && moment.id === firstPhotoId && <HeroPhoto moment={moment} />}
+          {moment.type === "photo" && moment.id !== firstPhotoId && <InsetPhoto moment={moment} />}
+          {moment.type === "milestone" && <MilestonePanel moment={moment} />}
+          {moment.type === "note" && <NoteCard moment={moment} />}
         </motion.div>
       ))}
     </div>

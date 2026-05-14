@@ -115,11 +115,11 @@ export default function FavoritesView() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.18 + i * 0.08, duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
-          className="rounded-[2rem] bg-[#FBF8F2] dark:bg-surface-raised px-7 py-8 shadow-card border border-stone-100/80 dark:border-stone-800/50"
+          className="rounded-[2rem] bg-[#FBF8F2] dark:bg-surface-raised px-7 pt-7 pb-9 shadow-card border border-stone-100/80 dark:border-stone-800/50"
         >
-          <div className="text-[20px] text-amber-400 dark:text-amber-500 mb-5">✦</div>
-          <p className="text-[20px] font-extrabold text-foreground leading-snug tracking-tight mb-5">
-            &ldquo;{item.content}&rdquo;
+          <p className="text-[56px] leading-[0.7] text-amber-300 dark:text-amber-700 font-serif mb-4">&ldquo;</p>
+          <p className="text-[22px] font-extrabold text-foreground leading-snug tracking-tight mb-6 -mt-1">
+            {item.content}
           </p>
           <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
             {item.date}

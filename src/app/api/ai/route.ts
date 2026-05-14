@@ -29,6 +29,11 @@ export async function POST(req: Request) {
     } else if (type === "insights") {
       const { insightsPrompt } = await import("@/lib/ai/prompts/insights");
       prompt = insightsPrompt(input);
+    } else if (type === "activityPlan") {
+      const { activityPlanPrompt } = await import(
+        "@/lib/ai/prompts/activityPlan"
+      );
+      prompt = activityPlanPrompt(input);
     } else {
       return Response.json({ error: "unknown_type" });
     }
@@ -42,7 +47,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 512,
+        max_tokens: 1024,
         system: systemPrompt,
         messages: [{ role: "user", content: prompt }],
       }),

@@ -7,24 +7,15 @@ import { cn } from "@/lib/utils";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 
 export default function TimelineFeed() {
-  const done = schedule.filter((s) => s.done).length;
-
   return (
-    <div className="mx-4 bg-surface-card rounded-[1.4rem] shadow-card border-soft overflow-hidden">
-      {/* Header */}
-      <div className="px-5 pt-5 pb-3.5 border-b border-soft">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-bold text-foreground tracking-tight">
-            Today&rsquo;s Schedule
-          </h2>
-          <span className="text-[11px] font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-full tabular-nums">
-            {done}/{schedule.length}
-          </span>
-        </div>
-      </div>
+    <div className="mx-5">
+      {/* Section label */}
+      <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-[0.1em] mb-3">
+        Today
+      </p>
 
       {/* Items */}
-      <div>
+      <div className="space-y-1">
         {schedule.map((item, i) => {
           const config = typeConfig[item.type];
           return (
@@ -32,26 +23,25 @@ export default function TimelineFeed() {
               key={item.id}
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05, duration: 0.3, ease: "easeOut" }}
+              transition={{ delay: i * 0.05, duration: 0.35, ease: "easeOut" }}
               className={cn(
-                "flex items-start gap-3 px-5 py-3.5 relative",
-                item.active && "bg-amber-50/60 dark:bg-amber-950/15",
-                item.done && "opacity-45",
-                i < schedule.length - 1 && "border-b border-soft"
+                "flex items-start gap-3 px-4 py-4 rounded-2xl relative transition-colors",
+                item.active && "bg-amber-50/80 dark:bg-amber-950/20",
+                item.done && "opacity-35",
               )}
             >
               {/* Active left bar */}
               {item.active && (
-                <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-amber-400 to-orange-400 rounded-r-full" />
+                <div className="absolute left-0 top-3 bottom-3 w-[3px] bg-gradient-to-b from-amber-400 to-orange-400 rounded-r-full" />
               )}
 
               {/* Time */}
-              <span className="text-[11px] text-muted-foreground w-10 shrink-0 pt-[3px] tabular-nums font-semibold">
+              <span className="text-[11px] text-muted-foreground/70 w-10 shrink-0 pt-[3px] tabular-nums font-semibold">
                 {item.time}
               </span>
 
               {/* Dot + line */}
-              <div className="flex flex-col items-center shrink-0 pt-[4px]">
+              <div className="flex flex-col items-center shrink-0 pt-[5px]">
                 <div
                   className={cn(
                     "w-2 h-2 rounded-full shrink-0 transition-colors",
@@ -63,7 +53,7 @@ export default function TimelineFeed() {
                   )}
                 />
                 {i < schedule.length - 1 && (
-                  <div className="w-px flex-1 min-h-[22px] bg-border/50 mt-1.5" />
+                  <div className="w-px flex-1 min-h-[24px] bg-border/40 mt-1.5" />
                 )}
               </div>
 
@@ -74,7 +64,7 @@ export default function TimelineFeed() {
                     className={cn(
                       "text-[14px] font-semibold leading-snug tracking-tight",
                       item.done
-                        ? "line-through text-muted-foreground/60"
+                        ? "line-through text-muted-foreground/50"
                         : "text-foreground"
                     )}
                   >
@@ -92,7 +82,7 @@ export default function TimelineFeed() {
                         <Check size={11} strokeWidth={2.5} className="text-emerald-600 dark:text-emerald-400" />
                       </div>
                     ) : !item.active ? (
-                      <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", config.color)}>
+                      <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full", config.color)}>
                         {config.label}
                       </span>
                     ) : null}
@@ -107,7 +97,7 @@ export default function TimelineFeed() {
                     {(item.done || item.active) && "loggedBy" in item && item.loggedBy && (
                       <AuthorBadge
                         author={item.loggedBy}
-                        className="mt-1.5 opacity-70"
+                        className="mt-2 opacity-70"
                       />
                     )}
                   </div>

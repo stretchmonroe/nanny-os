@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { weeklyMoments } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
-import WeeklyInsightCard from "./WeeklyInsightCard";
+import WeeklyRecap from "./WeeklyRecap";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 import type { JournalMoment } from "@/lib/data/demo";
 
@@ -24,8 +24,8 @@ function PhotoMoment({ moment, isFirst }: { moment: JournalMoment; isFirst: bool
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 px-5 pb-6">
-        <p className="text-[14px] font-bold text-white leading-snug mb-2.5">
+      <div className="absolute bottom-0 left-0 right-0 px-6 pb-7">
+        <p className="text-[15px] font-bold text-white leading-snug mb-2.5">
           {moment.content}
         </p>
         {moment.createdBy ? (
@@ -40,9 +40,9 @@ function PhotoMoment({ moment, isFirst }: { moment: JournalMoment; isFirst: bool
 
 function MilestoneMoment({ moment }: { moment: JournalMoment }) {
   return (
-    <div className="px-6 py-10 text-center">
-      <div className="text-[28px] text-amber-400 dark:text-amber-500 mb-4 leading-none">✦</div>
-      <p className="text-[22px] font-extrabold text-foreground leading-snug tracking-tight mb-4 max-w-xs mx-auto">
+    <div className="px-7 py-12 text-center">
+      <div className="text-[32px] text-amber-400 dark:text-amber-500 mb-4 leading-none">✦</div>
+      <p className="text-[24px] font-extrabold text-foreground leading-snug tracking-tight mb-4 max-w-xs mx-auto">
         {moment.content}
       </p>
       {moment.createdBy ? (
@@ -58,9 +58,9 @@ function MilestoneMoment({ moment }: { moment: JournalMoment }) {
 
 function NoteMoment({ moment }: { moment: JournalMoment }) {
   return (
-    <div className="px-6 py-6">
-      <p className="text-[44px] leading-[0.75] text-amber-300 dark:text-amber-700 font-serif mb-3">&ldquo;</p>
-      <p className="text-[16px] text-foreground/80 leading-relaxed font-medium mb-4">
+    <div className="px-6 py-7">
+      <p className="text-[52px] leading-[0.72] text-amber-300 dark:text-amber-700 font-serif mb-3 select-none">&ldquo;</p>
+      <p className="text-[17px] text-foreground/80 leading-relaxed font-medium mb-4">
         {moment.content}
       </p>
       {moment.createdBy ? (
@@ -76,10 +76,10 @@ export default function WeekView() {
   return (
     <div className="pb-8">
       <div className="px-4 mb-8">
-        <WeeklyInsightCard />
+        <WeeklyRecap />
       </div>
 
-      <div className="space-y-10">
+      <div className="space-y-12">
         {weeklyMoments.map((dayData, dayIndex) => {
           const firstPhotoId = dayData.moments.find((m) => m.type === "photo")?.id;
 
@@ -88,20 +88,20 @@ export default function WeekView() {
               key={dayData.date}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: dayIndex * 0.06, duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
+              transition={{ delay: dayIndex * 0.06, duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
             >
               {/* Day header */}
-              <div className="flex items-end justify-between mb-3 px-5">
+              <div className="flex items-end justify-between mb-4 px-5">
                 <div>
                   <p
                     className={cn(
                       "text-[11px] font-bold uppercase tracking-widest mb-1",
-                      dayData.isToday ? "text-amber-500" : "text-muted-foreground/55"
+                      dayData.isToday ? "text-amber-500" : "text-muted-foreground/50"
                     )}
                   >
                     {dayData.day}
                   </p>
-                  <p className="text-[26px] font-extrabold text-foreground tracking-tight leading-none">
+                  <p className="text-[28px] font-extrabold text-foreground tracking-tight leading-none">
                     {dayData.date.replace("Today · ", "")}
                   </p>
                 </div>

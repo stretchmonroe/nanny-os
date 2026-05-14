@@ -47,20 +47,20 @@ export default function QuickActions() {
   }
 
   return (
-    <div className="mx-4 space-y-2.5">
+    <div className="mx-5 space-y-2.5">
       <div className="flex gap-2.5">
         <button
           onClick={addNote}
-          className="flex-1 flex items-center justify-center gap-2 bg-surface-card border-soft shadow-card rounded-2xl py-3.5 text-[13px] font-semibold text-foreground active:scale-[0.97] transition-all duration-150 select-none"
+          className="flex-1 flex items-center justify-center gap-2 bg-surface-card border-soft shadow-card rounded-2xl py-4 text-[13px] font-semibold text-foreground active:scale-[0.97] transition-all duration-150 select-none"
         >
-          <PenLine size={14} className="text-amber-500" strokeWidth={2.2} />
+          <PenLine size={14} className="text-amber-500 opacity-90" strokeWidth={2.2} />
           Quick Note
         </button>
         <button
           onClick={addGrocery}
-          className="flex-1 flex items-center justify-center gap-2 bg-surface-card border-soft shadow-card rounded-2xl py-3.5 text-[13px] font-semibold text-foreground active:scale-[0.97] transition-all duration-150 select-none"
+          className="flex-1 flex items-center justify-center gap-2 bg-surface-card border-soft shadow-card rounded-2xl py-4 text-[13px] font-semibold text-foreground active:scale-[0.97] transition-all duration-150 select-none"
         >
-          <Plus size={15} className="text-violet-500" strokeWidth={2.5} />
+          <Plus size={15} className="text-violet-500 opacity-90" strokeWidth={2.5} />
           Add Item
         </button>
       </div>

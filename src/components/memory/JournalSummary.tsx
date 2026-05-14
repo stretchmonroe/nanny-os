@@ -49,13 +49,13 @@ export default function JournalSummary() {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
+      transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
       className="mx-4 rounded-[2rem] overflow-hidden shadow-deep"
       style={{ background: "linear-gradient(145deg, #1C1916 0%, #221F1B 60%, #1C1916 100%)" }}
     >
-      <div className="p-6">
+      <div className="p-7">
         {/* Label */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-5">
           <div className="w-7 h-7 rounded-full bg-amber-400/15 flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
           </div>
@@ -65,17 +65,17 @@ export default function JournalSummary() {
         </div>
 
         {/* Headline */}
-        <p className="text-[24px] font-extrabold text-white leading-snug mb-3 tracking-tight">
-          &ldquo;{summary.headline}&rdquo;
+        <p className="text-[26px] font-extrabold text-white leading-tight mb-3 tracking-tight">
+          {summary.headline}
         </p>
 
         {/* Body */}
-        <p className="text-[13px] text-white/65 leading-relaxed mb-5">
+        <p className="text-[13px] text-white/65 leading-[1.7] mb-5">
           {summary.summary}
         </p>
 
         {/* Highlight pills */}
-        <div className="flex flex-wrap gap-1.5 mb-5">
+        <div className="flex flex-wrap gap-1.5 mb-6">
           {summary.highlights.map((h, i) => (
             <span
               key={i}
@@ -87,10 +87,10 @@ export default function JournalSummary() {
         </div>
 
         {/* Care notes */}
-        <div className="pt-5 border-t border-white/8 space-y-4">
+        <div className="pt-5 border-t border-white/8 space-y-5">
           {careNotes.map((note, i) => (
             <div key={i} className="flex items-start gap-3.5">
-              <span className="text-[17px] shrink-0 mt-0.5">{note.icon}</span>
+              <span className="text-[18px] shrink-0 mt-0.5">{note.icon}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-1">
                   {note.label}
@@ -105,7 +105,7 @@ export default function JournalSummary() {
 
         {/* AI attribution */}
         <div className="pt-4 mt-1 border-t border-white/8">
-          <AuthorBadge author="ai" light className="opacity-50" />
+          <AuthorBadge author="ai" light className="opacity-50" showRole={false} />
         </div>
       </div>
     </motion.div>

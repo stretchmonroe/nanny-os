@@ -35,12 +35,14 @@
 - [x] `BottomNav` — floating glass pill, `shadow-float`, `backdrop-blur-24px`, active tab auto-inverts via `bg-foreground text-background`
 
 ### Home Screen (`/home`)
-- [x] `ChildProfileHeader` — gradient header, avatar with mood badge, focus + weather badges, animated day-progress bar
+- [x] `ChildProfileHeader` — gradient header, avatar with mood badge, focus + weather badges, animated day-progress bar; tappable focus badge opens inline `FocusArea` chip picker (language / sensory / movement / practical-life / creativity); selecting a chip updates `ActivityPlan` in real-time
 - [x] `RecommendationCard` — replaces AICard; live `nextBestAction` fetch with guidance layer, expandable "Why this works" section, share/approval action bar (idle → shared | awaiting); AI `flagForApproval` auto-sets awaiting state
+- [x] `ActivityPlan` — horizontal snap scroll of 3 Montessori-area activity cards; responds to `focus` prop from page; each card has Start → active → Done state machine + Swap button (swaps to alternativeTitle/alternativeDescription inline); `GuidanceTag` per card; live `activityPlan` AI fetch; falls back to `dailyActivities` demo data
 - [x] `QuickActions` — Quick Note + Add Item buttons
 - [x] `MomentsCarousel` — horizontal snap scroll, photo + note card types
 - [x] `TimelineFeed` — timeline with colored dots, active amber bar, NOW badge, done states
 - [x] `InsightStrip` — ambient single-sentence AI observation below timeline, fades in at 700ms
+- [x] `page.tsx` — converted to `"use client"`, lifts `focus: FocusArea` state shared between `ChildProfileHeader` (selector) and `ActivityPlan` (consumer)
 
 ### Memory / Journal Screen (`/memory`)
 - [x] Three-tab interface: **Today** / **This Week** / **Favorites** with AnimatePresence crossfade
@@ -48,7 +50,7 @@
 - [x] `JournalSummary` — dark gradient AI summary card, `24px` headline, highlight pills, care notes (Sleep / Nutrition / Growth); live `dailySummary` + `insights` fetch; subtle AI attribution badge at footer
 - [x] `TodayJournal` — full-bleed `3:4` hero photo (no border-radius, edge-to-edge); milestone as centered typographic panel with `36px` ✦ glyph + generous `py-14`; notes with `56px` serif `"` drop mark + no card background; secondary photos inset `mx-4 rounded-[1.5rem]`
 - [x] `WeekView` — all photos full-bleed (first per day `3:4` portrait, subsequent `16:9` landscape); milestones + notes rendered as open typographic sections with no card backgrounds; day headers `px-5` inline
-- [x] `WeeklyInsightCard` — emerald pattern card at top of week view; live insights fetch
+- [x] `WeeklyRecap` — replaces `WeeklyInsightCard`; milestone highlights strip (up to 4 ✦ items from `weeklyMoments`); skills-practiced chips derived from activity categories (learning→Language, outdoor→Gross Motor, etc.); retains live AI pattern observations
 - [x] `FavoritesView` — `3:4` featured hero, first extra photo full-width, remaining in `2-col` grid; milestone pull-quotes with `56px` serif `"` drop mark + `22px` text in warm cream cards
 
 ### Trusted Caregiving Intelligence (`src/lib/ai/guidance.ts`, `src/components/ui/GuidanceTag.tsx`)
@@ -57,6 +59,16 @@
 - [x] `nextBestAction` prompt updated to return `developmentalReason`, `guidanceSource`, `ageRange`, `flagForApproval`; model instructed to name the aligning framework, never claim prescription, never flag approval without genuine parent-input need
 - [x] `RecommendationCard` guidance layer: `GuidanceTag` below developmental note; "Why this works" toggle reveals `developmentalReason` + "Aligned with…" static tag; `guidanceSource` validated against known values before use
 - [x] `demo.ts` `aiSuggestion` enriched with `developmentalReason`, `guidanceSource`, `ageRange`, `flagForApproval`
+
+### Collaborative Journal (`src/components/memory/`)
+- [x] `ReactionBar` — 4 emoji reactions (❤️ 🥹 😂 ✨); toggle state with per-author tracking (current user = "nanny"); active chip: amber background; renders on milestone panels and note cards
+- [x] `ReplyThread` — threaded reply composer on journal entries; shows last 2 replies collapsed with "N earlier replies" expand; reply input shows Send button only when text present; new replies appended to local state; AuthorBadge dot per reply
+- [x] `TodayJournal` — milestone panels and note cards now include `ReactionBar` + `ReplyThread`; photos remain editorial only
+- [x] `WeekView` — same interaction model carried into week-view milestones and notes
+
+### Activity Planning (`src/lib/ai/prompts/activityPlan.ts`)
+- [x] `activityPlan` AI prompt — returns 3 Montessori-area activities with `title`, `area`, `description`, `duration`, `materials`, `guidanceSource`, `alternativeTitle`, `alternativeDescription`; child-led exploration framing, age-appropriate, no prescriptive language
+- [x] `/api/ai` route — added `activityPlan` branch; `max_tokens` raised 512 → 1024
 
 ### User Attribution (`src/components/ui/AuthorBadge.tsx`)
 - [x] `AuthorBadge` — shared component: `nanny` (amber, "E", "Elena"), `parent` (rose, "S", "Sofia"), `ai` (violet, Sparkles icon, "Claude")
@@ -90,6 +102,8 @@
 - [x] `todayInsights`, `weeklyPatterns`, `careNotes`
 - [x] `aiJournalSummary`, `weeklyMoments` (4 days, 12 moments), `favoriteMemories` (6 items)
 - [x] `typeConfig` (meal/outdoor/play/nap/learning → color + dot + label)
+- [x] `MomentReaction` + `MomentReply` interfaces; reactions/replies seeded on `t2` (milestone) and `t4` (note)
+- [x] `FocusArea` type + `focusAreas` array; `MontessoriArea` + `PlannedActivity` interfaces; `dailyActivities` (3 activities across language/sensory/practical-life); `areaConfig` with colors + icons per area
 
 ---
 

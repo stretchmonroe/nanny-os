@@ -91,6 +91,74 @@ export const aiSuggestion = {
   flagForApproval: false,
 }
 
+// ── Focus Areas ───────────────────────────────────────────────────────────────
+
+export const focusAreas = [
+  { id: "language",     label: "Language",     emoji: "🗣️" },
+  { id: "movement",     label: "Movement",     emoji: "🏃" },
+  { id: "sensory",      label: "Sensory",      emoji: "🫧" },
+  { id: "creativity",   label: "Creativity",   emoji: "🎨" },
+  { id: "independence", label: "Independence", emoji: "🏠" },
+] as const
+
+export type FocusArea = (typeof focusAreas)[number]["id"]
+
+// ── Planned Activities ────────────────────────────────────────────────────────
+
+export type MontessoriArea = "language" | "sensory" | "movement" | "practical-life" | "creativity"
+
+export interface PlannedActivity {
+  id: string
+  title: string
+  area: MontessoriArea
+  description: string
+  duration: string
+  materials: string[]
+  status: "pending" | "active" | "done" | "skipped"
+  guidanceSource?: string
+  alternativeTitle?: string
+  alternativeDescription?: string
+}
+
+export const dailyActivities: PlannedActivity[] = [
+  {
+    id: "act1",
+    title: "Object naming walk",
+    area: "language",
+    description: "Point to 10 things on your outdoor walk and pause each time. Let Mateo observe and touch when safe — narrate everything.",
+    duration: "15–20 min",
+    materials: [],
+    status: "done",
+    guidanceSource: "CDC 15–18 month milestones",
+    alternativeTitle: "Indoor pointing game",
+    alternativeDescription: "Point to objects around the house and name them. Pause and wait — let him point back.",
+  },
+  {
+    id: "act2",
+    title: "Pouring water station",
+    area: "practical-life",
+    description: "Two small containers at the water table or sink. Support self-directed pouring — resist correcting the spills.",
+    duration: "20–30 min",
+    materials: ["2 containers", "small cup", "towel nearby"],
+    status: "active",
+    guidanceSource: "AAP early childhood guidance",
+    alternativeTitle: "Dry pouring with beans",
+    alternativeDescription: "Same setup with dried beans instead of water — less mess, same fine motor benefit.",
+  },
+  {
+    id: "act3",
+    title: "Sorting by color",
+    area: "sensory",
+    description: "3 bowls, 3 colors of blocks or balls. Demonstrate once then step back and let him explore the idea on his own.",
+    duration: "15–20 min",
+    materials: ["3 small bowls", "colored blocks or balls"],
+    status: "pending",
+    guidanceSource: "CDC 18–24 month milestones",
+    alternativeTitle: "Shape sorter",
+    alternativeDescription: "Classic shape sorter with verbal encouragement — name each shape as he handles it.",
+  },
+]
+
 // ── Insights & Patterns ──────────────────────────────────────────────────────
 
 export const todayInsights = [
@@ -137,6 +205,18 @@ export const aiJournalSummary = {
 export type JournalMomentType = "photo" | "note" | "milestone"
 export type ActivityCategory  = "meal" | "outdoor" | "play" | "nap" | "learning"
 
+export interface MomentReaction {
+  emoji: string
+  authors: ("nanny" | "parent")[]
+}
+
+export interface MomentReply {
+  id: string
+  author: "nanny" | "parent"
+  content: string
+  time: string
+}
+
 export interface JournalMoment {
   id: string
   type: JournalMomentType
@@ -145,6 +225,8 @@ export interface JournalMoment {
   imageUrl?: string
   category: ActivityCategory
   createdBy?: "nanny" | "parent"
+  reactions?: MomentReaction[]
+  replies?: MomentReply[]
 }
 
 export interface JournalDay {
@@ -161,9 +243,23 @@ export const weeklyMoments: JournalDay[] = [
     day: "Thursday", date: "Today · May 14", isToday: true,
     moments: [
       { id: "t1", type: "photo",     content: "First time down the big slide by himself — pure pride on that face",                time: "9:47 am",  imageUrl: "https://picsum.photos/seed/baby1/400/600",      category: "outdoor",  createdBy: "nanny"  },
-      { id: "t2", type: "milestone", content: "Said 'more' clearly during snack — unprompted, first functional word! 🌟",           time: "10:15 am", category: "learning", createdBy: "nanny"  },
+      { id: "t2", type: "milestone", content: "Said 'more' clearly during snack — unprompted, first functional word! 🌟",           time: "10:15 am", category: "learning", createdBy: "nanny",
+        reactions: [
+          { emoji: "❤️", authors: ["nanny", "parent"] },
+          { emoji: "🥹", authors: ["parent"] },
+        ],
+        replies: [
+          { id: "r_t2_1", author: "parent" as const, content: "Oh my heart 🥹 This is the one we've been waiting for", time: "10:18 am" },
+          { id: "r_t2_2", author: "nanny"  as const, content: "He said it three more times after snack. Lit up every single time 💛", time: "10:24 am" },
+        ],
+      },
       { id: "t3", type: "photo",     content: "12 straight minutes on stacking rings — new personal focus record",                  time: "11:20 am", imageUrl: "https://picsum.photos/seed/toddler2/400/500",    category: "play",     createdBy: "nanny"  },
-      { id: "t4", type: "note",      content: "Cuddly and calm before sensory bin. Very sweet mood all morning.",                   time: "10:55 am", category: "play",     createdBy: "nanny"  },
+      { id: "t4", type: "note",      content: "Cuddly and calm before sensory bin. Very sweet mood all morning.",                   time: "10:55 am", category: "play",     createdBy: "nanny",
+        reactions: [{ emoji: "❤️", authors: ["parent"] }],
+        replies: [
+          { id: "r_t4_1", author: "parent" as const, content: "These calm moments are everything. Thank you for always catching them 🙏", time: "11:35 am" },
+        ],
+      },
     ],
   },
   {

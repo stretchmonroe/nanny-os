@@ -44,11 +44,12 @@
 
 ### Memory / Journal Screen (`/memory`)
 - [x] Three-tab interface: **Today** / **This Week** / **Favorites** with AnimatePresence crossfade
-- [x] `JournalSummary` — dark gradient AI summary card with headline, paragraph, highlight pills, care notes section (Sleep / Nutrition / Growth); live `dailySummary` + `insights` fetch
-- [x] `TodayJournal` — magazine grid: hero photo → milestone + small photo side-by-side → note card
-- [x] `WeekView` — day-separated timeline (Thu → Mon) with photo thumbnails
+- [x] Page header — live date display ("Thursday, May 14"), editorial "Mateo's Journal" label, backdrop-blur; no border-b utility look
+- [x] `JournalSummary` — dark gradient AI summary card, `24px` headline, highlight pills, care notes (Sleep / Nutrition / Growth); live `dailySummary` + `insights` fetch
+- [x] `TodayJournal` — type-based dynamic rendering: tall `4:5` photo cards with gradient + caption, amber milestone cards with `✦` glyph, warm cream note cards with author attribution
+- [x] `WeekView` — editorial day headers (weekday label + bold `26px` date); `4:3` full-width photo cards, amber milestone rows, clean note cards — no thumbnail rows
 - [x] `WeeklyInsightCard` — emerald pattern card at top of week view; live insights fetch
-- [x] `FavoritesView` — featured hero, 2-column photo grid, milestone quote cards
+- [x] `FavoritesView` — `3:4` featured hero, first extra photo full-width, remaining in `2-col` grid, milestone pull-quotes with `20px` bold text in warm cream cards
 
 ### Schedule Screen (`/schedule`)
 - [x] Two-section layout: Upcoming / Completed

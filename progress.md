@@ -36,7 +36,7 @@
 
 ### Home Screen (`/home`)
 - [x] `ChildProfileHeader` — gradient header, avatar with mood badge, focus + weather badges, animated day-progress bar
-- [x] `AICard` — live `nextBestAction` fetch with demo fallback; developmental note section (Brain icon, focus label, specific rationale)
+- [x] `RecommendationCard` — replaces AICard; live `nextBestAction` fetch with guidance layer, expandable "Why this works" section, share/approval action bar (idle → shared | awaiting); AI `flagForApproval` auto-sets awaiting state
 - [x] `QuickActions` — Quick Note + Add Item buttons
 - [x] `MomentsCarousel` — horizontal snap scroll, photo + note card types
 - [x] `TimelineFeed` — timeline with colored dots, active amber bar, NOW badge, done states
@@ -50,6 +50,13 @@
 - [x] `WeekView` — all photos full-bleed (first per day `3:4` portrait, subsequent `16:9` landscape); milestones + notes rendered as open typographic sections with no card backgrounds; day headers `px-5` inline
 - [x] `WeeklyInsightCard` — emerald pattern card at top of week view; live insights fetch
 - [x] `FavoritesView` — `3:4` featured hero, first extra photo full-width, remaining in `2-col` grid; milestone pull-quotes with `56px` serif `"` drop mark + `22px` text in warm cream cards
+
+### Trusted Caregiving Intelligence (`src/lib/ai/guidance.ts`, `src/components/ui/GuidanceTag.tsx`)
+- [x] `guidance.ts` — typed `GuidanceSource` registry: CDC 15–18 mo., CDC 18–24 mo., AAP early childhood, WHO nurturing care, General developmental practice; each entry has label, description, ageRange, and honest `disclaimer` ("informed by, not prescribed by"); structured as hook point for future real data
+- [x] `GuidanceTag` — tappable framework pill, color-coded by source (emerald/sky/teal/stone); tap expands inline context panel with description + disclaimer; `static` prop disables expansion for nested use
+- [x] `nextBestAction` prompt updated to return `developmentalReason`, `guidanceSource`, `ageRange`, `flagForApproval`; model instructed to name the aligning framework, never claim prescription, never flag approval without genuine parent-input need
+- [x] `RecommendationCard` guidance layer: `GuidanceTag` below developmental note; "Why this works" toggle reveals `developmentalReason` + "Aligned with…" static tag; `guidanceSource` validated against known values before use
+- [x] `demo.ts` `aiSuggestion` enriched with `developmentalReason`, `guidanceSource`, `ageRange`, `flagForApproval`
 
 ### User Attribution (`src/components/ui/AuthorBadge.tsx`)
 - [x] `AuthorBadge` — shared component: `nanny` (amber, "E", "Elena"), `parent` (rose, "S", "Sofia"), `ai` (violet, Sparkles icon, "Claude")

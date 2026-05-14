@@ -45,12 +45,21 @@
 ### Memory / Journal Screen (`/memory`)
 - [x] Three-tab interface: **Today** / **This Week** / **Favorites** with AnimatePresence crossfade
 - [x] Page header — live date display ("Thursday, May 14"), editorial "Mateo's Journal" label, backdrop-blur; no border-b utility look
-- [x] `JournalSummary` — dark gradient AI summary card, `24px` headline, highlight pills, care notes (Sleep / Nutrition / Growth); live `dailySummary` + `insights` fetch
-- [x] `JournalSummary` — dark gradient AI summary card, `24px` headline, highlight pills, care notes (Sleep / Nutrition / Growth); live `dailySummary` + `insights` fetch
+- [x] `JournalSummary` — dark gradient AI summary card, `24px` headline, highlight pills, care notes (Sleep / Nutrition / Growth); live `dailySummary` + `insights` fetch; subtle AI attribution badge at footer
 - [x] `TodayJournal` — full-bleed `3:4` hero photo (no border-radius, edge-to-edge); milestone as centered typographic panel with `36px` ✦ glyph + generous `py-14`; notes with `56px` serif `"` drop mark + no card background; secondary photos inset `mx-4 rounded-[1.5rem]`
 - [x] `WeekView` — all photos full-bleed (first per day `3:4` portrait, subsequent `16:9` landscape); milestones + notes rendered as open typographic sections with no card backgrounds; day headers `px-5` inline
 - [x] `WeeklyInsightCard` — emerald pattern card at top of week view; live insights fetch
 - [x] `FavoritesView` — `3:4` featured hero, first extra photo full-width, remaining in `2-col` grid; milestone pull-quotes with `56px` serif `"` drop mark + `22px` text in warm cream cards
+
+### User Attribution (`src/components/ui/AuthorBadge.tsx`)
+- [x] `AuthorBadge` — shared component: `nanny` (amber, "E", "Elena"), `parent` (rose, "S", "Sofia"), `ai` (violet, Sparkles icon, "Claude")
+- [x] `inline` variant — circle + name + optional time; `dot` variant — circle only for photo overlays; `light` prop for dark/photo backgrounds
+- [x] `TodayJournal` — attribution in hero + inset photo captions, milestone panels, and note card bylines; data-driven from `moment.createdBy`
+- [x] `WeekView` — all moment types carry attribution; parent-captured Sunday/Monday evening entries visually distinct from nanny entries
+- [x] `FavoritesView` — attribution on featured hero overlay and milestone pull-quote footers
+- [x] `JournalSummary` — `opacity-50` AI badge at card footer distinguishes AI-generated content from human entries
+- [x] `TimelineFeed` — `opacity-70` author badge below logged notes on done/active schedule items
+- [x] `demo.ts` — `createdBy` added to `JournalMoment` interface + all `weeklyMoments`; `favoriteMemories` tagged `parent`; `loggedBy` on done/active schedule items
 
 ### Schedule Screen (`/schedule`)
 - [x] Two-section layout: Upcoming / Completed

@@ -19,10 +19,10 @@ export const family = {
 // ── Today's Schedule (May 14, 2026 — Thursday) ──────────────────────────────
 
 export const schedule = [
-  { id: "1", time: "07:30", title: "Breakfast",       type: "meal"     as const, done: true,  notes: "Scrambled eggs with cheddar + banana — cleared the plate"       },
-  { id: "2", time: "08:45", title: "Morning Park",    type: "outdoor"  as const, done: true,  notes: "45 min — first time down the big slide solo"                     },
-  { id: "3", time: "10:00", title: "Morning Snack",   type: "meal"     as const, done: true,  notes: "Rice cakes + mango — said 'more' for the first time! 🌟"        },
-  { id: "4", time: "10:30", title: "Sensory Bin Play",type: "play"     as const, done: false, active: true, notes: "Rice bin with cups, scoops, and small safari animals" },
+  { id: "1", time: "07:30", title: "Breakfast",       type: "meal"     as const, done: true,  loggedBy: "nanny"  as const, notes: "Scrambled eggs with cheddar + banana — cleared the plate"       },
+  { id: "2", time: "08:45", title: "Morning Park",    type: "outdoor"  as const, done: true,  loggedBy: "nanny"  as const, notes: "45 min — first time down the big slide solo"                     },
+  { id: "3", time: "10:00", title: "Morning Snack",   type: "meal"     as const, done: true,  loggedBy: "nanny"  as const, notes: "Rice cakes + mango — said 'more' for the first time! 🌟"        },
+  { id: "4", time: "10:30", title: "Sensory Bin Play",type: "play"     as const, done: false, active: true, loggedBy: "nanny" as const, notes: "Rice bin with cups, scoops, and small safari animals" },
   { id: "5", time: "12:00", title: "Lunch",           type: "meal"     as const, done: false, notes: "Avocado toast + blueberries + cheese stick"                      },
   { id: "6", time: "12:45", title: "Nap",             type: "nap"      as const, done: false, notes: "Target 90 min — blackout curtains + white noise on"              },
   { id: "7", time: "14:30", title: "Afternoon Snack", type: "meal"     as const, done: false, notes: "Yogurt with soft berries"                                        },
@@ -140,6 +140,7 @@ export interface JournalMoment {
   time: string
   imageUrl?: string
   category: ActivityCategory
+  createdBy?: "nanny" | "parent"
 }
 
 export interface JournalDay {
@@ -155,60 +156,60 @@ export const weeklyMoments: JournalDay[] = [
   {
     day: "Thursday", date: "Today · May 14", isToday: true,
     moments: [
-      { id: "t1", type: "photo",     content: "First time down the big slide by himself — pure pride on that face",                time: "9:47 am",  imageUrl: "https://picsum.photos/seed/baby1/400/600",      category: "outdoor"  },
-      { id: "t2", type: "milestone", content: "Said 'more' clearly during snack — unprompted, first functional word! 🌟",           time: "10:15 am", category: "learning" },
-      { id: "t3", type: "photo",     content: "12 straight minutes on stacking rings — new personal focus record",                  time: "11:20 am", imageUrl: "https://picsum.photos/seed/toddler2/400/500",    category: "play"     },
-      { id: "t4", type: "note",      content: "Cuddly and calm before sensory bin. Very sweet mood all morning.",                   time: "10:55 am", category: "play"     },
+      { id: "t1", type: "photo",     content: "First time down the big slide by himself — pure pride on that face",                time: "9:47 am",  imageUrl: "https://picsum.photos/seed/baby1/400/600",      category: "outdoor",  createdBy: "nanny"  },
+      { id: "t2", type: "milestone", content: "Said 'more' clearly during snack — unprompted, first functional word! 🌟",           time: "10:15 am", category: "learning", createdBy: "nanny"  },
+      { id: "t3", type: "photo",     content: "12 straight minutes on stacking rings — new personal focus record",                  time: "11:20 am", imageUrl: "https://picsum.photos/seed/toddler2/400/500",    category: "play",     createdBy: "nanny"  },
+      { id: "t4", type: "note",      content: "Cuddly and calm before sensory bin. Very sweet mood all morning.",                   time: "10:55 am", category: "play",     createdBy: "nanny"  },
     ],
   },
   {
     day: "Wednesday", date: "May 13", isToday: false,
     moments: [
-      { id: "w1", type: "photo",     content: "Water table in the backyard — completely soaked and absolutely ecstatic",            time: "10:30 am", imageUrl: "https://picsum.photos/seed/water5/400/500",      category: "outdoor"  },
-      { id: "w2", type: "milestone", content: "Climbed the full staircase unassisted for the first time — so proud at the top 🏔️", time: "3:45 pm",  category: "learning" },
-      { id: "w3", type: "note",      content: "Best nap of the month — 1hr 45min. Woke up glowing.",                               time: "2:15 pm",  category: "nap"      },
-      { id: "w4", type: "photo",     content: "Brown Bear for the fourth time today — he never gets bored of it 📖",               time: "4:00 pm",  imageUrl: "https://picsum.photos/seed/book7/400/500",       category: "learning" },
+      { id: "w1", type: "photo",     content: "Water table in the backyard — completely soaked and absolutely ecstatic",            time: "10:30 am", imageUrl: "https://picsum.photos/seed/water5/400/500",      category: "outdoor",  createdBy: "nanny"  },
+      { id: "w2", type: "milestone", content: "Climbed the full staircase unassisted for the first time — so proud at the top 🏔️", time: "3:45 pm",  category: "learning", createdBy: "nanny"  },
+      { id: "w3", type: "note",      content: "Best nap of the month — 1hr 45min. Woke up glowing.",                               time: "2:15 pm",  category: "nap",      createdBy: "nanny"  },
+      { id: "w4", type: "photo",     content: "Brown Bear for the fourth time today — he never gets bored of it 📖",               time: "4:00 pm",  imageUrl: "https://picsum.photos/seed/book7/400/500",       category: "learning", createdBy: "nanny"  },
     ],
   },
   {
     day: "Tuesday", date: "May 12", isToday: false,
     moments: [
-      { id: "tu1", type: "photo",     content: "Farmer's market morning — curious about every texture and smell",                  time: "9:15 am",  imageUrl: "https://picsum.photos/seed/market6/400/500",     category: "outdoor"  },
-      { id: "tu2", type: "milestone", content: "Stacked 6 blocks before the big dramatic knockdown — new personal best 🏗️",       time: "11:00 am", category: "play"     },
-      { id: "tu3", type: "note",      content: "Tried avocado again — 3 bites without making the face. Real progress.",            time: "12:30 pm", category: "meal"     },
-      { id: "tu4", type: "photo",     content: "Oliver playdate — he held that truck for 20 minutes straight",                     time: "3:30 pm",  imageUrl: "https://picsum.photos/seed/playdate17/400/500",  category: "play"     },
+      { id: "tu1", type: "photo",     content: "Farmer's market morning — curious about every texture and smell",                  time: "9:15 am",  imageUrl: "https://picsum.photos/seed/market6/400/500",     category: "outdoor",  createdBy: "nanny"  },
+      { id: "tu2", type: "milestone", content: "Stacked 6 blocks before the big dramatic knockdown — new personal best 🏗️",       time: "11:00 am", category: "play",     createdBy: "nanny"  },
+      { id: "tu3", type: "note",      content: "Tried avocado again — 3 bites without making the face. Real progress.",            time: "12:30 pm", category: "meal",     createdBy: "nanny"  },
+      { id: "tu4", type: "photo",     content: "Oliver playdate — he held that truck for 20 minutes straight",                     time: "3:30 pm",  imageUrl: "https://picsum.photos/seed/playdate17/400/500",  category: "play",     createdBy: "nanny"  },
     ],
   },
   {
     day: "Monday", date: "May 11", isToday: false,
     moments: [
-      { id: "mo1", type: "photo",     content: "Morning light and warm oatmeal — the best little sleepy face",                    time: "8:30 am",  imageUrl: "https://picsum.photos/seed/morning8/400/500",    category: "meal"     },
-      { id: "mo2", type: "milestone", content: "First social wave — 'bye bye' to the mailman, completely unprompted 👋",           time: "11:00 am", category: "learning" },
-      { id: "mo3", type: "note",      content: "Such a calm Monday. Long outdoor walk, perfect nap, easy bedtime. Some days just flow.", time: "7:30 pm", category: "outdoor" },
+      { id: "mo1", type: "photo",     content: "Morning light and warm oatmeal — the best little sleepy face",                    time: "8:30 am",  imageUrl: "https://picsum.photos/seed/morning8/400/500",    category: "meal",     createdBy: "parent" },
+      { id: "mo2", type: "milestone", content: "First social wave — 'bye bye' to the mailman, completely unprompted 👋",           time: "11:00 am", category: "learning", createdBy: "nanny"  },
+      { id: "mo3", type: "note",      content: "Such a calm Monday. Long outdoor walk, perfect nap, easy bedtime. Some days just flow.", time: "7:30 pm", category: "outdoor", createdBy: "parent" },
     ],
   },
   {
     day: "Sunday", date: "May 10", isToday: false,
     moments: [
-      { id: "su1", type: "photo", content: "Family pancake morning — maple syrup on his nose, absolute happiness",                time: "8:45 am",  imageUrl: "https://picsum.photos/seed/pancake_fam/400/500", category: "meal" },
-      { id: "su2", type: "note",  content: "Grandma came for the afternoon — ran to her the second she walked in. That recognition gets us every time.", time: "2:30 pm", category: "play" },
-      { id: "su3", type: "note",  content: "Marco did bedtime solo for the first time. Asleep in 9 minutes. He texted Sofia a photo of the monitor. So proud.", time: "7:15 pm", category: "nap" },
+      { id: "su1", type: "photo", content: "Family pancake morning — maple syrup on his nose, absolute happiness",                time: "8:45 am",  imageUrl: "https://picsum.photos/seed/pancake_fam/400/500", category: "meal",  createdBy: "parent" },
+      { id: "su2", type: "note",  content: "Grandma came for the afternoon — ran to her the second she walked in. That recognition gets us every time.", time: "2:30 pm", category: "play", createdBy: "parent" },
+      { id: "su3", type: "note",  content: "Marco did bedtime solo for the first time. Asleep in 9 minutes. He texted Sofia a photo of the monitor. So proud.", time: "7:15 pm", category: "nap", createdBy: "parent" },
     ],
   },
   {
     day: "Saturday", date: "May 9", isToday: false,
     moments: [
-      { id: "sa1", type: "photo",     content: "Saturday library story time — mesmerized by the puppet show for 8 full minutes",  time: "10:00 am", imageUrl: "https://picsum.photos/seed/library15/400/500",   category: "learning" },
-      { id: "sa2", type: "milestone", content: "Clapped along to the song at library — first time clapping on cue! Elena nearly cried 👏", time: "10:45 am", category: "learning" },
-      { id: "sa3", type: "note",      content: "Post-library energy was high. Great appetite at lunch — ate absolutely everything.", time: "12:00 pm", category: "meal" },
+      { id: "sa1", type: "photo",     content: "Saturday library story time — mesmerized by the puppet show for 8 full minutes",  time: "10:00 am", imageUrl: "https://picsum.photos/seed/library15/400/500",   category: "learning", createdBy: "nanny"  },
+      { id: "sa2", type: "milestone", content: "Clapped along to the song at library — first time clapping on cue! Elena nearly cried 👏", time: "10:45 am", category: "learning", createdBy: "nanny"  },
+      { id: "sa3", type: "note",      content: "Post-library energy was high. Great appetite at lunch — ate absolutely everything.", time: "12:00 pm", category: "meal",     createdBy: "nanny"  },
     ],
   },
   {
     day: "Friday", date: "May 8", isToday: false,
     moments: [
-      { id: "fr1", type: "photo",     content: "First splash pad visit of the season — couldn't stop laughing",                  time: "11:00 am", imageUrl: "https://picsum.photos/seed/splashpad/400/500",   category: "outdoor" },
-      { id: "fr2", type: "milestone", content: "Ran — actually ran — directly towards the sprinklers. First real running gait! 🏃", time: "11:30 am", category: "outdoor" },
-      { id: "fr3", type: "note",      content: "Refused the sun hat for exactly 4 minutes then fully accepted it. Character development.", time: "11:15 am", category: "outdoor" },
+      { id: "fr1", type: "photo",     content: "First splash pad visit of the season — couldn't stop laughing",                  time: "11:00 am", imageUrl: "https://picsum.photos/seed/splashpad/400/500",   category: "outdoor",  createdBy: "nanny"  },
+      { id: "fr2", type: "milestone", content: "Ran — actually ran — directly towards the sprinklers. First real running gait! 🏃", time: "11:30 am", category: "outdoor",  createdBy: "nanny"  },
+      { id: "fr3", type: "note",      content: "Refused the sun hat for exactly 4 minutes then fully accepted it. Character development.", time: "11:15 am", category: "outdoor",  createdBy: "nanny"  },
     ],
   },
 ]
@@ -216,15 +217,15 @@ export const weeklyMoments: JournalDay[] = [
 // ── Favorite Memories ────────────────────────────────────────────────────────
 
 export const favoriteMemories = [
-  { id: "f1", type: "photo"     as const, content: "First steps — three wobbles and a fall right into our arms",                           date: "March 15, 2026",    imageUrl: "https://picsum.photos/seed/firststeps/600/800",   isFeatured: true  },
-  { id: "f2", type: "photo"     as const, content: "Six months old and already obsessed with the dog",                                      date: "May 14, 2025",      imageUrl: "https://picsum.photos/seed/sixmonths/400/400",     isFeatured: false },
-  { id: "f3", type: "milestone" as const, content: "First word: 'Dada' — at 11 months, unprompted, in the kitchen on a Sunday morning",     date: "December 20, 2025", isFeatured: false },
-  { id: "f4", type: "photo"     as const, content: "Beach trip — first time feeling sand between little toes",                               date: "January 8, 2026",   imageUrl: "https://picsum.photos/seed/beachbaby/400/500",     isFeatured: false },
-  { id: "f5", type: "photo"     as const, content: "The look on his face when he first saw the Christmas tree lights",                       date: "December 25, 2025", imageUrl: "https://picsum.photos/seed/xmasbaby/400/500",     isFeatured: false },
-  { id: "f6", type: "milestone" as const, content: "First full night of sleep — 8 hours straight. We cried more than he did.",              date: "October 12, 2025",  isFeatured: false },
-  { id: "f7", type: "photo"     as const, content: "First solid food — rice cereal face was somewhere between disgusted and delighted",      date: "April 14, 2025",    imageUrl: "https://picsum.photos/seed/firstfood/400/400",     isFeatured: false },
-  { id: "f8", type: "photo"     as const, content: "First bath with rubber ducks — splashed for 35 minutes, pure heaven",                   date: "September 2, 2025", imageUrl: "https://picsum.photos/seed/bathducks/400/400",     isFeatured: false },
-  { id: "f9", type: "milestone" as const, content: "Said 'Mama' for the first time — January 6th, right after waking up from a nap",       date: "January 6, 2026",   isFeatured: false },
+  { id: "f1", type: "photo"     as const, content: "First steps — three wobbles and a fall right into our arms",                           date: "March 15, 2026",    imageUrl: "https://picsum.photos/seed/firststeps/600/800",   isFeatured: true,  createdBy: "parent" as const },
+  { id: "f2", type: "photo"     as const, content: "Six months old and already obsessed with the dog",                                      date: "May 14, 2025",      imageUrl: "https://picsum.photos/seed/sixmonths/400/400",     isFeatured: false, createdBy: "parent" as const },
+  { id: "f3", type: "milestone" as const, content: "First word: 'Dada' — at 11 months, unprompted, in the kitchen on a Sunday morning",     date: "December 20, 2025", isFeatured: false, createdBy: "parent" as const },
+  { id: "f4", type: "photo"     as const, content: "Beach trip — first time feeling sand between little toes",                               date: "January 8, 2026",   imageUrl: "https://picsum.photos/seed/beachbaby/400/500",     isFeatured: false, createdBy: "parent" as const },
+  { id: "f5", type: "photo"     as const, content: "The look on his face when he first saw the Christmas tree lights",                       date: "December 25, 2025", imageUrl: "https://picsum.photos/seed/xmasbaby/400/500",     isFeatured: false, createdBy: "parent" as const },
+  { id: "f6", type: "milestone" as const, content: "First full night of sleep — 8 hours straight. We cried more than he did.",              date: "October 12, 2025",  isFeatured: false, createdBy: "parent" as const },
+  { id: "f7", type: "photo"     as const, content: "First solid food — rice cereal face was somewhere between disgusted and delighted",      date: "April 14, 2025",    imageUrl: "https://picsum.photos/seed/firstfood/400/400",     isFeatured: false, createdBy: "parent" as const },
+  { id: "f8", type: "photo"     as const, content: "First bath with rubber ducks — splashed for 35 minutes, pure heaven",                   date: "September 2, 2025", imageUrl: "https://picsum.photos/seed/bathducks/400/400",     isFeatured: false, createdBy: "parent" as const },
+  { id: "f9", type: "milestone" as const, content: "Said 'Mama' for the first time — January 6th, right after waking up from a nap",       date: "January 6, 2026",   isFeatured: false, createdBy: "parent" as const },
 ]
 
 // ── Recent Memories (full 2-week history, newest first) ──────────────────────

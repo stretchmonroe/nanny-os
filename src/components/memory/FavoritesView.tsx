@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import { favoriteMemories } from "@/lib/data/demo";
+import AuthorBadge from "@/components/ui/AuthorBadge";
 
 export default function FavoritesView() {
   const [featured, ...rest] = favoriteMemories;
@@ -39,9 +40,12 @@ export default function FavoritesView() {
           <p className="text-[10px] font-bold uppercase tracking-widest text-white/45 mb-2.5">
             {featured.date} · Featured Memory
           </p>
-          <p className="text-[20px] font-extrabold text-white leading-snug tracking-tight">
+          <p className="text-[20px] font-extrabold text-white leading-snug tracking-tight mb-4">
             {featured.content}
           </p>
+          {featured.createdBy && (
+            <AuthorBadge author={featured.createdBy} light />
+          )}
         </div>
       </motion.div>
 
@@ -118,12 +122,15 @@ export default function FavoritesView() {
           className="rounded-[2rem] bg-[#FBF8F2] dark:bg-surface-raised px-7 pt-7 pb-9 shadow-card border border-stone-100/80 dark:border-stone-800/50"
         >
           <p className="text-[56px] leading-[0.7] text-amber-300 dark:text-amber-700 font-serif mb-4">&ldquo;</p>
-          <p className="text-[22px] font-extrabold text-foreground leading-snug tracking-tight mb-6 -mt-1">
+          <p className="text-[22px] font-extrabold text-foreground leading-snug tracking-tight mb-5 -mt-1">
             {item.content}
           </p>
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
-            {item.date}
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+              {item.date}
+            </p>
+            {item.createdBy && <AuthorBadge author={item.createdBy} />}
+          </div>
         </motion.div>
       ))}
     </div>

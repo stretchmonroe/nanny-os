@@ -4,12 +4,9 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { weeklyMoments } from "@/lib/data/demo";
 import type { JournalMoment } from "@/lib/data/demo";
+import AuthorBadge from "@/components/ui/AuthorBadge";
 
 const today = weeklyMoments[0];
-
-const catEmoji: Record<string, string> = {
-  outdoor: "🌳", learning: "🧠", play: "🎈", meal: "🍽️", nap: "💤",
-};
 
 function HeroPhoto({ moment }: { moment: JournalMoment }) {
   return (
@@ -26,12 +23,12 @@ function HeroPhoto({ moment }: { moment: JournalMoment }) {
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 px-7 pb-9">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-white/45 mb-3">
-          {catEmoji[moment.category]} {moment.time}
-        </p>
-        <p className="text-[22px] font-extrabold text-white leading-snug tracking-tight">
+        <p className="text-[22px] font-extrabold text-white leading-snug tracking-tight mb-3">
           {moment.content}
         </p>
+        {moment.createdBy && (
+          <AuthorBadge author={moment.createdBy} time={moment.time} light />
+        )}
       </div>
     </div>
   );
@@ -55,12 +52,12 @@ function InsetPhoto({ moment }: { moment: JournalMoment }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-5">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/45 mb-2">
-            {catEmoji[moment.category]} {moment.time}
-          </p>
-          <p className="text-[17px] font-bold text-white leading-snug tracking-tight">
+          <p className="text-[17px] font-bold text-white leading-snug tracking-tight mb-2.5">
             {moment.content}
           </p>
+          {moment.createdBy && (
+            <AuthorBadge author={moment.createdBy} time={moment.time} light />
+          )}
         </div>
       </div>
     </div>
@@ -74,9 +71,13 @@ function MilestonePanel({ moment }: { moment: JournalMoment }) {
       <p className="text-[26px] font-extrabold text-foreground leading-snug tracking-tight mb-4 max-w-[280px] mx-auto">
         {moment.content}
       </p>
-      <p className="text-[11px] font-bold text-muted-foreground/55 uppercase tracking-widest">
-        {moment.time}
-      </p>
+      {moment.createdBy ? (
+        <AuthorBadge author={moment.createdBy} time={moment.time} className="justify-center" />
+      ) : (
+        <p className="text-[11px] font-bold text-muted-foreground/55 uppercase tracking-widest">
+          {moment.time}
+        </p>
+      )}
     </div>
   );
 }
@@ -88,14 +89,11 @@ function NoteCard({ moment }: { moment: JournalMoment }) {
       <p className="text-[19px] font-medium text-foreground leading-[1.65] mb-5">
         {moment.content}
       </p>
-      <div className="flex items-center gap-2">
-        <div className="w-5 h-5 rounded-full bg-amber-200/80 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
-          <span className="text-[9px] font-bold text-amber-800 dark:text-amber-300">E</span>
-        </div>
-        <p className="text-[12px] text-muted-foreground font-semibold">
-          Elena · {moment.time}
-        </p>
-      </div>
+      {moment.createdBy ? (
+        <AuthorBadge author={moment.createdBy} time={moment.time} />
+      ) : (
+        <p className="text-[12px] text-muted-foreground font-semibold">{moment.time}</p>
+      )}
     </div>
   );
 }

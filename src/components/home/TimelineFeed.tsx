@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { schedule, typeConfig } from "@/lib/data/demo";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import AuthorBadge from "@/components/ui/AuthorBadge";
 
 export default function TimelineFeed() {
   const done = schedule.filter((s) => s.done).length;
@@ -99,9 +100,17 @@ export default function TimelineFeed() {
                 </div>
 
                 {item.notes && (
-                  <p className="text-[12px] text-muted-foreground mt-0.5 leading-relaxed">
-                    {item.notes}
-                  </p>
+                  <div className="mt-0.5">
+                    <p className="text-[12px] text-muted-foreground leading-relaxed">
+                      {item.notes}
+                    </p>
+                    {(item.done || item.active) && "loggedBy" in item && item.loggedBy && (
+                      <AuthorBadge
+                        author={item.loggedBy}
+                        className="mt-1.5 opacity-70"
+                      />
+                    )}
+                  </div>
                 )}
               </div>
             </motion.div>

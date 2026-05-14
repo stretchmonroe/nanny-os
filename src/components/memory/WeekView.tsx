@@ -5,6 +5,7 @@ import Image from "next/image";
 import { weeklyMoments } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
 import WeeklyInsightCard from "./WeeklyInsightCard";
+import AuthorBadge from "@/components/ui/AuthorBadge";
 import type { JournalMoment } from "@/lib/data/demo";
 
 function PhotoMoment({ moment, isFirst }: { moment: JournalMoment; isFirst: boolean }) {
@@ -24,10 +25,14 @@ function PhotoMoment({ moment, isFirst }: { moment: JournalMoment; isFirst: bool
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 px-5 pb-6">
-        <p className="text-[14px] font-bold text-white leading-snug">
+        <p className="text-[14px] font-bold text-white leading-snug mb-2.5">
           {moment.content}
         </p>
-        <p className="text-[10px] text-white/50 mt-1.5 font-medium">{moment.time}</p>
+        {moment.createdBy ? (
+          <AuthorBadge author={moment.createdBy} time={moment.time} light />
+        ) : (
+          <p className="text-[10px] text-white/50 font-medium">{moment.time}</p>
+        )}
       </div>
     </div>
   );
@@ -37,12 +42,16 @@ function MilestoneMoment({ moment }: { moment: JournalMoment }) {
   return (
     <div className="px-6 py-10 text-center">
       <div className="text-[28px] text-amber-400 dark:text-amber-500 mb-4 leading-none">✦</div>
-      <p className="text-[22px] font-extrabold text-foreground leading-snug tracking-tight mb-3 max-w-xs mx-auto">
+      <p className="text-[22px] font-extrabold text-foreground leading-snug tracking-tight mb-4 max-w-xs mx-auto">
         {moment.content}
       </p>
-      <p className="text-[11px] font-bold text-muted-foreground/55 uppercase tracking-widest">
-        {moment.time}
-      </p>
+      {moment.createdBy ? (
+        <AuthorBadge author={moment.createdBy} time={moment.time} className="justify-center" />
+      ) : (
+        <p className="text-[11px] font-bold text-muted-foreground/55 uppercase tracking-widest">
+          {moment.time}
+        </p>
+      )}
     </div>
   );
 }
@@ -51,10 +60,14 @@ function NoteMoment({ moment }: { moment: JournalMoment }) {
   return (
     <div className="px-6 py-6">
       <p className="text-[44px] leading-[0.75] text-amber-300 dark:text-amber-700 font-serif mb-3">&ldquo;</p>
-      <p className="text-[16px] text-foreground/80 leading-relaxed font-medium mb-3">
+      <p className="text-[16px] text-foreground/80 leading-relaxed font-medium mb-4">
         {moment.content}
       </p>
-      <p className="text-[11px] text-muted-foreground font-semibold">{moment.time}</p>
+      {moment.createdBy ? (
+        <AuthorBadge author={moment.createdBy} time={moment.time} />
+      ) : (
+        <p className="text-[11px] text-muted-foreground font-semibold">{moment.time}</p>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { aiJournalSummary, careNotes, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import AuthorBadge from "@/components/ui/AuthorBadge";
 
 type Summary  = { headline: string; summary: string; highlights: string[] };
 type Insights = { todayInsight?: string; careNote?: string };
@@ -100,6 +101,11 @@ export default function JournalSummary() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* AI attribution */}
+        <div className="pt-4 mt-1 border-t border-white/8">
+          <AuthorBadge author="ai" light className="opacity-50" />
         </div>
       </div>
     </motion.div>

@@ -46,10 +46,11 @@
 - [x] Three-tab interface: **Today** / **This Week** / **Favorites** with AnimatePresence crossfade
 - [x] Page header — live date display ("Thursday, May 14"), editorial "Mateo's Journal" label, backdrop-blur; no border-b utility look
 - [x] `JournalSummary` — dark gradient AI summary card, `24px` headline, highlight pills, care notes (Sleep / Nutrition / Growth); live `dailySummary` + `insights` fetch
-- [x] `TodayJournal` — type-based dynamic rendering: tall `4:5` photo cards with gradient + caption, amber milestone cards with `✦` glyph, warm cream note cards with author attribution
-- [x] `WeekView` — editorial day headers (weekday label + bold `26px` date); `4:3` full-width photo cards, amber milestone rows, clean note cards — no thumbnail rows
+- [x] `JournalSummary` — dark gradient AI summary card, `24px` headline, highlight pills, care notes (Sleep / Nutrition / Growth); live `dailySummary` + `insights` fetch
+- [x] `TodayJournal` — full-bleed `3:4` hero photo (no border-radius, edge-to-edge); milestone as centered typographic panel with `36px` ✦ glyph + generous `py-14`; notes with `56px` serif `"` drop mark + no card background; secondary photos inset `mx-4 rounded-[1.5rem]`
+- [x] `WeekView` — all photos full-bleed (first per day `3:4` portrait, subsequent `16:9` landscape); milestones + notes rendered as open typographic sections with no card backgrounds; day headers `px-5` inline
 - [x] `WeeklyInsightCard` — emerald pattern card at top of week view; live insights fetch
-- [x] `FavoritesView` — `3:4` featured hero, first extra photo full-width, remaining in `2-col` grid, milestone pull-quotes with `20px` bold text in warm cream cards
+- [x] `FavoritesView` — `3:4` featured hero, first extra photo full-width, remaining in `2-col` grid; milestone pull-quotes with `56px` serif `"` drop mark + `22px` text in warm cream cards
 
 ### Schedule Screen (`/schedule`)
 - [x] Two-section layout: Upcoming / Completed

@@ -6,6 +6,7 @@ import { weeklyMoments } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
 import WeeklyRecap from "./WeeklyRecap";
 import AuthorBadge from "@/components/ui/AuthorBadge";
+import ReactionBar from "@/components/memory/ReactionBar";
 import type { JournalMoment } from "@/lib/data/demo";
 
 function PhotoMoment({ moment, isFirst }: { moment: JournalMoment; isFirst: boolean }) {
@@ -41,17 +42,19 @@ function PhotoMoment({ moment, isFirst }: { moment: JournalMoment; isFirst: bool
 function MilestoneMoment({ moment }: { moment: JournalMoment }) {
   return (
     <div className="px-7 py-12 text-center">
-      <div className="text-[32px] text-amber-400 dark:text-amber-500 mb-4 leading-none">✦</div>
+      <div className="text-[32px] text-amber-400 dark:text-amber-500 mb-4 leading-none select-none">✦</div>
       <p className="text-[24px] font-extrabold text-foreground leading-snug tracking-tight mb-4 max-w-xs mx-auto">
         {moment.content}
       </p>
       {moment.createdBy ? (
-        <AuthorBadge author={moment.createdBy} time={moment.time} className="justify-center" />
+        <AuthorBadge author={moment.createdBy} time={moment.time} className="justify-center mb-5" />
       ) : (
-        <p className="text-[11px] font-bold text-muted-foreground/55 uppercase tracking-widest">
+        <p className="text-[11px] font-bold text-muted-foreground/55 uppercase tracking-widest mb-5">
           {moment.time}
         </p>
       )}
+      {/* Reactions only for week view — keep it light */}
+      <ReactionBar initialReactions={moment.reactions} className="justify-center" />
     </div>
   );
 }
@@ -64,10 +67,11 @@ function NoteMoment({ moment }: { moment: JournalMoment }) {
         {moment.content}
       </p>
       {moment.createdBy ? (
-        <AuthorBadge author={moment.createdBy} time={moment.time} />
+        <AuthorBadge author={moment.createdBy} time={moment.time} className="mb-4" />
       ) : (
-        <p className="text-[11px] text-muted-foreground font-semibold">{moment.time}</p>
+        <p className="text-[11px] text-muted-foreground font-semibold mb-4">{moment.time}</p>
       )}
+      <ReactionBar initialReactions={moment.reactions} />
     </div>
   );
 }

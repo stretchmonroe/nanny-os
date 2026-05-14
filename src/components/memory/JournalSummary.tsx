@@ -47,13 +47,13 @@ export default function JournalSummary() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
-      className="mx-4 rounded-[2rem] overflow-hidden shadow-deep"
-      style={{ background: "linear-gradient(145deg, #1C1916 0%, #221F1B 60%, #1C1916 100%)" }}
+      className="overflow-hidden shadow-deep"
+      style={{ background: "linear-gradient(160deg, #1A1714 0%, #221F1A 55%, #1C1916 100%)" }}
     >
-      <div className="p-7">
+      <div className="px-6 pt-7 pb-8">
         {/* Label */}
         <div className="flex items-center gap-2 mb-5">
           <div className="w-7 h-7 rounded-full bg-amber-400/15 flex items-center justify-center">
@@ -65,7 +65,7 @@ export default function JournalSummary() {
         </div>
 
         {/* Headline */}
-        <p className="text-[26px] font-extrabold text-white leading-tight mb-3 tracking-tight">
+        <p className="text-[28px] font-extrabold text-white leading-tight mb-3 tracking-tight">
           {summary.headline}
         </p>
 

@@ -27,7 +27,7 @@ export default function TimelineFeed() {
               className={cn(
                 "flex items-start gap-3 px-4 py-4 rounded-2xl relative transition-colors",
                 item.active && "bg-amber-50/80 dark:bg-amber-950/20",
-                item.done && "opacity-35",
+                item.done && "opacity-25",
               )}
             >
               {/* Active left bar */}

@@ -86,6 +86,15 @@
 - [x] `supabase/seed.sql` — full schema (`children`, `memory_events`, `schedule_items`, `grocery_items`, `ai_summaries`) + all data inserts
 - [x] `supabase/seed.ts` — TypeScript runner using service role key; `npx tsx supabase/seed.ts`
 
+### Voice Input Layer (`src/hooks/`, `src/lib/voice/`, `src/components/voice/`)
+- [x] `useVoiceInput` hook — SpeechRecognition wrapper with `idle/listening/done/error/unsupported` states; `createRecognition()` isolated so Whisper can replace the engine later
+- [x] `src/lib/voice/parser.ts` — grocery item extraction (comma + "and" splitting), activity category detection from keywords (nap/meal/outdoor/learning), time extraction from schedule phrases
+- [x] `VoiceSheet` — spring-animated bottom sheet: 4-bar waveform animation while recording, live blinking cursor, editable transcript textarea after stop, haptic `navigator.vibrate` on save, "Saved ✓" confirmation before auto-dismiss
+- [x] `VoiceInput` — self-contained mic button + sheet; `pill` variant for inline inputs, `row` variant for standalone sections
+- [x] Lists page — mic pill in input bar; one utterance adds multiple items with staggered optimistic inserts
+- [x] Journal page — mic pill in header next to PhotoUploader; saves note to Supabase `memory_events`
+- [x] QuickActions (home) — full-width voice row beneath text buttons; routes to grocery or activity log based on parsed intent
+
 ### Security — Row Level Security (`supabase/rls.sql`)
 - [x] `households` table — one row per family, fixed demo UUID `11111111-...`
 - [x] `household_members` table — maps `auth.users.id` → household + role (`parent` | `nanny`)

@@ -21,8 +21,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="bg-[#EFEBE4] dark:bg-[#111009] text-zinc-900 dark:text-stone-100 pb-20">
-        <div className="max-w-md mx-auto min-h-screen bg-[#FDFBF7] dark:bg-[#1A1714] shadow-2xl">
+      <body className="bg-surface-page text-foreground pb-20">
+        <div className="max-w-md mx-auto min-h-screen bg-surface-page shadow-deep">
           {children}
           <BottomNav />
         </div>

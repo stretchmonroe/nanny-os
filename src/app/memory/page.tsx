@@ -21,15 +21,18 @@ export default function MemoryPage() {
   const [tab, setTab] = useState<Tab>("today");
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] dark:bg-[#1A1714]">
+    <div className="min-h-screen bg-surface-page">
       {/* Sticky header */}
-      <div className="px-5 pt-6 pb-4 bg-[#FDFBF7]/90 dark:bg-[#1A1714]/90 backdrop-blur-xl sticky top-0 z-10 border-b border-stone-100 dark:border-stone-800/60">
+      <div
+        className="px-5 pt-7 pb-4 sticky top-0 z-10 border-b border-soft backdrop-blur-2xl"
+        style={{ background: "var(--surface-header)" }}
+      >
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-[24px] font-bold text-zinc-900 dark:text-stone-100 tracking-tight">
+            <h1 className="text-[26px] font-extrabold text-foreground tracking-tight">
               Journal
             </h1>
-            <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+            <p className="text-[12px] text-muted-foreground mt-0.5 font-medium">
               Mateo&rsquo;s story, day by day
             </p>
           </div>
@@ -37,16 +40,16 @@ export default function MemoryPage() {
         </div>
 
         {/* Tab pills */}
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           {tabs.map(({ label, value }) => (
             <button
               key={value}
               onClick={() => setTab(value)}
               className={cn(
-                "px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 active:scale-95",
+                "px-4 py-1.5 rounded-full text-[12px] font-bold transition-all duration-200 active:scale-[0.96]",
                 tab === value
-                  ? "bg-zinc-900 dark:bg-stone-100 text-white dark:text-zinc-900"
-                  : "bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400"
+                  ? "bg-foreground text-background shadow-card"
+                  : "bg-muted text-muted-foreground"
               )}
             >
               {label}

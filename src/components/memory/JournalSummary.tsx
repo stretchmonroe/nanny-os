@@ -6,16 +6,8 @@ import { Sparkles } from "lucide-react";
 import { aiJournalSummary, careNotes, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
 
-type Summary = {
-  headline: string;
-  summary: string;
-  highlights: string[];
-};
-
-type Insights = {
-  todayInsight?: string;
-  careNote?: string;
-};
+type Summary = { headline: string; summary: string; highlights: string[] };
+type Insights = { todayInsight?: string; careNote?: string };
 
 const demoSummary: Summary = {
   headline: aiJournalSummary.headline,
@@ -64,53 +56,58 @@ export default function JournalSummary() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
-      className="mx-4 rounded-3xl overflow-hidden bg-gradient-to-br from-stone-900 via-stone-850 to-stone-900 p-5 shadow-xl"
+      className="mx-4 rounded-3xl overflow-hidden shadow-deep"
+      style={{
+        background: "linear-gradient(135deg, #1A1714 0%, #201D19 50%, #1A1714 100%)",
+      }}
     >
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 rounded-full bg-amber-400/20 flex items-center justify-center">
-          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-        </div>
-        <span className="text-[10px] font-bold text-amber-300/70 uppercase tracking-widest">
-          Today&rsquo;s Summary
-        </span>
-      </div>
-
-      {/* Headline + summary */}
-      <p className="text-[20px] font-bold text-white leading-snug mb-2.5">
-        &ldquo;{summary.headline}&rdquo;
-      </p>
-      <p className="text-sm text-stone-300/90 leading-relaxed mb-4">
-        {summary.summary}
-      </p>
-
-      {/* Highlights */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {summary.highlights.map((h, i) => (
-          <span
-            key={i}
-            className="text-xs bg-white/10 text-stone-200 px-3 py-1.5 rounded-full font-medium"
-          >
-            {h}
-          </span>
-        ))}
-      </div>
-
-      {/* Care notes */}
-      <div className="pt-4 border-t border-white/10 space-y-3">
-        {careNotes.map((note, i) => (
-          <div key={i} className="flex items-start gap-3">
-            <span className="text-base shrink-0">{note.icon}</span>
-            <div className="flex-1 min-w-0">
-              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
-                {note.label}
-              </span>
-              <p className="text-[13px] text-stone-300/90 leading-snug mt-0.5">
-                {i === 2 && liveNote ? liveNote : note.note}
-              </p>
-            </div>
+      <div className="p-5">
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-3.5">
+          <div className="w-7 h-7 rounded-full bg-amber-400/20 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
           </div>
-        ))}
+          <span className="text-[10px] font-bold text-amber-300/65 uppercase tracking-widest">
+            Today&rsquo;s Summary
+          </span>
+        </div>
+
+        {/* Headline + summary */}
+        <p className="text-[21px] font-extrabold text-white leading-snug mb-2.5 tracking-tight">
+          &ldquo;{summary.headline}&rdquo;
+        </p>
+        <p className="text-[13px] text-white/70 leading-relaxed mb-4">
+          {summary.summary}
+        </p>
+
+        {/* Highlights */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {summary.highlights.map((h, i) => (
+            <span
+              key={i}
+              className="text-[11px] font-semibold bg-white/10 text-white/85 px-3 py-1.5 rounded-full"
+            >
+              {h}
+            </span>
+          ))}
+        </div>
+
+        {/* Care notes */}
+        <div className="pt-4 border-t border-white/10 space-y-3">
+          {careNotes.map((note, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <span className="text-base shrink-0">{note.icon}</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-[10px] font-bold text-white/35 uppercase tracking-widest">
+                  {note.label}
+                </span>
+                <p className="text-[13px] text-white/70 leading-snug mt-0.5">
+                  {i === 2 && liveNote ? liveNote : note.note}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </motion.div>
   );

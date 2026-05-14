@@ -34,11 +34,11 @@ export default function InsightStrip() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ delay: 0.7, duration: 0.6 }}
+      transition={{ delay: 0.8, duration: 0.7 }}
       className="px-5 flex items-start gap-2.5"
     >
-      <Sparkles className="w-3 h-3 text-amber-400/80 shrink-0 mt-1" />
-      <p className="text-[13px] text-stone-400 dark:text-stone-500 leading-relaxed">
+      <Sparkles className="w-3 h-3 text-amber-400/70 shrink-0 mt-[3px]" />
+      <p className="text-[12px] text-muted-foreground leading-relaxed">
         {insight}
       </p>
     </motion.div>

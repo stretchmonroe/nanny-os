@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { groceryItems as demoItems } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
-import { Send } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 
 type Item = { id: string; name: string; completed: boolean };
 
@@ -18,7 +18,10 @@ export default function ListsPage() {
   }, []);
 
   async function load() {
-    const { data } = await supabase.from("grocery_items").select("*").order("created_at", { ascending: true });
+    const { data } = await supabase
+      .from("grocery_items")
+      .select("*")
+      .order("created_at", { ascending: true });
     setItems(data && data.length > 0 ? data : demoItems);
     setLoading(false);
   }
@@ -29,7 +32,9 @@ export default function ListsPage() {
     const newItem: Item = { id: Date.now().toString(), name, completed: false };
     setItems((prev) => [...prev, newItem]);
     setInput("");
-    await supabase.from("grocery_items").insert({ name, child_id: "default", created_by: "parent" });
+    await supabase
+      .from("grocery_items")
+      .insert({ name, child_id: "default", created_by: "parent" });
   }
 
   async function toggle(id: string) {
@@ -38,7 +43,10 @@ export default function ListsPage() {
     );
     const item = items.find((i) => i.id === id);
     if (item) {
-      await supabase.from("grocery_items").update({ completed: !item.completed }).eq("id", id);
+      await supabase
+        .from("grocery_items")
+        .update({ completed: !item.completed })
+        .eq("id", id);
     }
   }
 
@@ -47,19 +55,22 @@ export default function ListsPage() {
   const done = items.filter((i) => i.completed);
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] dark:bg-[#1A1714] flex flex-col">
+    <div className="min-h-screen bg-surface-page flex flex-col">
       {/* Header */}
-      <div className="px-5 pt-6 pb-4 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800">
-        <h1 className="text-[22px] font-bold text-zinc-900 dark:text-stone-100 tracking-tight">
+      <div
+        className="px-5 pt-7 pb-5 border-b border-soft"
+        style={{ background: "var(--surface-header)" }}
+      >
+        <h1 className="text-[26px] font-extrabold text-foreground tracking-tight">
           Grocery List
         </h1>
-        <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+        <p className="text-[12px] text-muted-foreground mt-0.5 font-medium">
           {remaining} item{remaining !== 1 ? "s" : ""} remaining
         </p>
       </div>
 
       {/* List */}
-      <div className="flex-1 p-4 space-y-1.5">
+      <div className="flex-1 px-4 pt-4 pb-4 space-y-1.5">
         {!loading && (
           <>
             {pending.map((item) => (
@@ -68,8 +79,8 @@ export default function ListsPage() {
 
             {done.length > 0 && (
               <>
-                {pending.length > 0 && <div className="h-3" />}
-                <p className="text-[11px] font-bold text-stone-300 dark:text-stone-600 uppercase tracking-wider px-1 pb-1">
+                {pending.length > 0 && <div className="h-4" />}
+                <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest px-1 pb-1">
                   Picked up
                 </p>
                 {done.map((item) => (
@@ -81,22 +92,25 @@ export default function ListsPage() {
         )}
       </div>
 
-      {/* Sticky input */}
-      <div className="sticky bottom-[68px] left-0 right-0 px-4 pb-3 pt-2 bg-[#FDFBF7]/90 dark:bg-[#1A1714]/90 backdrop-blur-sm border-t border-stone-100 dark:border-stone-800">
-        <div className="flex items-center gap-2 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-2xl px-4 py-2.5 shadow-sm">
+      {/* Input bar */}
+      <div
+        className="sticky bottom-[80px] px-4 pb-3 pt-2.5 border-t border-soft"
+        style={{ background: "var(--surface-header)" }}
+      >
+        <div className="flex items-center gap-2 bg-surface-card border-soft rounded-2xl px-4 py-2.5 shadow-card">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addItem()}
             placeholder="Add item…"
-            className="flex-1 text-[14px] bg-transparent text-zinc-800 dark:text-stone-100 placeholder:text-stone-300 dark:placeholder:text-stone-600 outline-none"
+            className="flex-1 text-[14px] bg-transparent text-foreground placeholder:text-muted-foreground/50 outline-none font-medium"
           />
           <button
             onClick={addItem}
             disabled={!input.trim()}
-            className="w-8 h-8 rounded-xl bg-zinc-900 dark:bg-stone-100 text-white dark:text-zinc-900 flex items-center justify-center disabled:opacity-30 transition-opacity active:scale-90"
+            className="w-8 h-8 rounded-xl bg-foreground text-background flex items-center justify-center disabled:opacity-25 transition-all active:scale-90 duration-150"
           >
-            <Send size={13} />
+            <ArrowUp size={14} strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -104,33 +118,46 @@ export default function ListsPage() {
   );
 }
 
-function ListRow({ item, onToggle }: { item: Item; onToggle: (id: string) => void }) {
+function ListRow({
+  item,
+  onToggle,
+}: {
+  item: Item;
+  onToggle: (id: string) => void;
+}) {
   return (
     <button
       onClick={() => onToggle(item.id)}
-      className="w-full flex items-center gap-3.5 bg-white dark:bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-100 dark:border-stone-800 shadow-sm active:scale-[0.98] transition-all duration-150 text-left"
+      className="w-full flex items-center gap-3.5 bg-surface-card rounded-2xl px-4 py-3.5 border-soft shadow-card active:scale-[0.985] transition-all duration-150 text-left select-none"
     >
-      {/* Checkbox */}
+      {/* Checkbox circle */}
       <div
         className={cn(
-          "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+          "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200",
           item.completed
             ? "bg-emerald-500 border-emerald-500"
-            : "border-stone-300 dark:border-stone-600"
+            : "border-border"
         )}
       >
         {item.completed && (
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M1 4L3.5 6.5L9 1"
+              stroke="white"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         )}
       </div>
+
       <span
         className={cn(
-          "text-[14px] font-medium flex-1",
+          "text-[14px] font-medium flex-1 transition-all duration-200",
           item.completed
-            ? "line-through text-stone-300 dark:text-stone-600"
-            : "text-zinc-800 dark:text-stone-100"
+            ? "line-through text-muted-foreground/40"
+            : "text-foreground"
         )}
       >
         {item.name}

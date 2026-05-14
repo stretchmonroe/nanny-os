@@ -9,24 +9,15 @@ import type { JournalMoment } from "@/lib/data/demo";
 const today = weeklyMoments[0];
 
 const catEmoji: Record<string, string> = {
-  outdoor: "🌳",
-  learning: "🧠",
-  play: "🎈",
-  meal: "🍽️",
-  nap: "💤",
+  outdoor: "🌳", learning: "🧠", play: "🎈", meal: "🍽️", nap: "💤",
 };
-
 const catLabel: Record<string, string> = {
-  outdoor: "Outdoor",
-  learning: "Learning",
-  play: "Play",
-  meal: "Meal",
-  nap: "Nap",
+  outdoor: "Outdoor", learning: "Learning", play: "Play", meal: "Meal", nap: "Nap",
 };
 
 function HeroPhoto({ moment }: { moment: JournalMoment }) {
   return (
-    <div className="relative w-full h-72 rounded-3xl overflow-hidden bg-stone-100 dark:bg-stone-800 shadow-md">
+    <div className="relative w-full h-72 rounded-3xl overflow-hidden bg-muted shadow-elevated">
       {moment.imageUrl && (
         <Image
           src={moment.imageUrl}
@@ -36,12 +27,14 @@ function HeroPhoto({ moment }: { moment: JournalMoment }) {
           sizes="(max-width: 448px) 100vw, 448px"
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 p-4">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-white/65 mb-1 block">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/8 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 p-5">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-white/60 mb-1.5 block">
           {catEmoji[moment.category]} {catLabel[moment.category]} · {moment.time}
         </span>
-        <p className="text-[15px] font-semibold text-white leading-snug">{moment.content}</p>
+        <p className="text-[15px] font-bold text-white leading-snug tracking-tight">
+          {moment.content}
+        </p>
       </div>
     </div>
   );
@@ -49,13 +42,13 @@ function HeroPhoto({ moment }: { moment: JournalMoment }) {
 
 function MilestoneCard({ moment }: { moment: JournalMoment }) {
   return (
-    <div className="rounded-3xl overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 p-4 flex flex-col justify-between h-48 shadow-md">
-      <Star className="w-5 h-5 text-white/90" fill="white" strokeWidth={0} />
+    <div className="rounded-3xl bg-gradient-to-br from-amber-400 via-amber-400 to-orange-500 p-4 flex flex-col justify-between h-48 shadow-elevated">
+      <Star className="w-5 h-5 text-white/85" fill="rgba(255,255,255,0.9)" strokeWidth={0} />
       <div>
-        <p className="text-[13px] font-bold text-white leading-snug mb-1.5">
+        <p className="text-[13px] font-bold text-white leading-snug mb-1.5 tracking-tight">
           {moment.content}
         </p>
-        <span className="text-[10px] font-medium text-white/70">{moment.time}</span>
+        <span className="text-[10px] font-semibold text-white/65">{moment.time}</span>
       </div>
     </div>
   );
@@ -63,7 +56,7 @@ function MilestoneCard({ moment }: { moment: JournalMoment }) {
 
 function SmallPhoto({ moment }: { moment: JournalMoment }) {
   return (
-    <div className="relative rounded-3xl overflow-hidden bg-stone-100 dark:bg-stone-800 h-48 shadow-md">
+    <div className="relative rounded-3xl overflow-hidden bg-muted h-48 shadow-elevated">
       {moment.imageUrl && (
         <Image
           src={moment.imageUrl}
@@ -73,12 +66,12 @@ function SmallPhoto({ moment }: { moment: JournalMoment }) {
           sizes="(max-width: 224px) 50vw, 224px"
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-3">
-        <p className="text-[11px] font-medium text-white/90 line-clamp-2 leading-snug">
+        <p className="text-[11px] font-semibold text-white/90 line-clamp-2 leading-snug">
           {moment.content}
         </p>
-        <span className="text-[10px] text-white/60 mt-0.5 block">{moment.time}</span>
+        <span className="text-[10px] text-white/55 mt-0.5 block">{moment.time}</span>
       </div>
     </div>
   );
@@ -86,12 +79,12 @@ function SmallPhoto({ moment }: { moment: JournalMoment }) {
 
 function NoteCard({ moment }: { moment: JournalMoment }) {
   return (
-    <div className="rounded-3xl bg-amber-50/80 dark:bg-stone-800 border border-amber-100/60 dark:border-stone-700 p-5 shadow-sm">
-      <div className="text-2xl mb-3">✍️</div>
-      <p className="text-[15px] font-medium text-zinc-800 dark:text-stone-100 leading-relaxed">
+    <div className="rounded-3xl bg-amber-50/90 dark:bg-surface-raised border border-amber-100/60 dark:border-amber-900/20 p-5 shadow-card">
+      <div className="text-xl mb-3">✍️</div>
+      <p className="text-[15px] font-medium text-foreground leading-relaxed">
         {moment.content}
       </p>
-      <p className="text-[11px] text-stone-400 dark:text-stone-500 mt-3 font-medium">
+      <p className="text-[11px] text-muted-foreground mt-3 font-semibold">
         {moment.time} · from nanny
       </p>
     </div>
@@ -103,7 +96,6 @@ export default function TodayJournal() {
 
   return (
     <div className="px-4 pb-8 space-y-3">
-      {/* Hero */}
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
@@ -112,7 +104,6 @@ export default function TodayJournal() {
         <HeroPhoto moment={hero} />
       </motion.div>
 
-      {/* Milestone + small photo side-by-side */}
       <motion.div
         className="grid grid-cols-2 gap-3"
         initial={{ opacity: 0, y: 14 }}
@@ -123,7 +114,6 @@ export default function TodayJournal() {
         {smallPhoto && <SmallPhoto moment={smallPhoto} />}
       </motion.div>
 
-      {/* Note */}
       {note && (
         <motion.div
           initial={{ opacity: 0, y: 14 }}

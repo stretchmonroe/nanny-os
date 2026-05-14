@@ -30,31 +30,32 @@ export default async function SchedulePage() {
   const upcoming = items.filter((i) => !i.done);
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] dark:bg-[#1A1714]">
+    <div className="min-h-screen bg-surface-page">
       {/* Header */}
-      <div className="px-5 pt-6 pb-5 border-b border-stone-100 dark:border-stone-800 bg-white dark:bg-stone-900">
-        <h1 className="text-[22px] font-bold text-zinc-900 dark:text-stone-100 tracking-tight">
+      <div className="px-5 pt-7 pb-5 border-b border-soft" style={{ background: "var(--surface-header)" }}>
+        <h1 className="text-[26px] font-extrabold text-foreground tracking-tight">
           Schedule
         </h1>
-        <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">{formatDate()}</p>
-        <div className="mt-3 flex gap-4 text-xs font-semibold">
-          <span className="text-emerald-600 dark:text-emerald-400">
-            ✓ {completed.length} done
+        <p className="text-[12px] text-muted-foreground mt-0.5 font-medium">{formatDate()}</p>
+        <div className="mt-3 flex items-center gap-3">
+          <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
+            {completed.length} done
           </span>
-          <span className="text-stone-400 dark:text-stone-500">
-            · {upcoming.length} remaining
+          <span className="w-1 h-1 rounded-full bg-border" />
+          <span className="text-[12px] font-semibold text-muted-foreground">
+            {upcoming.length} remaining
           </span>
         </div>
       </div>
 
-      <div className="p-4 space-y-5">
+      <div className="p-4 space-y-6">
         {/* Upcoming */}
         {upcoming.length > 0 && (
           <section>
-            <p className="text-[11px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider px-1 mb-2.5">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-3">
               Upcoming
             </p>
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {upcoming.map((item) => (
                 <ScheduleBlock key={item.id} item={item} />
               ))}
@@ -65,10 +66,10 @@ export default async function SchedulePage() {
         {/* Completed */}
         {completed.length > 0 && (
           <section>
-            <p className="text-[11px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider px-1 mb-2.5">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-3">
               Completed
             </p>
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {completed.map((item) => (
                 <ScheduleBlock key={item.id} item={item} />
               ))}

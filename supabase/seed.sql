@@ -212,3 +212,114 @@ INSERT INTO ai_summaries (id, child_id, summary_date, headline, summary, highlig
 )
 
 ON CONFLICT (id) DO NOTHING;
+
+-- ── Past Grocery Items (week of May 5 — all completed) ────────────────────────
+
+INSERT INTO grocery_items (id, child_id, name, completed, created_by, created_at) VALUES
+('pg1',  'default', 'Whole milk (1 gal)',            TRUE, 'parent', '2026-05-05T09:00:00Z'),
+('pg2',  'default', 'Greek yogurt pouches × 6',      TRUE, 'parent', '2026-05-05T09:01:00Z'),
+('pg3',  'default', 'Frozen peas (for steaming)',     TRUE, 'nanny',  '2026-05-05T09:02:00Z'),
+('pg4',  'default', 'Whole grain bread',              TRUE, 'parent', '2026-05-05T09:03:00Z'),
+('pg5',  'default', 'String cheese sticks × 12',     TRUE, 'nanny',  '2026-05-06T08:00:00Z'),
+('pg6',  'default', 'Vanilla puffs (Happy Baby)',     TRUE, 'nanny',  '2026-05-06T08:01:00Z'),
+('pg7',  'default', 'Bananas (bunch)',                TRUE, 'parent', '2026-05-06T08:02:00Z'),
+('pg8',  'default', 'Avocado × 2',                   TRUE, 'nanny',  '2026-05-07T07:30:00Z'),
+('pg9',  'default', 'Baby carrots (for steaming)',    TRUE, 'parent', '2026-05-07T07:31:00Z'),
+('pg10', 'default', 'Cheddar block (for cubes)',      TRUE, 'parent', '2026-05-07T07:32:00Z'),
+('pg11', 'default', 'Sweet potato × 3',              TRUE, 'nanny',  '2026-05-07T07:33:00Z'),
+('pg12', 'default', 'Applesauce pouches × 6',        TRUE, 'parent', '2026-05-07T07:34:00Z')
+ON CONFLICT (id) DO NOTHING;
+
+-- ── Additional Memory Events (May 1–14, new entries) ─────────────────────────
+
+INSERT INTO memory_events (id, child_id, type, content, category, image_url, created_by, is_favorite, created_at) VALUES
+
+-- May 13 (new)
+('r9',  'default', 'note',      'Elena texted Sofia mid-nap: ''He climbed the full stairs today. He knew it was a big deal.'' Sofia screenshot it immediately.', 'learning', NULL, 'parent', FALSE, '2026-05-13T13:55:00Z'),
+
+-- May 12 (new)
+('r14', 'default', 'note',      'Starting to acknowledge Oliver directly — made eye contact and offered him a block. Not just parallel play anymore.',             'play',     NULL, 'nanny',  FALSE, '2026-05-12T16:15:00Z'),
+
+-- May 11 (new)
+('r18', 'default', 'photo',     'Afternoon walk — found every puddle on the block and tested each one thoroughly',                                                 'outdoor',  'https://picsum.photos/seed/walk_puddle/400/500', 'nanny', FALSE, '2026-05-11T15:00:00Z'),
+
+-- May 10 (new — Sunday family day)
+('r19', 'default', 'photo',     'Family pancake morning — maple syrup on his nose, pure happiness',                                                               'meal',     'https://picsum.photos/seed/pancake_fam/400/500', 'parent', FALSE, '2026-05-10T08:45:00Z'),
+('r20', 'default', 'note',      'Grandma came for the afternoon — ran to her the second she walked in. That recognition gets us every time.',                     'play',     NULL, 'parent', FALSE, '2026-05-10T14:30:00Z'),
+('r21', 'default', 'note',      'Marco did bedtime solo for the first time. Asleep in 9 minutes. He texted Sofia a photo of the monitor. He was so proud.',      'nap',      NULL, 'parent', FALSE, '2026-05-10T19:15:00Z'),
+
+-- May 7 (new)
+('r30', 'default', 'photo',     'Afternoon stacking rings — worked through all 7 sizes, found a real groove',                                                     'play',     'https://picsum.photos/seed/rings_stack/400/500', 'nanny', FALSE, '2026-05-07T15:30:00Z'),
+
+-- May 6 (new)
+('r32', 'default', 'note',      'Sweet potato for the first time — 6 bites! Zero resistance. Different texture than he usually accepts. A new favourite forming.', 'meal',   NULL, 'nanny',  FALSE, '2026-05-06T12:15:00Z'),
+('r33', 'default', 'note',      'Spotted a dog on the walk home — stopped cold, pointed, looked at Elena. The naming game is clicking.',                          'outdoor',  NULL, 'nanny',  FALSE, '2026-05-06T16:45:00Z'),
+
+-- May 5 (new)
+('r36', 'default', 'note',      'Garbage truck on the morning walk: stood completely still watching it for 3 full minutes. Total wonder. Total seriousness.',     'outdoor',  NULL, 'nanny',  FALSE, '2026-05-05T09:30:00Z'),
+
+-- May 4 (new — harder day)
+('r37', 'default', 'note',      'Overtired Monday — fussier than usual at breakfast, short 55-min nap, lower appetite. Needed a reset after an active weekend.',  'meal',     NULL, 'nanny',  FALSE, '2026-05-04T08:30:00Z'),
+('r38', 'default', 'photo',     'Even on tough days he finds his thing — blocks and books for 40 quiet minutes',                                                  'play',     'https://picsum.photos/seed/blocks_quiet/400/500', 'nanny', FALSE, '2026-05-04T14:30:00Z'),
+('r39', 'default', 'note',      'Short walk at 3:30 fully reset his mood. Came home a different kid. Good reminder: fresh air solves a lot.',                    'outdoor',  NULL, 'nanny',  FALSE, '2026-05-04T16:00:00Z'),
+
+-- May 3 (new — Sunday)
+('r40', 'default', 'photo',     'Park morning with Marco — the Sunday dad tradition is forming nicely',                                                           'outdoor',  'https://picsum.photos/seed/park_marco/400/500', 'parent', FALSE, '2026-05-03T10:00:00Z'),
+('r41', 'default', 'note',      'Low-energy Sunday — not sick, just quieter. Sometimes toddlers need a rest day. We let him set the pace.',                      'nap',      NULL, 'parent', FALSE, '2026-05-03T14:00:00Z'),
+('r42', 'default', 'note',      'Sofia and Mateo did 6 books in a row this afternoon. He chose every one. Reading is becoming their ritual.',                     'learning', NULL, 'parent', FALSE, '2026-05-03T16:00:00Z'),
+
+-- May 2 (new entries on top of r28-r29)
+('r43', 'default', 'photo',     'Saturday library — walked in, grabbed a book, walked it straight to the reading mat himself',                                    'learning', 'https://picsum.photos/seed/library_books/400/600', 'nanny', FALSE, '2026-05-02T10:15:00Z'),
+('r45', 'default', 'milestone', 'Walked into library and went directly to the reading mat without any prompting — spatial memory forming.',                       'learning', NULL, 'nanny',  FALSE, '2026-05-02T10:00:00Z'),
+('r46', 'default', 'note',      'Started reaching for his jacket at 8:30 before Elena mentioned going out — recognizing the daily routine.',                     'learning', NULL, 'nanny',  FALSE, '2026-05-02T08:35:00Z'),
+
+-- May 1 (new)
+('r49', 'default', 'milestone', 'First clear head-shake ''no'' — deliberate, not just crying. A real communication leap.',                                        'learning', NULL, 'nanny',  FALSE, '2026-05-01T13:30:00Z')
+
+ON CONFLICT (id) DO NOTHING;
+
+-- ── Additional AI Summaries (May 1–10) ────────────────────────────────────────
+
+INSERT INTO ai_summaries (id, child_id, summary_date, headline, summary, highlights) VALUES
+
+('as6', 'default', '2026-05-10', 'A Rivera family Sunday',
+  'A full family day — pancake breakfast together, Marco took the morning at the park while Sofia rested. Grandma came for the afternoon and Mateo ran to her the moment she arrived. Marco put him down for bed solo for the first time and it took 9 minutes.',
+  '["Grandma visit 👵", "Marco solo bedtime 🌙", "Family pancakes 🥞"]'
+),
+
+('as7', 'default', '2026-05-07', 'Beans, pointing, and patience',
+  'Deep sensory play in the morning with a bin of dried beans — Elena noted nearly 18 minutes of independent play. The afternoon was pure language: Mateo pointed at 8 different objects one after another, each time waiting for Elena to name them.',
+  '["18-min sensory focus 🫘", "8-object pointing game 🗣️", "Stacking rings mastered 🔵"]'
+),
+
+('as8', 'default', '2026-05-06', 'Sweet potato and a very shared bucket',
+  'The morning was a solid park run. Lunch brought the sweet potato breakthrough — 6 bites of a food he''d been rejecting for three weeks. The Oliver playdate was the real highlight: he handed Oliver the sandbox bucket without any prompting.',
+  '["Sweet potato milestone 🍠", "First unprompted sharing 🪣", "Oliver playdate 👦"]'
+),
+
+('as9', 'default', '2026-05-05', 'Chalk marks and garbage trucks',
+  'Mateo discovered sidewalk chalk on the patio and held it correctly on his second try — the first intentional scribble Elena has seen. Earlier on the morning walk, a garbage truck stopped him for three full minutes. Language and fine motor both active today.',
+  '["First chalk scribble 🖍️", "Garbage truck fixation 🚛", "Correct crayon grip ✏️"]'
+),
+
+('as10', 'default', '2026-05-04', 'A reset day — and that''s okay',
+  'Mateo was overtired from an active weekend — fussier at breakfast, a short 55-minute nap, lower appetite. But the afternoon redeemed itself: 40 minutes of blocks and books unprompted, then a short walk that reset his mood entirely.',
+  '["Blocks + books 40min 🧱", "Reset walk worked 🌿", "Good bedtime after all 🌙"]'
+),
+
+('as11', 'default', '2026-05-03', 'A quiet Sunday with the family',
+  'Marco and Mateo had the morning together at the park while Sofia rested. A lower-energy day overall — no big milestones, and that was fine. Sofia did extended reading in the afternoon: six books in a row, Mateo chose each one.',
+  '["Marco park morning 🏃", "6-book reading session 📚", "Sofia + Mateo time ❤️"]'
+),
+
+('as12', 'default', '2026-05-02', 'He knew exactly where the reading mat was',
+  'Saturday library and this time Mateo walked in, scanned the room, and went directly to the reading mat — no prompting. Elena noted it felt like a real spatial memory forming. He grabbed a book from the shelf himself.',
+  '["Spatial memory at library 🗺️", "Grabbed book independently 📖", "Blue cup preference set 🔵"]'
+),
+
+('as13', 'default', '2026-05-01', 'May begins — the outdoor rhythm is holding',
+  'First day of May and the morning walk felt settled — like a real ritual now. Mateo noticed birds for the first time, pointing and looking back at Elena to name them. Two weeks of consistent outdoor mornings is paying off in calmer afternoons.',
+  '["Noticed birds for first time 🐦", "Outdoor rhythm locked in 🌳", "First clear ''no'' shake 🙅"]'
+)
+
+ON CONFLICT (id) DO NOTHING;

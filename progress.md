@@ -86,11 +86,21 @@
 - [x] `supabase/seed.sql` — full schema (`children`, `memory_events`, `schedule_items`, `grocery_items`, `ai_summaries`) + all data inserts
 - [x] `supabase/seed.ts` — TypeScript runner using service role key; `npx tsx supabase/seed.ts`
 
+### Security — Row Level Security (`supabase/rls.sql`)
+- [x] `households` table — one row per family, fixed demo UUID `11111111-...`
+- [x] `household_members` table — maps `auth.users.id` → household + role (`parent` | `nanny`)
+- [x] `children` — `household_id` column added, FK to `households`
+- [x] Helper functions: `my_household_id()`, `my_role()`, `in_my_household(child_id)` — keep policies readable
+- [x] RLS enabled on all 7 tables with per-operation policies
+- [x] Nannies: read all, create memories + grocery items, update schedule — no delete
+- [x] Parents: full read/write on all tables, manage members
+- [x] Cross-household isolation enforced at DB level — no app-level enforcement needed
+
 ---
 
 ## Known / Deferred
 
-- [ ] Real authentication (Supabase Auth) — currently `child_id: "default"` everywhere
+- [ ] Real authentication (Supabase Auth) — currently `child_id: "default"` everywhere; `household_members` inserts needed after auth users created
 - [ ] Photo upload to Supabase Storage (`PhotoUploader.tsx` is wired but untested without keys)
 - [ ] `.env.local` not in repo — app runs on demo data without it
 - [ ] `MemoryCard.tsx` placeholder component not yet used

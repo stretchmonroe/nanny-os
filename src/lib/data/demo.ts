@@ -85,6 +85,10 @@ export const aiSuggestion = {
   duration: "20–30 min",
   developmentalNote: "Filling and emptying containers builds the bilateral hand coordination he'll need for self-feeding — right on the edge of this milestone at 18 months.",
   developmentalFocus: "Fine Motor Skills",
+  developmentalReason: "At 18 months, children are refining bilateral hand use and cause-and-effect understanding through repetitive object manipulation. Fill-and-dump play directly supports the fine motor precision that feeds into self-feeding and early tool use — patterns that typically consolidate in this window.",
+  guidanceSource: "CDC 15–18 month milestones" as const,
+  ageRange: "15–24 months",
+  flagForApproval: false,
 }
 
 // ── Insights & Patterns ──────────────────────────────────────────────────────

@@ -1,6 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { createRecognition, isSupported } from "@/lib/voice/speechRecognition"
+import type { SpeechRec } from "@/lib/voice/speechRecognition"
 
 export type VoiceState = "idle" | "listening" | "done" | "error" | "unsupported"
 
@@ -14,48 +16,13 @@ export interface VoiceInputHook {
   reset(): void
 }
 
-// Minimal SpeechRecognition types — not yet fully in TypeScript's DOM lib
-interface SpeechRec extends EventTarget {
-  continuous: boolean
-  interimResults: boolean
-  lang: string
-  maxAlternatives: number
-  onstart: (() => void) | null
-  onend: (() => void) | null
-  onerror: (() => void) | null
-  onresult: ((e: SpeechRecEvent) => void) | null
-  start(): void
-  stop(): void
-  abort(): void
-}
-interface SpeechRecEvent {
-  resultIndex: number
-  results: { length: number; [i: number]: { isFinal: boolean; [j: number]: { transcript: string } } }
-}
-
-// Swap `createRecognition` body for a Whisper fetch to replace the engine later.
-function createRecognition(): SpeechRec | null {
-  if (typeof window === "undefined") return null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Ctor = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition
-  if (!Ctor) return null
-  const rec: SpeechRec = new Ctor()
-  rec.continuous = false
-  rec.interimResults = true
-  rec.lang = "en-US"
-  rec.maxAlternatives = 1
-  return rec
-}
-
 export function useVoiceInput(): VoiceInputHook {
   const [state, setState] = useState<VoiceState>("idle")
   const [transcript, setTranscript] = useState("")
   const [interim, setInterim] = useState("")
   const recRef = useRef<SpeechRec | null>(null)
 
-  const supported =
-    typeof window !== "undefined" &&
-    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
+  const supported = isSupported()
 
   const start = useCallback(() => {
     if (!supported) { setState("unsupported"); return }

@@ -5,8 +5,8 @@ import { supabase } from "@/lib/supabase/client";
 import { groceryItems as demoItems } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
 import { ArrowUp } from "lucide-react";
-import VoiceInput from "@/components/voice/VoiceInput";
-import type { VoiceResult } from "@/lib/voice/parser";
+import VoiceRecorder from "@/components/voice/VoiceRecorder";
+import type { VoiceResult } from "@/lib/voice/transcriptParser";
 
 type Item = { id: string; name: string; completed: boolean };
 
@@ -124,7 +124,7 @@ export default function ListsPage() {
               <ArrowUp size={14} strokeWidth={2.5} />
             </button>
           </div>
-          <VoiceInput
+          <VoiceRecorder
             context="grocery"
             onSave={handleVoiceSave}
             className="w-11 h-11"

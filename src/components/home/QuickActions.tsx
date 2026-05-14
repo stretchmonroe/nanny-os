@@ -2,8 +2,8 @@
 
 import { supabase } from "@/lib/supabase/client";
 import { PenLine, Plus } from "lucide-react";
-import VoiceInput from "@/components/voice/VoiceInput";
-import type { VoiceResult } from "@/lib/voice/parser";
+import VoiceRecorder from "@/components/voice/VoiceRecorder";
+import type { VoiceResult } from "@/lib/voice/transcriptParser";
 
 export default function QuickActions() {
   async function addNote() {
@@ -65,7 +65,7 @@ export default function QuickActions() {
         </button>
       </div>
 
-      <VoiceInput
+      <VoiceRecorder
         context="schedule"
         onSave={handleVoiceSave}
         variant="row"

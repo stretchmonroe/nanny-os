@@ -8,9 +8,9 @@ import TodayJournal from "@/components/memory/TodayJournal";
 import WeekView from "@/components/memory/WeekView";
 import FavoritesView from "@/components/memory/FavoritesView";
 import PhotoUploader from "@/components/memory/PhotoUploader";
-import VoiceInput from "@/components/voice/VoiceInput";
+import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import { supabase } from "@/lib/supabase/client";
-import type { VoiceResult } from "@/lib/voice/parser";
+import type { VoiceResult } from "@/lib/voice/transcriptParser";
 
 type Tab = "today" | "week" | "favorites";
 
@@ -52,7 +52,7 @@ export default function MemoryPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <VoiceInput context="memory" onSave={handleVoiceSave} className="w-9 h-9" />
+            <VoiceRecorder context="memory" onSave={handleVoiceSave} className="w-9 h-9" />
             <PhotoUploader />
           </div>
         </div>

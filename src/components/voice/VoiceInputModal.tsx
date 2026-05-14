@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Check, Square, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import type { VoiceState } from "@/hooks/useVoiceInput"
-import type { VoiceContext } from "@/lib/voice/parser"
+import type { VoiceContext } from "@/lib/voice/transcriptParser"
 
 const LABELS: Record<VoiceContext, string> = {
   grocery:  "Adding to grocery list",
@@ -28,7 +28,7 @@ interface Props {
   onCancel(): void
 }
 
-export default function VoiceSheet({ state, transcript, interim, context, onStop, onSave, onCancel }: Props) {
+export default function VoiceInputModal({ state, transcript, interim, context, onStop, onSave, onCancel }: Props) {
   const [editText, setEditText] = useState("")
   const [saved, setSaved] = useState(false)
   const areaRef = useRef<HTMLTextAreaElement>(null)
@@ -73,7 +73,7 @@ export default function VoiceSheet({ state, transcript, interim, context, onStop
           />
 
           <motion.div
-            key="vsheet"
+            key="vmodal"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -100,7 +100,7 @@ export default function VoiceSheet({ state, transcript, interim, context, onStop
                 </button>
               </div>
 
-              {/* Waveform bars + done button while listening */}
+              {/* Waveform + done button */}
               {listening && (
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex items-end gap-[3px] h-6">
@@ -125,7 +125,7 @@ export default function VoiceSheet({ state, transcript, interim, context, onStop
                 </div>
               )}
 
-              {/* Transcript / edit */}
+              {/* Live transcript / editable text */}
               <div className="min-h-[76px] mb-5">
                 {listening ? (
                   <p className="text-[15px] font-medium text-foreground leading-relaxed">
@@ -152,7 +152,7 @@ export default function VoiceSheet({ state, transcript, interim, context, onStop
                 )}
               </div>
 
-              {/* Actions */}
+              {/* Save / Discard */}
               {done && !saved && (
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}

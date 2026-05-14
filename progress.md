@@ -87,12 +87,14 @@
 - [x] `supabase/seed.ts` — TypeScript runner using service role key; `npx tsx supabase/seed.ts`
 
 ### Voice Input Layer (`src/hooks/`, `src/lib/voice/`, `src/components/voice/`)
-- [x] `useVoiceInput` hook — SpeechRecognition wrapper with `idle/listening/done/error/unsupported` states; `createRecognition()` isolated so Whisper can replace the engine later
-- [x] `src/lib/voice/parser.ts` — grocery item extraction (comma + "and" splitting), activity category detection from keywords (nap/meal/outdoor/learning), time extraction from schedule phrases
-- [x] `VoiceSheet` — spring-animated bottom sheet: 4-bar waveform animation while recording, live blinking cursor, editable transcript textarea after stop, haptic `navigator.vibrate` on save, "Saved ✓" confirmation before auto-dismiss
-- [x] `VoiceInput` — self-contained mic button + sheet; `pill` variant for inline inputs, `row` variant for standalone sections
+- [x] `useVoiceInput` hook — SpeechRecognition wrapper with `idle/listening/done/error/unsupported` states
+- [x] `src/lib/voice/speechRecognition.ts` — engine abstraction; `createRecognition()` is the Whisper swap point
+- [x] `src/lib/voice/transcriptParser.ts` — grocery item extraction (comma + "and" splitting), activity category detection, time extraction from schedule phrases
+- [x] `VoiceButton` — pure UI mic button; `pill` variant (circular, inline) and `row` variant (full-width labeled)
+- [x] `VoiceInputModal` — spring-animated bottom sheet: 4-bar waveform, live blinking cursor, editable transcript, haptic `navigator.vibrate` on save, "Saved ✓" auto-dismiss
+- [x] `VoiceRecorder` — orchestrator: wires `useVoiceInput` + `transcriptParser` + the two UI components
 - [x] Lists page — mic pill in input bar; one utterance adds multiple items with staggered optimistic inserts
-- [x] Journal page — mic pill in header next to PhotoUploader; saves note to Supabase `memory_events`
+- [x] Memory page — mic pill in header next to PhotoUploader; saves note to Supabase `memory_events`
 - [x] QuickActions (home) — full-width voice row beneath text buttons; routes to grocery or activity log based on parsed intent
 
 ### Security — Row Level Security (`supabase/rls.sql`)

@@ -1,6 +1,7 @@
 "use client";
 
 import type { Activity, TimeWindow } from "@/lib/activities";
+import type { ActivityExecution } from "@/lib/execution";
 import { ActivityCard } from "./ActivityCard";
 
 interface TimeWindowSectionProps {
@@ -10,6 +11,10 @@ interface TimeWindowSectionProps {
   isSwapping: boolean;
   anySwapping: boolean;
   onSwap: () => void;
+  execution?: ActivityExecution;
+  onStart: () => void;
+  onComplete: () => void;
+  onEditNote: () => void;
   animDelay?: number;
 }
 
@@ -19,8 +24,14 @@ export function TimeWindowSection({
   isSwapping,
   anySwapping,
   onSwap,
+  execution,
+  onStart,
+  onComplete,
+  onEditNote,
   animDelay = 0,
 }: TimeWindowSectionProps) {
+  const isDone = execution?.status === "done";
+
   return (
     <div
       className="animate-fade-slide-up"
@@ -35,6 +46,8 @@ export function TimeWindowSection({
           marginBottom: 10,
           paddingBottom: 10,
           borderBottom: "1.5px solid var(--border-soft)",
+          opacity: isDone ? 0.55 : 1,
+          transition: "opacity 0.3s ease",
         }}
       >
         <span style={{ fontSize: 26, lineHeight: 1 }}>{meta.emoji}</span>
@@ -63,16 +76,18 @@ export function TimeWindowSection({
         </div>
       </div>
 
-      {/* Activity card */}
       {activity ? (
         <ActivityCard
           activity={activity}
           isSwapping={isSwapping}
           onSwap={onSwap}
           disabled={anySwapping}
+          execution={execution}
+          onStart={onStart}
+          onComplete={onComplete}
+          onEditNote={onEditNote}
         />
       ) : (
-        // Fallback if activity missing (shouldn't happen in normal flow)
         <div
           style={{
             background: "white",

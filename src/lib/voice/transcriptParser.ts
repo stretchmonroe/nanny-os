@@ -1,4 +1,4 @@
-export type VoiceContext = "grocery" | "memory" | "schedule"
+export type VoiceContext = "grocery" | "memory" | "schedule" | "note"
 export type ActivityCategory = "meal" | "outdoor" | "play" | "nap" | "learning"
 
 export interface GroceryResult  { type: "grocery";  items: string[] }
@@ -38,6 +38,10 @@ export function parseVoice(text: string, context: VoiceContext): VoiceResult {
   if (context === "schedule") {
     const timeMatch = t.match(TIME_RE)
     return { type: "schedule", content: t, category: detectCategory(t), time: timeMatch?.[1] }
+  }
+
+  if (context === "note") {
+    return { type: "memory", content: t, category: detectCategory(t) }
   }
 
   return { type: "memory", content: t, category: detectCategory(t) }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useVoiceNote } from "@/hooks/useVoiceNote";
+import { useVoiceInput } from "@/hooks/useVoiceInput";
 
 interface QuickNoteModalProps {
   activityTitle: string;
@@ -19,13 +19,14 @@ export function QuickNoteModal({
   const [note, setNote] = useState(initialNote);
   const [visible, setVisible] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { isSupported, isListening, transcript, setTranscript, start, stop, reset } =
-    useVoiceNote();
+  const voice = useVoiceInput({ continuous: false });
 
-  // Sync voice transcript into note text
+  const isListening = voice.state === "listening";
+
+  // Sync finalised transcript into note field
   useEffect(() => {
-    if (transcript) setNote(transcript);
-  }, [transcript]);
+    if (voice.transcript) setNote(voice.transcript);
+  }, [voice.transcript]);
 
   // Animate in on mount
   useEffect(() => {
@@ -34,23 +35,29 @@ export function QuickNoteModal({
   }, []);
 
   const handleSave = () => {
+    voice.reset();
     onSave(note.trim());
   };
 
   const handleSkip = () => {
-    reset();
+    voice.reset();
     onSkip();
   };
 
   const toggleVoice = () => {
     if (isListening) {
-      stop();
+      voice.stop();
     } else {
-      reset();
+      voice.reset();
       setNote("");
-      start();
+      voice.start();
     }
   };
+
+  // While listening, show interim speech as italic placeholder
+  const placeholder = isListening
+    ? (voice.interim || "Listening…")
+    : "A quick thought, anything notable…";
 
   return (
     <>
@@ -124,15 +131,8 @@ export function QuickNoteModal({
           <textarea
             ref={textareaRef}
             value={note}
-            onChange={(e) => {
-              setTranscript("");
-              setNote(e.target.value);
-            }}
-            placeholder={
-              isListening
-                ? "Listening…"
-                : "A quick thought, anything notable…"
-            }
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={placeholder}
             rows={4}
             style={{
               width: "100%",
@@ -147,10 +147,10 @@ export function QuickNoteModal({
               outline: "none",
               transition: "border-color 0.2s, background 0.2s",
               fontFamily: "inherit",
+              fontStyle: voice.interim && isListening ? "italic" : "normal",
             }}
           />
 
-          {/* Voice listening pulse */}
           {isListening && (
             <div
               style={{
@@ -168,15 +168,8 @@ export function QuickNoteModal({
         </div>
 
         {/* Actions row */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          {/* Mic button */}
-          {isSupported && (
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {voice.supported && (
             <button
               onClick={toggleVoice}
               style={{
@@ -200,7 +193,6 @@ export function QuickNoteModal({
             </button>
           )}
 
-          {/* Skip */}
           <button
             onClick={handleSkip}
             style={{
@@ -219,7 +211,6 @@ export function QuickNoteModal({
             Skip
           </button>
 
-          {/* Save */}
           <button
             onClick={handleSave}
             style={{
@@ -234,9 +225,7 @@ export function QuickNoteModal({
               fontSize: 15,
               fontWeight: 600,
               cursor: "pointer",
-              boxShadow: note.trim()
-                ? "0 4px 12px rgba(255, 123, 84, 0.25)"
-                : "none",
+              boxShadow: note.trim() ? "0 4px 12px rgba(255, 123, 84, 0.25)" : "none",
               transition: "all 0.2s ease",
               WebkitTapHighlightColor: "transparent",
             }}

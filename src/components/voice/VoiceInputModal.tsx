@@ -5,17 +5,20 @@ import { Check, Square, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import type { VoiceState } from "@/hooks/useVoiceInput"
 import type { VoiceContext } from "@/lib/voice/transcriptParser"
+import VoiceOrb from "./VoiceOrb"
 
 const LABELS: Record<VoiceContext, string> = {
   grocery:  "Adding to grocery list",
   memory:   "Capturing a moment",
   schedule: "Logging activity",
+  note:     "Adding a note",
 }
 
 const HINTS: Record<VoiceContext, string> = {
   grocery:  "\"Add blueberries, wipes, and yogurt…\"",
   memory:   "\"Mateo said a new word at the park…\"",
   schedule: "\"Nap started at 11:42…\"",
+  note:     "\"She was really focused during this one…\"",
 }
 
 interface Props {
@@ -89,7 +92,10 @@ export default function VoiceInputModal({ state, transcript, interim, context, o
 
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[11px] font-bold text-amber-500 uppercase tracking-widest">
+                <span
+                  className="text-[11px] font-bold uppercase tracking-widest"
+                  style={{ color: saved ? "#5BC8A8" : "var(--accent-primary)" }}
+                >
                   {saved ? "Saved ✓" : LABELS[context]}
                 </span>
                 <button
@@ -100,24 +106,20 @@ export default function VoiceInputModal({ state, transcript, interim, context, o
                 </button>
               </div>
 
-              {/* Waveform + done button */}
+              {/* Waveform — centered, full-width */}
+              {listening && (
+                <div className="mb-3">
+                  <VoiceOrb state={state} />
+                </div>
+              )}
+
+              {/* Listening status + stop button */}
               {listening && (
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-end gap-[3px] h-6">
-                    {[0, 1, 2, 3].map(i => (
-                      <motion.div
-                        key={i}
-                        className="w-[3px] rounded-full bg-amber-400"
-                        animate={{ height: ["5px", "20px", "5px"] }}
-                        transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.13, ease: "easeInOut" }}
-                        style={{ height: "5px" }}
-                      />
-                    ))}
-                  </div>
                   <span className="text-[12px] text-muted-foreground font-medium">Listening…</span>
                   <button
                     onClick={onStop}
-                    className="ml-auto flex items-center gap-1.5 bg-muted rounded-full px-3 py-1.5 text-[12px] font-semibold text-foreground active:scale-95 transition-transform"
+                    className="ml-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold text-foreground active:scale-95 transition-transform bg-muted"
                   >
                     <Square className="w-3 h-3 fill-current" strokeWidth={0} />
                     Done
@@ -135,7 +137,8 @@ export default function VoiceInputModal({ state, transcript, interim, context, o
                       </span>
                     )}
                     <motion.span
-                      className="inline-block w-[2px] h-4 bg-amber-400 ml-0.5 align-middle rounded-full"
+                      className="inline-block w-[2px] h-4 ml-0.5 align-middle rounded-full"
+                      style={{ background: "var(--accent-primary)" }}
                       animate={{ opacity: [1, 0] }}
                       transition={{ duration: 0.6, repeat: Infinity }}
                     />
@@ -168,7 +171,8 @@ export default function VoiceInputModal({ state, transcript, interim, context, o
                   <button
                     onClick={handleSave}
                     disabled={!editText.trim()}
-                    className="flex-1 py-3.5 rounded-2xl bg-amber-400 text-[14px] font-bold text-amber-950 disabled:opacity-30 flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
+                    className="flex-1 py-3.5 rounded-2xl text-[14px] font-bold text-white disabled:opacity-30 flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
+                    style={{ background: "linear-gradient(135deg, var(--accent-primary), var(--accent-soft))" }}
                   >
                     <Check className="w-4 h-4" strokeWidth={2.5} />
                     Save
@@ -180,9 +184,10 @@ export default function VoiceInputModal({ state, transcript, interim, context, o
                 <motion.div
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center justify-center py-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30"
+                  className="flex items-center justify-center py-3.5 rounded-2xl"
+                  style={{ background: "#E8F9F4" }}
                 >
-                  <span className="text-[14px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="text-[14px] font-bold" style={{ color: "#5BC8A8" }}>
                     Saved ✓
                   </span>
                 </motion.div>

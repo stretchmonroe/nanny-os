@@ -34,9 +34,14 @@ export async function POST(req: Request) {
         "@/lib/ai/prompts/activityPlan"
       );
       prompt = activityPlanPrompt(input);
+    } else if (type === "research") {
+      const { researchPrompt } = await import("@/lib/ai/prompts/research");
+      prompt = researchPrompt(input as { question: string; childAge: string; childName: string });
     } else {
       return Response.json({ error: "unknown_type" });
     }
+
+    const isResearch = type === "research";
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -47,7 +52,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 1024,
+        max_tokens: isResearch ? 1200 : 1024,
         system: systemPrompt,
         messages: [{ role: "user", content: prompt }],
       }),

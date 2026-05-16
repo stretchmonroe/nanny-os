@@ -8,10 +8,12 @@ import TimelineFeed from "@/components/home/TimelineFeed";
 import QuickActions from "@/components/home/QuickActions";
 import MomentsCarousel from "@/components/home/MomentsCarousel";
 import InsightStrip from "@/components/home/InsightStrip";
+import ResearchSheet from "@/components/shared/ResearchSheet";
 import type { FocusArea } from "@/lib/data/demo";
 
 export default function HomePage() {
-  const [focus, setFocus] = useState<FocusArea>("language");
+  const [focus,        setFocus]        = useState<FocusArea>("language");
+  const [researchOpen, setResearchOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] dark:bg-[#1A1714]">
@@ -38,9 +40,14 @@ export default function HomePage() {
         </div>
 
         <div className="mt-6">
-          <InsightStrip />
+          <InsightStrip onResearch={() => setResearchOpen(true)} />
         </div>
       </div>
+
+      <ResearchSheet
+        open={researchOpen}
+        onClose={() => setResearchOpen(false)}
+      />
     </div>
   );
 }

@@ -6,7 +6,11 @@ import { Sparkles } from "lucide-react";
 import { todayInsights, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
 
-export default function InsightStrip() {
+interface Props {
+  onResearch?(): void;
+}
+
+export default function InsightStrip({ onResearch }: Props) {
   const [insight, setInsight] = useState(todayInsights[0]);
 
   useEffect(() => {
@@ -37,10 +41,24 @@ export default function InsightStrip() {
       transition={{ delay: 0.8, duration: 0.9 }}
       className="px-7 py-2 text-center"
     >
-      <Sparkles className="w-3.5 h-3.5 text-amber-400/50 mx-auto mb-2.5" />
+      <Sparkles
+        className="w-3.5 h-3.5 mx-auto mb-2"
+        style={{ color: "var(--accent-primary)", opacity: 0.4 }}
+      />
+      <p className="text-[9px] font-bold text-muted-foreground/30 uppercase tracking-widest mb-2">
+        AI · Evidence-informed
+      </p>
       <p className="text-[13px] text-foreground/45 leading-relaxed italic">
         {insight}
       </p>
+      {onResearch && (
+        <button
+          onClick={onResearch}
+          className="mt-3 text-[11px] font-semibold text-muted-foreground/35 active:opacity-70 transition-opacity"
+        >
+          Research a topic →
+        </button>
+      )}
     </motion.div>
   );
 }

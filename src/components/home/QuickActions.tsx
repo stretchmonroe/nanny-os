@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
-import { PenLine, Plus } from "lucide-react";
+import { BookOpen, PenLine, Plus } from "lucide-react";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import QuickCaptureSheet from "@/components/shared/QuickCaptureSheet";
+import ResearchSheet from "@/components/shared/ResearchSheet";
 import type { VoiceResult } from "@/lib/voice/transcriptParser";
 
 export default function QuickActions() {
-  const [noteOpen,    setNoteOpen]    = useState(false);
-  const [groceryOpen, setGroceryOpen] = useState(false);
+  const [noteOpen,     setNoteOpen]     = useState(false);
+  const [groceryOpen,  setGroceryOpen]  = useState(false);
+  const [researchOpen, setResearchOpen] = useState(false);
 
   async function handleNoteSave(text: string) {
     await supabase.from("memory_events").insert({
@@ -75,6 +77,15 @@ export default function QuickActions() {
           onSave={handleVoiceSave}
           variant="row"
         />
+
+        <motion.button
+          whileTap={{ scale: 0.96 }}
+          onClick={() => setResearchOpen(true)}
+          className="w-full flex items-center justify-center gap-2 bg-surface-card border-soft shadow-card rounded-2xl py-3.5 text-[13px] font-semibold text-foreground select-none"
+        >
+          <BookOpen size={13} className="text-muted-foreground/50" strokeWidth={2} />
+          Research a topic
+        </motion.button>
       </div>
 
       <QuickCaptureSheet
@@ -90,6 +101,11 @@ export default function QuickActions() {
         onSave={text => handleInstantAdd(text)}
         onInstantAdd={handleInstantAdd}
         onClose={() => setGroceryOpen(false)}
+      />
+
+      <ResearchSheet
+        open={researchOpen}
+        onClose={() => setResearchOpen(false)}
       />
     </>
   );

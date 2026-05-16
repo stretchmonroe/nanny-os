@@ -79,15 +79,29 @@ export default function GuidanceTag({ source, size = "sm", static: isStatic = fa
             )}
           >
             <div className="flex items-start justify-between gap-3 mb-2">
-              <p className="text-[11px] font-bold text-foreground/80">{fw.label}</p>
+              <div>
+                <p className="text-[11px] font-bold text-foreground/80">{fw.label}</p>
+                <p className="text-[9px] font-semibold text-muted-foreground/45 uppercase tracking-widest mt-0.5">
+                  {fw.ageRange}
+                </p>
+              </div>
               <button onClick={() => setOpen(false)} className="shrink-0 active:opacity-70 mt-0.5">
                 <X size={11} className="text-muted-foreground" />
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">
+            <p className="text-[11px] text-muted-foreground leading-relaxed mb-2.5">
               {fw.description}
             </p>
-            <p className="text-[10px] text-muted-foreground/60 leading-relaxed italic">
+            {fw.domains.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2.5">
+                {fw.domains.map(d => (
+                  <span key={d} className="text-[9px] font-semibold text-muted-foreground/50 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full">
+                    {d}
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="text-[10px] text-muted-foreground/55 leading-relaxed italic">
               {fw.disclaimer}
             </p>
           </motion.div>

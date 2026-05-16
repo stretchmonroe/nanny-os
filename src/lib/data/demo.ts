@@ -159,6 +159,50 @@ export const dailyActivities: PlannedActivity[] = [
   },
 ]
 
+// ── Pattern Insights ─────────────────────────────────────────────────────────
+
+export type PatternCategory = "sleep" | "mood" | "engagement" | "energy" | "language" | "social"
+export type PatternConfidence = "emerging" | "consistent"
+
+export interface PatternInsight {
+  id: string
+  headline: string
+  detail: string
+  emoji: string
+  category: PatternCategory
+  confidence: PatternConfidence
+  suggestion?: string
+}
+
+export const demoPatterns: PatternInsight[] = [
+  {
+    id: "p1",
+    headline: "Outdoor mornings improve naps",
+    detail: "On days Mateo has outdoor time before lunch, his nap tends to start within minutes and run longer.",
+    emoji: "🌿",
+    category: "sleep",
+    confidence: "consistent",
+    suggestion: "Keep morning outdoor time before nap prep when the schedule allows.",
+  },
+  {
+    id: "p2",
+    headline: "Language blooms after lunch",
+    detail: "Pointing, naming games, and new words almost always surface in the post-lunch quiet window.",
+    emoji: "💬",
+    category: "language",
+    confidence: "emerging",
+    suggestion: "Books and naming walks hit differently right after lunch — that window is golden.",
+  },
+  {
+    id: "p3",
+    headline: "Sensory play steadies afternoon mood",
+    detail: "Afternoons that include sensory activity tend to flow more smoothly toward dinnertime.",
+    emoji: "✨",
+    category: "mood",
+    confidence: "emerging",
+  },
+]
+
 // ── Insights & Patterns ──────────────────────────────────────────────────────
 
 export const todayInsights = [

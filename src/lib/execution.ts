@@ -1,12 +1,16 @@
 import type { TimeWindow } from "./activities";
 
-export type ActivityStatus = "idle" | "active" | "done";
+export type ActivityStatus = "idle" | "active" | "done" | "skipped";
+export type ActivityOutcome = "great" | "okay" | "rough";
 
 export interface ActivityExecution {
   status: ActivityStatus;
   startedAt?: number;
   completedAt?: number;
+  skippedAt?: number;
   note?: string;
+  outcome?: ActivityOutcome;
+  replacedBy?: string;
 }
 
 export type ExecutionMap = Partial<Record<TimeWindow, ActivityExecution>>;

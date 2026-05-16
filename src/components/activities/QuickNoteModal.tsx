@@ -2,33 +2,36 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useVoiceInput } from "@/hooks/useVoiceInput";
+import { OutcomePicker } from "./OutcomePicker";
+import type { ActivityOutcome } from "@/lib/execution";
 
 interface QuickNoteModalProps {
   activityTitle: string;
   initialNote?: string;
-  onSave: (note: string) => void;
+  initialOutcome?: ActivityOutcome;
+  onSave: (note: string, outcome?: ActivityOutcome) => void;
   onSkip: () => void;
 }
 
 export function QuickNoteModal({
   activityTitle,
   initialNote = "",
+  initialOutcome,
   onSave,
   onSkip,
 }: QuickNoteModalProps) {
   const [note, setNote] = useState(initialNote);
+  const [outcome, setOutcome] = useState<ActivityOutcome | undefined>(initialOutcome);
   const [visible, setVisible] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const voice = useVoiceInput({ continuous: false });
 
   const isListening = voice.state === "listening";
 
-  // Sync finalised transcript into note field
   useEffect(() => {
     if (voice.transcript) setNote(voice.transcript);
   }, [voice.transcript]);
 
-  // Animate in on mount
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 20);
     return () => clearTimeout(t);
@@ -36,7 +39,7 @@ export function QuickNoteModal({
 
   const handleSave = () => {
     voice.reset();
-    onSave(note.trim());
+    onSave(note.trim(), outcome);
   };
 
   const handleSkip = () => {
@@ -54,14 +57,14 @@ export function QuickNoteModal({
     }
   };
 
-  // While listening, show interim speech as italic placeholder
   const placeholder = isListening
     ? (voice.interim || "Listening…")
-    : "A quick thought, anything notable…";
+    : "Anything notable…";
+
+  const canSave = note.trim().length > 0 || Boolean(outcome);
 
   return (
     <>
-      {/* Backdrop */}
       <div
         onClick={handleSkip}
         style={{
@@ -74,7 +77,6 @@ export function QuickNoteModal({
         }}
       />
 
-      {/* Bottom sheet */}
       <div
         style={{
           position: "fixed",
@@ -91,7 +93,6 @@ export function QuickNoteModal({
           boxShadow: "0 -8px 40px rgba(0,0,0,0.12)",
         }}
       >
-        {/* Drag handle */}
         <div
           style={{
             width: 36,
@@ -102,7 +103,6 @@ export function QuickNoteModal({
           }}
         />
 
-        {/* Header */}
         <p
           style={{
             fontSize: 11,
@@ -126,14 +126,15 @@ export function QuickNoteModal({
           How did it go? 🌿
         </h3>
 
-        {/* Text area */}
+        <OutcomePicker value={outcome} onChange={setOutcome} />
+
         <div style={{ position: "relative", marginBottom: 20 }}>
           <textarea
             ref={textareaRef}
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder={placeholder}
-            rows={4}
+            rows={3}
             style={{
               width: "100%",
               padding: "14px 16px",
@@ -150,7 +151,6 @@ export function QuickNoteModal({
               fontStyle: voice.interim && isListening ? "italic" : "normal",
             }}
           />
-
           {isListening && (
             <div
               style={{
@@ -167,7 +167,6 @@ export function QuickNoteModal({
           )}
         </div>
 
-        {/* Actions row */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {voice.supported && (
             <button
@@ -218,19 +217,19 @@ export function QuickNoteModal({
               padding: "13px",
               borderRadius: 14,
               border: "none",
-              background: note.trim()
+              background: canSave
                 ? "linear-gradient(135deg, #FF7B54, #FF9A6C)"
                 : "var(--border-soft)",
-              color: note.trim() ? "white" : "var(--text-light)",
+              color: canSave ? "white" : "var(--text-light)",
               fontSize: 15,
               fontWeight: 600,
               cursor: "pointer",
-              boxShadow: note.trim() ? "0 4px 12px rgba(255, 123, 84, 0.25)" : "none",
+              boxShadow: canSave ? "0 4px 12px rgba(255, 123, 84, 0.25)" : "none",
               transition: "all 0.2s ease",
               WebkitTapHighlightColor: "transparent",
             }}
           >
-            Save note
+            Save
           </button>
         </div>
       </div>

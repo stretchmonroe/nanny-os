@@ -12,11 +12,15 @@ export function DayProgress({ execution }: DayProgressProps) {
     (w) => execution[w]?.status === "done"
   ).length;
 
+  const skippedCount = TIME_WINDOW_ORDER.filter(
+    (w) => execution[w]?.status === "skipped"
+  ).length;
+
   const activeWindow = TIME_WINDOW_ORDER.find(
     (w) => execution[w]?.status === "active"
   );
 
-  if (doneCount === 0 && !activeWindow) return null;
+  if (doneCount === 0 && skippedCount === 0 && !activeWindow) return null;
 
   return (
     <div
@@ -45,6 +49,8 @@ export function DayProgress({ execution }: DayProgressProps) {
                     ? "var(--success)"
                     : status === "active"
                     ? "var(--accent-primary)"
+                    : status === "skipped"
+                    ? "var(--border-medium)"
                     : "var(--border-soft)",
                 transition: "all 0.3s ease",
                 boxShadow:
@@ -70,12 +76,12 @@ export function DayProgress({ execution }: DayProgressProps) {
           <span style={{ color: "var(--accent-primary)", fontWeight: 600 }}>
             In progress
           </span>
-        ) : doneCount === TIME_WINDOW_ORDER.length ? (
+        ) : doneCount + skippedCount === TIME_WINDOW_ORDER.length ? (
           <span style={{ color: "var(--success)", fontWeight: 600 }}>
             All done today 🎉
           </span>
         ) : (
-          `${doneCount} of ${TIME_WINDOW_ORDER.length} done`
+          `${doneCount} of ${TIME_WINDOW_ORDER.length} done${skippedCount > 0 ? ` · ${skippedCount} skipped` : ""}`
         )}
       </p>
     </div>

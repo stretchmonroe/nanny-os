@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase/client";
-import { schedule as demoSchedule, typeConfig } from "@/lib/data/demo";
+import { schedule as demoSchedule, typeConfig, demoPatterns } from "@/lib/data/demo";
 import ScheduleBlock from "@/components/schedule/ScheduleBlock";
+import { PatternCard } from "@/components/insights/PatternCard";
 
 function formatDate() {
   return new Date().toLocaleDateString("en-US", {
@@ -76,6 +77,14 @@ export default async function SchedulePage() {
             </div>
           </section>
         )}
+
+        {/* Pattern insight — schedule-relevant */}
+        <section className="pt-2">
+          <p className="text-[10px] font-bold text-muted-foreground/35 uppercase tracking-widest px-1 mb-2.5">
+            Pattern · Mateo
+          </p>
+          <PatternCard pattern={demoPatterns[0]} compact />
+        </section>
       </div>
     </div>
   );

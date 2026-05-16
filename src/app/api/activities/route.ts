@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import type { ChildProfile } from "@/lib/onboarding-flow";
 import type { TimeWindow } from "@/lib/activities";
+import type { AdaptiveProfile } from "@/lib/adaptive-profile";
 import { buildActivitiesPrompt, buildSwapPrompt } from "@/lib/activities-prompt";
 
 const client = new Anthropic({
@@ -14,12 +15,13 @@ export async function POST(request: NextRequest) {
     const {
       profile,
       swapWindow,
-    }: { profile: ChildProfile; swapWindow?: TimeWindow } = body;
+      adaptive,
+    }: { profile: ChildProfile; swapWindow?: TimeWindow; adaptive?: AdaptiveProfile } = body;
 
     const isSwap = Boolean(swapWindow);
     const prompt = isSwap
-      ? buildSwapPrompt(profile, swapWindow!)
-      : buildActivitiesPrompt(profile);
+      ? buildSwapPrompt(profile, swapWindow!, adaptive)
+      : buildActivitiesPrompt(profile, adaptive);
     const maxTokens = isSwap ? 400 : 1800;
 
     const message = await client.messages.create({

@@ -5,14 +5,36 @@ import { useRouter } from "next/navigation";
 import type { ChildProfile } from "@/lib/onboarding-flow";
 import type { Activity, TimeWindow } from "@/lib/activities";
 import { TIME_WINDOW_META, TIME_WINDOW_ORDER } from "@/lib/activities";
-import type { ExecutionMap } from "@/lib/execution";
+import type { ActivityOutcome, ExecutionMap } from "@/lib/execution";
 import { loadExecution, persistExecution } from "@/lib/execution";
+import { saveActivityLog } from "@/lib/supabase/activityLogs";
 import { TimeWindowSection } from "@/components/activities/TimeWindowSection";
 import { ActivitiesLoadingSkeleton } from "@/components/activities/ActivitiesLoadingSkeleton";
 import { DayProgress } from "@/components/activities/DayProgress";
+import { DaySummaryCard } from "@/components/activities/DaySummaryCard";
 import { QuickNoteModal } from "@/components/activities/QuickNoteModal";
+import { PatternCard } from "@/components/insights/PatternCard";
+import { demoPatterns } from "@/lib/data/demo";
+import { loadAdaptiveProfile } from "@/lib/adaptive-profile";
+import type { PatternInsight } from "@/lib/data/demo";
+import type { AdaptiveProfile } from "@/lib/adaptive-profile";
 
 type Status = "loading" | "loaded" | "error";
+
+function getContextualPattern(exec: ExecutionMap, acts: Activity[]): PatternInsight {
+  const doneCategories = new Set(
+    Object.entries(exec)
+      .filter(([, e]) => e?.status === "done")
+      .flatMap(([w]) => {
+        const cat = acts.find(a => a.timeWindow === (w as TimeWindow))?.category;
+        return cat ? [cat] : [];
+      })
+  );
+  if (doneCategories.has("outdoor") || doneCategories.has("motor")) return demoPatterns[0];
+  if (doneCategories.has("language")) return demoPatterns[1];
+  if (doneCategories.has("sensory")) return demoPatterns[2];
+  return demoPatterns[0];
+}
 
 export default function ActivitiesPage() {
   const router = useRouter();
@@ -23,7 +45,6 @@ export default function ActivitiesPage() {
   const [execution, setExecution] = useState<ExecutionMap>({});
   const [noteTarget, setNoteTarget] = useState<TimeWindow | null>(null);
 
-  // Persist execution whenever it changes
   const updateExecution = useCallback((map: ExecutionMap) => {
     setExecution(map);
     persistExecution(map);
@@ -33,10 +54,13 @@ export default function ActivitiesPage() {
     setStatus("loading");
     setActivities([]);
     try {
+      let adaptive: AdaptiveProfile | null = null;
+      try { adaptive = loadAdaptiveProfile(prof.name); } catch { /* ignore */ }
+
       const res = await fetch("/api/activities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile: prof }),
+        body: JSON.stringify({ profile: prof, adaptive }),
       });
       const data = await res.json();
       if (!res.ok || !data.activities) throw new Error(data.error || "Failed");
@@ -80,21 +104,59 @@ export default function ActivitiesPage() {
       },
     };
     updateExecution(next);
-    // Open quick note modal
     setNoteTarget(window);
   };
 
-  const handleSaveNote = (note: string) => {
+  const handleSkip = (window: TimeWindow) => {
+    const activity = activities.find(a => a.timeWindow === window);
+    const next: ExecutionMap = {
+      ...execution,
+      [window]: {
+        ...execution[window],
+        status: "skipped",
+        skippedAt: Date.now(),
+      },
+    };
+    updateExecution(next);
+
+    if (activity) {
+      saveActivityLog({
+        date: new Date().toISOString().slice(0, 10),
+        child_id: "default",
+        time_window: window,
+        planned_title: activity.title,
+        planned_category: activity.category,
+        status: "skipped",
+      });
+    }
+  };
+
+  const handleSaveNote = (note: string, outcome?: ActivityOutcome) => {
     if (!noteTarget) return;
+    const activity = activities.find(a => a.timeWindow === noteTarget);
     const next: ExecutionMap = {
       ...execution,
       [noteTarget]: {
         ...execution[noteTarget],
         note: note || undefined,
+        outcome,
       },
     };
     updateExecution(next);
     setNoteTarget(null);
+
+    if (activity) {
+      saveActivityLog({
+        date: new Date().toISOString().slice(0, 10),
+        child_id: "default",
+        time_window: noteTarget,
+        planned_title: activity.title,
+        planned_category: activity.category,
+        status: "done",
+        outcome,
+        note: note || undefined,
+      });
+    }
   };
 
   const handleEditNote = (window: TimeWindow) => {
@@ -105,8 +167,8 @@ export default function ActivitiesPage() {
 
   const handleSwap = async (window: TimeWindow) => {
     if (!profile || swappingWindow) return;
+    const prevActivity = activities.find(a => a.timeWindow === window);
     setSwappingWindow(window);
-    // Reset execution for swapped window
     const clearedExec: ExecutionMap = { ...execution };
     delete clearedExec[window];
     updateExecution(clearedExec);
@@ -118,9 +180,22 @@ export default function ActivitiesPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.activity) throw new Error(data.error || "Failed");
+      const newActivity: Activity = data.activity;
       setActivities((prev) =>
-        prev.map((a) => (a.timeWindow === window ? data.activity : a))
+        prev.map((a) => (a.timeWindow === window ? newActivity : a))
       );
+      // Log the swap so AI knows what was replaced
+      if (prevActivity) {
+        saveActivityLog({
+          date: new Date().toISOString().slice(0, 10),
+          child_id: "default",
+          time_window: window,
+          planned_title: prevActivity.title,
+          planned_category: prevActivity.category,
+          status: "skipped",
+          replaced_by: newActivity.title,
+        });
+      }
     } catch {
       // Keep existing card on failure
     } finally {
@@ -314,10 +389,34 @@ export default function ActivitiesPage() {
                     onStart={() => handleStart(windowId)}
                     onComplete={() => handleComplete(windowId)}
                     onEditNote={() => handleEditNote(windowId)}
+                    onSkip={() => handleSkip(windowId)}
                     animDelay={i * 80}
                   />
                 );
               })}
+
+              <DaySummaryCard execution={execution} />
+
+              {Object.values(execution).some(e => e?.status === "done") && (
+                <div>
+                  <p
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      textTransform: "uppercase" as const,
+                      letterSpacing: "0.09em",
+                      color: "var(--text-light)",
+                      margin: "0 0 8px 4px",
+                    }}
+                  >
+                    Pattern · Mateo
+                  </p>
+                  <PatternCard
+                    pattern={getContextualPattern(execution, activities)}
+                    compact
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -328,6 +427,7 @@ export default function ActivitiesPage() {
         <QuickNoteModal
           activityTitle={noteActivity.title}
           initialNote={execution[noteTarget]?.note ?? ""}
+          initialOutcome={execution[noteTarget]?.outcome}
           onSave={handleSaveNote}
           onSkip={() => setNoteTarget(null)}
         />

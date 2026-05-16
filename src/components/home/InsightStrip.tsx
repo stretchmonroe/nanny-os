@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { todayInsights, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { loadExecution } from "@/lib/execution";
+import type { ExecutionSummary } from "@/lib/ai/prompts/insights";
 
 interface Props {
   onResearch?(): void;
@@ -17,6 +19,27 @@ export default function InsightStrip({ onResearch }: Props) {
     const done = schedule.filter((s) => s.done).map((s) => s.title);
     const current = schedule.find((s) => s.active)?.title;
 
+    // Enrich with real execution outcomes when available
+    let executionSummary: ExecutionSummary | undefined;
+    try {
+      const exec = loadExecution();
+      const completed = Object.entries(exec)
+        .filter(([, e]) => e.status === "done")
+        .map(([window, e]) => ({
+          title: window.replace(/-/g, " "),
+          outcome: e.outcome,
+          note: e.note,
+        }));
+      const skipped = Object.entries(exec)
+        .filter(([, e]) => e.status === "skipped")
+        .map(([window]) => window.replace(/-/g, " "));
+      if (completed.length + skipped.length > 0) {
+        executionSummary = { completed, skipped };
+      }
+    } catch {
+      // sessionStorage unavailable — skip
+    }
+
     callAI("insights", {
       childName: "Mateo",
       childAge: "18 months",
@@ -27,6 +50,7 @@ export default function InsightStrip({ onResearch }: Props) {
         hour: "numeric",
         minute: "2-digit",
       }),
+      executionSummary,
     }).then((res) => {
       if (!res) return;
       const parsed = parseAIJson<{ todayInsight?: string }>(res.result, {});

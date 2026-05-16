@@ -25,9 +25,10 @@ function formatToday() {
 interface Props {
   focus: FocusArea;
   onFocusChange: (f: FocusArea) => void;
+  onProfileOpen(): void;
 }
 
-export default function ChildProfileHeader({ focus, onFocusChange }: Props) {
+export default function ChildProfileHeader({ focus, onFocusChange, onProfileOpen }: Props) {
   const [greeting, setGreeting] = useState("Good morning");
   const [today, setToday] = useState("");
   const [focusOpen, setFocusOpen] = useState(false);
@@ -54,15 +55,18 @@ export default function ChildProfileHeader({ focus, onFocusChange }: Props) {
           {today}
         </p>
 
-        {/* Avatar — decorative, top-right */}
-        <div className="relative">
+        {/* Avatar — tappable, opens profile */}
+        <button
+          onClick={onProfileOpen}
+          className="relative active:scale-[0.94] transition-transform"
+        >
           <div className="w-14 h-14 rounded-[1.3rem] bg-gradient-to-br from-amber-200 to-orange-300 dark:from-amber-900/80 dark:to-orange-900/60 flex items-center justify-center text-[28px] shadow-elevated ring-[3px] ring-amber-200/50 dark:ring-amber-800/25">
             {child.emoji}
           </div>
           <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-xl bg-surface-card shadow-card flex items-center justify-center text-[13px] border-soft">
             {child.mood}
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Hero editorial block */}

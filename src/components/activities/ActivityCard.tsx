@@ -13,6 +13,7 @@ interface ActivityCardProps {
   onStart: () => void;
   onComplete: () => void;
   onEditNote: () => void;
+  onSkip: () => void;
 }
 
 export function ActivityCard({
@@ -24,12 +25,14 @@ export function ActivityCard({
   onStart,
   onComplete,
   onEditNote,
+  onSkip,
 }: ActivityCardProps) {
   const status = execution?.status ?? "idle";
   const categoryColor = CATEGORY_COLORS[activity.category];
 
   const isActive = status === "active";
   const isDone = status === "done";
+  const isSkipped = status === "skipped";
 
   const cardStyle: React.CSSProperties = {
     position: "relative",
@@ -40,8 +43,10 @@ export function ActivityCard({
       ? "0 0 0 2px var(--accent-primary), 0 4px 20px rgba(255,123,84,0.12)"
       : isDone
       ? "0 2px 8px rgba(0,0,0,0.04)"
+      : isSkipped
+      ? "0 2px 8px rgba(0,0,0,0.03)"
       : "0 2px 16px rgba(0,0,0,0.06)",
-    opacity: isDone ? 0.82 : 1,
+    opacity: isDone ? 0.82 : isSkipped ? 0.55 : 1,
     transition: "all 0.25s ease",
   };
 
@@ -160,6 +165,21 @@ export function ActivityCard({
               }}
             >
               ✓ Done
+            </span>
+          )}
+
+          {isSkipped && (
+            <span
+              style={{
+                background: "var(--bg-warm)",
+                color: "var(--text-light)",
+                borderRadius: 99,
+                padding: "4px 10px",
+                fontSize: 12,
+                fontWeight: 700,
+              }}
+            >
+              Skipped
             </span>
           )}
 
@@ -307,67 +327,88 @@ export function ActivityCard({
       <div
         style={{
           display: "flex",
+          flexDirection: "column",
           gap: 8,
-          alignItems: "center",
           marginTop: isDone ? 4 : 0,
         }}
       >
         {/* Idle state */}
         {status === "idle" && (
           <>
-            <button
-              onClick={onSwap}
-              disabled={disabled || isSwapping}
-              style={{
-                background: "var(--accent-light)",
-                color: "var(--accent-primary)",
-                border: "none",
-                borderRadius: 10,
-                padding: "8px 14px",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: disabled || isSwapping ? "not-allowed" : "pointer",
-                opacity: disabled || isSwapping ? 0.5 : 1,
-                transition: "all 0.15s ease",
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                WebkitTapHighlightColor: "transparent",
-              }}
-            >
-              <span style={{ fontSize: 15 }}>↻</span> Try another
-            </button>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <button
+                onClick={onSwap}
+                disabled={disabled || isSwapping}
+                style={{
+                  background: "var(--accent-light)",
+                  color: "var(--accent-primary)",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "8px 14px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: disabled || isSwapping ? "not-allowed" : "pointer",
+                  opacity: disabled || isSwapping ? 0.5 : 1,
+                  transition: "all 0.15s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  WebkitTapHighlightColor: "transparent",
+                }}
+              >
+                <span style={{ fontSize: 15 }}>↻</span> Try another
+              </button>
+
+              <button
+                onClick={onStart}
+                disabled={disabled}
+                style={{
+                  flex: 1,
+                  background: disabled
+                    ? "var(--border-soft)"
+                    : "linear-gradient(135deg, #5BC8A8, #4DB896)",
+                  color: disabled ? "var(--text-light)" : "white",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "10px 14px",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: disabled ? "not-allowed" : "pointer",
+                  boxShadow: disabled
+                    ? "none"
+                    : "0 3px 12px rgba(91,200,168,0.3)",
+                  transition: "all 0.18s ease",
+                  WebkitTapHighlightColor: "transparent",
+                }}
+              >
+                ▶ Start
+              </button>
+            </div>
 
             <button
-              onClick={onStart}
+              onClick={onSkip}
               disabled={disabled}
               style={{
-                flex: 1,
-                background: disabled
-                  ? "var(--border-soft)"
-                  : "linear-gradient(135deg, #5BC8A8, #4DB896)",
-                color: disabled ? "var(--text-light)" : "white",
+                background: "transparent",
                 border: "none",
-                borderRadius: 10,
-                padding: "10px 14px",
-                fontSize: 14,
-                fontWeight: 700,
+                padding: "2px 0",
+                fontSize: 12,
+                fontWeight: 500,
+                color: "var(--text-light)",
                 cursor: disabled ? "not-allowed" : "pointer",
-                boxShadow: disabled
-                  ? "none"
-                  : "0 3px 12px rgba(91,200,168,0.3)",
-                transition: "all 0.18s ease",
+                opacity: disabled ? 0.4 : 1,
+                textAlign: "center",
                 WebkitTapHighlightColor: "transparent",
               }}
             >
-              ▶ Start
+              Skip this one
             </button>
           </>
         )}
 
         {/* Active state */}
         {status === "active" && (
-          <>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <button
               onClick={onSwap}
               disabled={disabled || isSwapping}
@@ -408,31 +449,60 @@ export function ActivityCard({
             >
               Mark done ✓
             </button>
-          </>
+          </div>
         )}
 
         {/* Done state */}
         {status === "done" && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {execution?.outcome && (
+              <span style={{ fontSize: 18 }}>
+                {execution.outcome === "great" ? "😊" : execution.outcome === "okay" ? "🙂" : "😓"}
+              </span>
+            )}
+            <button
+              onClick={onEditNote}
+              style={{
+                background: "transparent",
+                color: "var(--text-secondary)",
+                border: "none",
+                padding: "4px 0",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                WebkitTapHighlightColor: "transparent",
+              }}
+            >
+              <span style={{ fontSize: 14 }}>
+                {execution?.note ? "✏️" : "📝"}
+              </span>
+              {execution?.note ? "Edit note" : "Add note"}
+            </button>
+          </div>
+        )}
+
+        {/* Skipped state */}
+        {status === "skipped" && (
           <button
-            onClick={onEditNote}
+            onClick={onStart}
+            disabled={disabled}
             style={{
               background: "transparent",
               color: "var(--text-secondary)",
-              border: "none",
-              padding: "4px 0",
+              border: "1.5px solid var(--border-soft)",
+              borderRadius: 10,
+              padding: "8px 14px",
               fontSize: 13,
               fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
+              cursor: disabled ? "not-allowed" : "pointer",
+              opacity: disabled ? 0.4 : 1,
               WebkitTapHighlightColor: "transparent",
             }}
           >
-            <span style={{ fontSize: 14 }}>
-              {execution?.note ? "✏️" : "📝"}
-            </span>
-            {execution?.note ? "Edit note" : "Add note"}
+            Start anyway
           </button>
         )}
       </div>

@@ -15,6 +15,7 @@ interface TimeWindowSectionProps {
   onStart: () => void;
   onComplete: () => void;
   onEditNote: () => void;
+  onSkip: () => void;
   animDelay?: number;
 }
 
@@ -28,6 +29,7 @@ export function TimeWindowSection({
   onStart,
   onComplete,
   onEditNote,
+  onSkip,
   animDelay = 0,
 }: TimeWindowSectionProps) {
   const isDone = execution?.status === "done";
@@ -86,6 +88,7 @@ export function TimeWindowSection({
           onStart={onStart}
           onComplete={onComplete}
           onEditNote={onEditNote}
+          onSkip={onSkip}
         />
       ) : (
         <div

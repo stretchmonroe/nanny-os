@@ -1,13 +1,18 @@
 import type { ChildProfile } from "./onboarding-flow";
 import type { TimeWindow } from "./activities";
+import type { AdaptiveProfile } from "./adaptive-profile";
 
-export function buildActivitiesPrompt(profile: ChildProfile): string {
+export function buildActivitiesPrompt(profile: ChildProfile, adaptive?: AdaptiveProfile | null): string {
   const hasSensory =
     profile.sensorySensitivities.filter((s) => s !== "none").length > 0;
   const montessoriOk = profile.montessoriInterest !== "not-for-us";
   const preferOutdoor =
     profile.environmentPreference === "outdoor" ||
     profile.environmentPreference === "both";
+
+  const adaptiveSection = adaptive?.recommendationHints?.length
+    ? `\nLearned preferences (from activity history — prioritize these):\n${adaptive.recommendationHints.map(h => `- ${h}`).join("\n")}\n`
+    : "";
 
   return `You are a warm, playful child development guide. Generate a full day of 5 developmentally appropriate activities for a child with the following profile.
 
@@ -22,7 +27,7 @@ Child profile:
 - Environment: ${profile.environmentPreference}
 - Developmental focus: ${profile.developmentalFocus.join(", ")}
 - Montessori interest: ${profile.montessoriInterest}
-
+${adaptiveSection}
 Generate exactly 5 activities, one per time window in this exact order:
 1. morning-energy (active, stimulating, high-energy)
 2. mid-morning-focus (concentration, learning, calm exploration)
@@ -63,7 +68,8 @@ The activities array must have exactly 5 items in the window order listed above.
 
 export function buildSwapPrompt(
   profile: ChildProfile,
-  windowToSwap: TimeWindow
+  windowToSwap: TimeWindow,
+  adaptive?: AdaptiveProfile | null
 ): string {
   const hasSensory =
     profile.sensorySensitivities.filter((s) => s !== "none").length > 0;
@@ -85,6 +91,10 @@ export function buildSwapPrompt(
       "very gentle, calming, low-stimulation — preparing the body and mind for rest",
   };
 
+  const adaptiveHints = adaptive?.recommendationHints?.length
+    ? `\nLearned preferences:\n${adaptive.recommendationHints.map(h => `- ${h}`).join("\n")}\n`
+    : "";
+
   return `You are a warm child development guide. Suggest one fresh activity for the "${windowToSwap}" time window for this child. Make it different and creative — not the typical first suggestion.
 
 Child profile:
@@ -96,7 +106,7 @@ Child profile:
 - Sensory notes: ${hasSensory ? profile.sensorySensitivities.join(", ") : "none"}
 - Environment: ${profile.environmentPreference}
 - Developmental focus: ${profile.developmentalFocus.join(", ")}
-
+${adaptiveHints}
 Time window: ${windowContext[windowToSwap]}
 
 Rules:

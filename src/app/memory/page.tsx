@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import JournalSummary from "@/components/memory/JournalSummary";
@@ -11,6 +11,7 @@ import PhotoUploader from "@/components/memory/PhotoUploader";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import { supabase } from "@/lib/supabase/client";
 import type { VoiceResult } from "@/lib/voice/transcriptParser";
+import { ArrowUp } from "lucide-react";
 
 type Tab = "today" | "week" | "favorites";
 
@@ -25,6 +26,86 @@ const dateStr = new Date().toLocaleDateString("en-US", {
   month:   "long",
   day:     "numeric",
 });
+
+const NOTE_EMOJIS = ["😄", "🌿", "⭐", "🎯", "🍼", "💛"];
+
+function QuickWrite() {
+  const [text,          setText]          = useState("");
+  const [selectedEmoji, setSelectedEmoji] = useState("");
+  const [saving,        setSaving]        = useState(false);
+  const [saved,         setSaved]         = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const canSave = text.trim().length > 0;
+
+  async function handleSave() {
+    if (!canSave || saving) return;
+    setSaving(true);
+    const content = selectedEmoji ? `${selectedEmoji} ${text.trim()}` : text.trim();
+    await supabase.from("memory_events").insert({
+      type: "note", content, child_id: "default", created_by: "parent",
+      created_at: new Date().toISOString(),
+    });
+    setSaving(false);
+    setSaved(true);
+    navigator.vibrate?.(40);
+    setTimeout(() => { setSaved(false); setText(""); setSelectedEmoji(""); }, 1200);
+  }
+
+  return (
+    <div
+      className="mx-4 mt-4 mb-1 rounded-2xl px-4 pt-3.5 pb-4"
+      style={{ background: "var(--surface-card)", border: "1.5px solid var(--border-soft)" }}
+    >
+      {/* Emoji chips */}
+      <div className="flex gap-2 mb-3">
+        {NOTE_EMOJIS.map(e => (
+          <motion.button
+            key={e}
+            whileTap={{ scale: 0.88 }}
+            onClick={() => setSelectedEmoji(e === selectedEmoji ? "" : e)}
+            className="w-9 h-9 rounded-xl text-[18px] flex items-center justify-center transition-all duration-150"
+            style={{
+              background: e === selectedEmoji ? "var(--accent-light)" : "var(--surface-page)",
+              border:     `1.5px solid ${e === selectedEmoji ? "var(--accent-primary)" : "transparent"}`,
+            }}
+          >
+            {e}
+          </motion.button>
+        ))}
+      </div>
+
+      <div className="flex items-end gap-2">
+        <textarea
+          ref={textareaRef}
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="What's happening right now…"
+          rows={2}
+          className="flex-1 resize-none text-[14px] text-foreground leading-relaxed bg-transparent outline-none placeholder:text-muted-foreground/35 placeholder:italic font-medium"
+        />
+        <motion.button
+          onClick={handleSave}
+          disabled={!canSave || saving || saved}
+          whileTap={{ scale: 0.9 }}
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mb-0.5 transition-all duration-150"
+          style={{
+            background: saved ? "#5BC8A8" : canSave ? "var(--accent-primary)" : "var(--border-medium)",
+            opacity: saving ? 0.6 : 1,
+          }}
+        >
+          {saved ? (
+            <svg width="14" height="11" viewBox="0 0 14 11" fill="none">
+              <path d="M1 5.5L5 9.5L13 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : (
+            <ArrowUp size={16} strokeWidth={2.5} className="text-white" />
+          )}
+        </motion.button>
+      </div>
+    </div>
+  );
+}
 
 export default function MemoryPage() {
   const [tab, setTab] = useState<Tab>("today");
@@ -94,7 +175,8 @@ export default function MemoryPage() {
         >
           {tab === "today" && (
             <div>
-              <div className="pt-3">
+              <QuickWrite />
+              <div className="pt-1">
                 <JournalSummary />
               </div>
               <TodayJournal />

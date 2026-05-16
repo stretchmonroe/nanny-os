@@ -1,23 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import { groceryItems as demoItems } from "@/lib/data/demo";
-import { cn } from "@/lib/utils";
 import { ArrowUp } from "lucide-react";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
+import SwipeableRow from "@/components/lists/SwipeableRow";
 import type { VoiceResult } from "@/lib/voice/transcriptParser";
+
+const CHIPS = ["Bananas", "Milk", "Eggs", "Avocado", "Yogurt", "Blueberries", "Cheese", "Crackers"];
 
 type Item = { id: string; name: string; completed: boolean };
 
 export default function ListsPage() {
-  const [items, setItems] = useState<Item[]>([]);
-  const [input, setInput] = useState("");
+  const [items,   setItems]   = useState<Item[]>([]);
+  const [input,   setInput]   = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   async function load() {
     const { data } = await supabase
@@ -32,7 +33,7 @@ export default function ListsPage() {
     const n = (name ?? input).trim();
     if (!n) return;
     const newItem: Item = { id: Date.now().toString() + Math.random(), name: n, completed: false };
-    setItems((prev) => [...prev, newItem]);
+    setItems(prev => [...prev, newItem]);
     if (!name) setInput("");
     await supabase
       .from("grocery_items")
@@ -48,21 +49,21 @@ export default function ListsPage() {
   }
 
   async function toggle(id: string) {
-    setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, completed: !i.completed } : i))
-    );
-    const item = items.find((i) => i.id === id);
+    setItems(prev => prev.map(i => i.id === id ? { ...i, completed: !i.completed } : i));
+    const item = items.find(i => i.id === id);
     if (item) {
-      await supabase
-        .from("grocery_items")
-        .update({ completed: !item.completed })
-        .eq("id", id);
+      await supabase.from("grocery_items").update({ completed: !item.completed }).eq("id", id);
     }
   }
 
-  const remaining = items.filter((i) => !i.completed).length;
-  const pending = items.filter((i) => !i.completed);
-  const done = items.filter((i) => i.completed);
+  async function deleteItem(id: string) {
+    setItems(prev => prev.filter(i => i.id !== id));
+    await supabase.from("grocery_items").delete().eq("id", id);
+  }
+
+  const pending   = items.filter(i => !i.completed);
+  const done      = items.filter(i => i.completed);
+  const remaining = pending.length;
 
   return (
     <div className="min-h-screen bg-surface-page flex flex-col">
@@ -80,11 +81,11 @@ export default function ListsPage() {
       </div>
 
       {/* List */}
-      <div className="flex-1 px-4 pt-4 pb-4 space-y-1.5">
+      <div className="flex-1 px-4 pt-4 pb-4">
         {!loading && (
           <>
-            {pending.map((item) => (
-              <ListRow key={item.id} item={item} onToggle={toggle} />
+            {pending.map(item => (
+              <SwipeableRow key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} />
             ))}
 
             {done.length > 0 && (
@@ -93,8 +94,8 @@ export default function ListsPage() {
                 <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest px-1 pb-1">
                   Picked up
                 </p>
-                {done.map((item) => (
-                  <ListRow key={item.id} item={item} onToggle={toggle} />
+                {done.map(item => (
+                  <SwipeableRow key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} />
                 ))}
               </>
             )}
@@ -102,17 +103,37 @@ export default function ListsPage() {
         )}
       </div>
 
-      {/* Input bar */}
+      {/* Input + chips bar */}
       <div
         className="sticky bottom-[80px] px-4 pb-3 pt-2.5 border-t border-soft"
         style={{ background: "var(--surface-header)" }}
       >
+        {/* Suggestion chips */}
+        <div className="flex gap-2 overflow-x-auto pb-2.5 scrollbar-hide">
+          {CHIPS.map(chip => (
+            <motion.button
+              key={chip}
+              whileTap={{ scale: 0.88 }}
+              onClick={() => addItem(chip)}
+              className="shrink-0 px-3 py-1.5 rounded-full text-[12px] font-semibold select-none"
+              style={{
+                background: "var(--surface-card)",
+                color:      "var(--foreground)",
+                border:     "1.5px solid var(--border-medium)",
+              }}
+            >
+              {chip}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Text input row */}
         <div className="flex items-center gap-2">
           <div className="flex-1 flex items-center gap-2 bg-surface-card border-soft rounded-2xl px-4 py-2.5 shadow-card">
             <input
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addItem()}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && addItem()}
               placeholder="Add item…"
               className="flex-1 text-[14px] bg-transparent text-foreground placeholder:text-muted-foreground/50 outline-none font-medium"
             />
@@ -132,53 +153,5 @@ export default function ListsPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-function ListRow({
-  item,
-  onToggle,
-}: {
-  item: Item;
-  onToggle: (id: string) => void;
-}) {
-  return (
-    <button
-      onClick={() => onToggle(item.id)}
-      className="w-full flex items-center gap-3.5 bg-surface-card rounded-2xl px-4 py-3.5 border-soft shadow-card active:scale-[0.985] transition-all duration-150 text-left select-none"
-    >
-      {/* Checkbox circle */}
-      <div
-        className={cn(
-          "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200",
-          item.completed
-            ? "bg-emerald-500 border-emerald-500"
-            : "border-border"
-        )}
-      >
-        {item.completed && (
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path
-              d="M1 4L3.5 6.5L9 1"
-              stroke="white"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-      </div>
-
-      <span
-        className={cn(
-          "text-[14px] font-medium flex-1 transition-all duration-200",
-          item.completed
-            ? "line-through text-muted-foreground/40"
-            : "text-foreground"
-        )}
-      >
-        {item.name}
-      </span>
-    </button>
   );
 }

@@ -1,4 +1,5 @@
 import type { Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import BottomNav from "@/components/layout/BottomNav";
 import { Geist } from "next/font/google";
@@ -22,15 +23,16 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
-      <head>
-        {/* Set dark class before paint to prevent flash */}
-        <script
+      <head />
+      <body className="bg-surface-page text-foreground pb-20">
+        {/* Runs before hydration to apply dark class without flash */}
+        <Script
+          id="dark-mode"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{if(window.matchMedia('(prefers-color-scheme:dark)').matches)document.documentElement.classList.add('dark')}catch(e){}})()`,
           }}
         />
-      </head>
-      <body className="bg-surface-page text-foreground pb-20">
         <div className="max-w-md mx-auto min-h-screen bg-surface-page shadow-deep">
           {children}
           <BottomNav />

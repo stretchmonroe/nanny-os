@@ -27,7 +27,8 @@ export function useVoiceInput(opts?: { continuous?: boolean }): VoiceInputHook {
   const stateRef = useRef<VoiceState>("idle")
   const continuousRef = useRef(continuous)
 
-  const supported = isSupported()
+  const [supported, setSupported] = useState(false)
+  useEffect(() => { setSupported(isSupported()) }, [])
 
   // Keep stateRef in sync so closures can read current state without going stale
   useEffect(() => { stateRef.current = state }, [state])

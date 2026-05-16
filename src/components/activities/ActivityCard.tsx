@@ -80,7 +80,6 @@ export function ActivityCard({
                 margin: "0 auto 8px",
               }}
             />
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             <p
               style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}
             >

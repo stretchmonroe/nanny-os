@@ -83,7 +83,6 @@ export function ProfileComplete({ profile }: ProfileCompleteProps) {
               animation: "spin 0.9s linear infinite",
             }}
           />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           <span
             style={{
               position: "absolute",

@@ -1,3 +1,4 @@
+import type { Viewport } from "next";
 import "./globals.css";
 import BottomNav from "@/components/layout/BottomNav";
 import { Geist } from "next/font/google";
@@ -8,6 +9,14 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 export const metadata = {
   title: "Nanny OS",
   description: "Shared childcare operating system",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#F5F1EB",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

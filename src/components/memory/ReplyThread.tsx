@@ -136,7 +136,8 @@ export default function ReplyThread({ initialReplies = [], className }: Props) {
                     exit={{ opacity: 0, scale: 0.6 }}
                     transition={{ duration: 0.15, ease: [0.34, 1.56, 0.64, 1] }}
                     onClick={submit}
-                    className="shrink-0 w-6 h-6 rounded-full bg-amber-400 flex items-center justify-center active:scale-90 transition-transform"
+                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                    style={{ background: "var(--accent-primary)" }}
                   >
                     <Send size={10} className="text-white" strokeWidth={2.5} />
                   </motion.button>

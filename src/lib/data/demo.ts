@@ -421,6 +421,74 @@ export const recentMemories: MemoryEvent[] = [
   { id: "r49", type: "milestone", content: "First clear head-shake 'no' — deliberate, not just crying. A real communication leap 🙅",                                category: "learning", date: "May 1",  time: "1:30 pm",  createdBy: "nanny"  },
 ]
 
+// ── Together: Suggestions & Approvals ────────────────────────────────────────
+
+export type SuggestionType   = "activity" | "food" | "schedule"
+export type SuggestionStatus = "pending"  | "approved" | "rejected"
+
+export interface SuggestionReply {
+  id: string
+  suggestion_id: string
+  author: "nanny" | "parent"
+  content: string
+  created_at: string
+}
+
+export interface Suggestion {
+  id: string
+  type: SuggestionType
+  title: string
+  description: string
+  reason: string
+  created_by: "nanny" | "parent"
+  status: SuggestionStatus
+  response_note?: string
+  child_id: string
+  created_at: string
+}
+
+export const demoSuggestions: Suggestion[] = [
+  {
+    id: "s1",
+    type: "food",
+    title: "Hummus with veggie sticks",
+    description: "Mateo's been really into dipping things lately. Hummus with cucumber and carrot sticks for afternoon snack could be a lovely new ritual.",
+    reason: "Introduces chickpeas as a protein source and builds fine motor skills through self-directed dipping and grasping.",
+    created_by: "nanny",
+    status: "pending",
+    child_id: "default",
+    created_at: "2026-05-16T10:30:00Z",
+  },
+  {
+    id: "s2",
+    type: "activity",
+    title: "Sensory water play before lunch",
+    description: "A small tub of water with cups and spoons set up in the backyard. About 20 minutes before the 11am nap prep — calm, contained, and he loves it.",
+    reason: "Water play is deeply calming and supports cause-and-effect understanding at 18 months. The scooping motion also builds bilateral hand coordination.",
+    created_by: "nanny",
+    status: "approved",
+    response_note: "Love this! Let's make it a Tuesday ritual. 💛",
+    child_id: "default",
+    created_at: "2026-05-15T09:00:00Z",
+  },
+  {
+    id: "s3",
+    type: "schedule",
+    title: "Shift nap to 12:30",
+    description: "Mateo's been showing tired cues around 12:15 lately instead of 1pm. Moving his nap window 30 minutes earlier might smooth out the fussiness we've been seeing.",
+    reason: "Better alignment with his natural sleep rhythm means a better quality nap and a happier afternoon for both of us.",
+    created_by: "nanny",
+    status: "pending",
+    child_id: "default",
+    created_at: "2026-05-16T08:00:00Z",
+  },
+]
+
+export const demoSuggestionReplies: SuggestionReply[] = [
+  { id: "sr1", suggestion_id: "s2", author: "parent", content: "Can we try it this Thursday?", created_at: "2026-05-15T14:00:00Z" },
+  { id: "sr2", suggestion_id: "s2", author: "nanny",  content: "Absolutely, I'll set everything up after morning snack!", created_at: "2026-05-15T14:15:00Z" },
+]
+
 // ── Daily Summaries (May 1–13) ────────────────────────────────────────────────
 
 export interface DailySummary {

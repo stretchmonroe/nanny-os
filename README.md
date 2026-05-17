@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nanny OS
+
+Shared childcare operating system for the Rivera family — Elena (nanny), Sofia and Marco (parents), Mateo (18 months).
+
+A mobile-first Next.js app that gives the nanny and parents a single place to log moments, coordinate schedules, manage groceries, and surface AI-powered developmental insights about Mateo's day.
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js (App Router, Turbopack) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 (no config file, `@tailwindcss/postcss`) |
+| Animation | Framer Motion |
+| Database | Supabase (Postgres + RLS + Storage) |
+| AI | Claude `claude-sonnet-4-6` via Anthropic API |
+| Icons | Lucide React |
+| Components | Base UI (ShadCN) |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). The app runs fully on demo data without any environment keys.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment (optional — for live data)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `.env.local`:
 
-## Learn More
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...   # seeding only, never exposed client-side
+ANTHROPIC_API_KEY=...
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Seeding the database
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npx tsx supabase/seed.ts
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Runs the 7-layer seed: household → child profile → activity library → journal entries → grocery lists → AI insights → reactions/replies/voice notes.
 
-## Deploy on Vercel
+If the schema needs a full reset first:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Open the Supabase SQL editor
+2. Run `supabase/setup.sql` (drops all tables in dependency order, recreates clean)
+3. Then run `npx tsx supabase/seed.ts`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+```
+src/
+  app/
+    home/         # Home screen — recommendation, activity plan, moments, timeline
+    schedule/     # Day schedule with date picker
+    memory/       # Journal — Today / This Week / Favorites tabs + past day/week views
+    lists/        # Grocery list with voice input
+    together/     # Parent–nanny collaboration feed
+    api/ai/       # Unified Claude handler (dailySummary, nextBestAction, activityPlan, research, profileUpdate)
+    api/upload/   # Supabase Storage photo upload
+  components/
+    layout/       # BottomNav (glass pill), GlobalFAB (expandable action tray)
+    home/         # ChildProfileHeader, RecommendationCard, ActivityPlan, TimelineFeed, MomentsCarousel
+    memory/       # TodayJournal, WeekView, FavoritesView, JournalSummary, DatePicker, PhotoUploader
+    insights/     # PatternsSection, WeeklyRecap, InsightStrip
+    profile/      # ProfileSheet (adaptive child learning profile, AI-updated)
+    shared/       # QuickCaptureSheet, ResearchSheet
+    voice/        # VoiceRecorder, VoiceButton, VoiceInputModal, VoiceOrb
+    ui/           # GuidanceTag, AuthorBadge
+  hooks/
+    useVoiceInput.ts   # SpeechRecognition wrapper
+  lib/
+    ai/           # callAI(), parseAIJson(), prompts, guidance registry
+    data/demo.ts  # Full demo dataset — app works without Supabase
+    voice/        # speechRecognition.ts, transcriptParser.ts
+    adaptive-profile.ts  # localStorage-cached AI child profile
+    supabase/     # client.ts, server.ts
+supabase/
+  setup.sql       # Full DDL — drops + recreates all tables + RLS
+  seed.ts         # 7-layer TypeScript seed runner
+  rls.sql         # Row Level Security policies (reference)
+```
+
+## Key Patterns
+
+**Demo data first** — every screen renders immediately from `src/lib/data/demo.ts`. Supabase and Claude quietly upgrade data on success. No loading skeletons visible to the user.
+
+**Bottom sheets** — all capture/display sheets use `fixed bottom-0` Framer Motion slide-up with `pb-28` interior padding to clear the nav pill. Safe-area insets handled via `env(safe-area-inset-bottom)`.
+
+**Global FAB** — `GlobalFAB` renders in the root layout above the nav bar. Tapping "+" expands a tray: Quick Note → QuickCaptureSheet, Add Item → QuickCaptureSheet (grocery), Voice → VoiceInputModal, Research → ResearchSheet. Accessible from every page.
+
+**Trusted intelligence layer** — AI responses cite a `guidanceSource` (CDC, AAP, WHO, etc.) rendered as tappable `GuidanceTag` pills. Copy is observer-voice ("Mateo tends to…"), never prescriptive.
+
+**RLS** — all tables have row-level security. Nannies can read everything, create memories/grocery items, update schedule. Parents have full write access. Cross-household isolation enforced at DB level.
+
+## Deployment
+
+Deployed to Vercel at `nanny-os-two.vercel.app`. Push to `main` auto-deploys.
+
+```bash
+git push origin main
+```

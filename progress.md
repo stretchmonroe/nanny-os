@@ -32,13 +32,14 @@
 - [x] `.scroll-hide` carousel utility
 
 ### Navigation
-- [x] `BottomNav` — floating glass pill, `shadow-float`, `backdrop-blur-24px`, active tab auto-inverts via `bg-foreground text-background`
+- [x] `BottomNav` — floating glass pill, `shadow-float`, `backdrop-blur-24px`, active tab auto-inverts via `bg-foreground text-background`; 5-item layout (Home / Schedule / Journal / Lists / Together) with even flex-1 spacing to fit narrow viewports
+- [x] `GlobalFAB` (`src/components/layout/GlobalFAB.tsx`) — expandable "+" button fixed above the nav pill on every page; expands upward into a stacked tray of 4 actions (Research, Add Item, Quick Note, Voice) with staggered Framer Motion animation; "+" rotates 45° to "×" when open; backdrop closes on tap; each action opens the appropriate bottom sheet; all Supabase writes (memory_events, grocery_items) live inside the component; registered in root layout alongside BottomNav
 
 ### Home Screen (`/home`)
 - [x] `ChildProfileHeader` — gradient header, avatar with mood badge, focus + weather badges, animated day-progress bar; tappable focus badge opens inline `FocusArea` chip picker (language / sensory / movement / practical-life / creativity); selecting a chip updates `ActivityPlan` in real-time
 - [x] `RecommendationCard` — replaces AICard; live `nextBestAction` fetch with guidance layer, expandable "Why this works" section, share/approval action bar (idle → shared | awaiting); AI `flagForApproval` auto-sets awaiting state
 - [x] `ActivityPlan` — horizontal snap scroll of 3 Montessori-area activity cards; responds to `focus` prop from page; each card has Start → active → Done state machine + Swap button (swaps to alternativeTitle/alternativeDescription inline); `GuidanceTag` per card; live `activityPlan` AI fetch; falls back to `dailyActivities` demo data
-- [x] `QuickActions` — Quick Note + Add Item buttons
+- [x] ~~`QuickActions`~~ — removed from home screen; Quick Note, Add Item, Voice, and Research moved to global `GlobalFAB` accessible on all pages
 - [x] `MomentsCarousel` — horizontal snap scroll, photo + note card types
 - [x] `TimelineFeed` — timeline with colored dots, active amber bar, NOW badge, done states
 - [x] `InsightStrip` — ambient single-sentence AI observation below timeline, fades in at 700ms
@@ -145,7 +146,7 @@
 - [x] `VoiceRecorder` — orchestrator: wires `useVoiceInput` + `transcriptParser` + the two UI components
 - [x] Lists page — mic pill in input bar; one utterance adds multiple items with staggered optimistic inserts
 - [x] Memory page — mic pill in header next to PhotoUploader; saves note to Supabase `memory_events`
-- [x] QuickActions (home) — full-width voice row beneath text buttons; routes to grocery or activity log based on parsed intent
+- [x] `GlobalFAB` — Voice action in FAB tray; uses `useVoiceInput` hook directly (not VoiceRecorder), renders `VoiceInputModal` within the FAB component; routes to grocery or memory insert based on parsed transcript
 
 ### Security — Row Level Security (`supabase/rls.sql`)
 - [x] `households` table — one row per family, fixed demo UUID `11111111-...`
@@ -157,6 +158,10 @@
 - [x] Parents: full read/write on all tables, manage members
 - [x] Cross-household isolation enforced at DB level — no app-level enforcement needed
 
+### Mobile UI Polish
+- [x] Bottom sheet padding — all sheets (`QuickCaptureSheet`, `ResearchSheet`, `VoiceInputModal`, `ProfileSheet`, `DatePicker`, `CreateSuggestionSheet`, `PhotoUploader`) use `pb-28` to clear the nav pill; `DatePicker` calendar/week list uses `max(100px, calc(88px + env(safe-area-inset-bottom)))` for safe-area coverage
+- [x] BottomNav overflow fix — reduced item padding so all 5 tabs fit on 360px Android viewport without clipping
+
 ---
 
 ## Known / Deferred
@@ -165,6 +170,5 @@
 - [ ] Photo upload to Supabase Storage (`PhotoUploader.tsx` is wired but untested without keys)
 - [ ] `.env.local` not in repo — app runs on demo data without it
 - [ ] `MemoryCard.tsx` placeholder component not yet used
-- [ ] `FloatingActions.tsx` — referenced in earlier build; removed from current home layout
 - [ ] Push notifications for nanny → parent updates
 - [ ] Multi-child support

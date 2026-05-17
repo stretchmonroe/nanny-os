@@ -83,7 +83,7 @@ export default function QuickCaptureSheet({ mode, open, onSave, onInstantAdd, on
             className="fixed bottom-0 left-0 right-0 z-50 max-w-md mx-auto"
           >
             <div
-              className="rounded-t-[2rem] px-5 pt-3 pb-10"
+              className="rounded-t-[2rem] px-5 pt-3 pb-28"
               style={{ background: "var(--surface-card)" }}
             >
               {/* Handle */}

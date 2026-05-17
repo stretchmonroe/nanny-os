@@ -229,7 +229,7 @@ export default function ProfileSheet({ open, onClose }: Props) {
               </div>
 
               {/* Scrollable content */}
-              <div className="overflow-y-auto flex-1 px-5 pb-10 scrollbar-hide">
+              <div className="overflow-y-auto flex-1 px-5 pb-28 scrollbar-hide">
 
                 {/* Personality summary */}
                 <div

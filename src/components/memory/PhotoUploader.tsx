@@ -90,7 +90,7 @@ export default function PhotoUploader() {
               className="fixed bottom-0 left-0 right-0 z-50 max-w-md mx-auto"
             >
               <div
-                className="rounded-t-[2rem] px-5 pt-3 pb-10"
+                className="rounded-t-[2rem] px-5 pt-3 pb-28"
                 style={{ background: "var(--surface-card)" }}
               >
                 <div className="w-10 h-1 rounded-full bg-black/10 dark:bg-white/10 mx-auto mb-4" />

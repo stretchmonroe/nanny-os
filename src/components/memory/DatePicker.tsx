@@ -187,7 +187,7 @@ export default function DatePicker({
                   </div>
 
                   {/* Calendar grid — relative so paywall overlay works */}
-                  <div className="relative px-2" style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}>
+                  <div className="relative px-2" style={{ paddingBottom: "max(100px, calc(88px + env(safe-area-inset-bottom)))" }}>
                     <div className="grid grid-cols-7">
                       {cells.map((day, idx) => {
                         if (day === null) return <div key={`pad-${idx}`} className="h-10" />;
@@ -266,7 +266,7 @@ export default function DatePicker({
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   transition={{ duration: 0.12 }}
                   className="px-4 space-y-2"
-                  style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}
+                  style={{ paddingBottom: "max(100px, calc(88px + env(safe-area-inset-bottom)))" }}
                 >
                   {WEEKS.map((week) => (
                     <button

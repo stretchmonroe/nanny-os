@@ -60,18 +60,18 @@ export default function BottomNav() {
             }}
           />
           {/* Two nav items on each side, center gap for the FAB */}
-          <div className="relative border-soft rounded-[1.6rem] flex items-center px-2 py-2">
+          <div className="relative border-soft rounded-[1.6rem] flex items-center px-1 py-2">
             {items.slice(0, 2).map(({ href, icon: Icon, label }) => {
               const active = pathname === href;
               return (
                 <Link
                   key={href}
                   href={href}
-                  className="flex flex-col items-center gap-[3px] px-3 py-1 select-none flex-1"
+                  className="flex flex-col items-center gap-[3px] px-1 py-1 select-none flex-1"
                 >
                   <div
                     className={cn(
-                      "flex items-center justify-center w-11 h-8 rounded-2xl transition-all duration-200",
+                      "flex items-center justify-center w-10 h-8 rounded-2xl transition-all duration-200",
                       active ? "bg-foreground shadow-card" : "bg-transparent active:bg-border/40"
                     )}
                   >
@@ -97,7 +97,7 @@ export default function BottomNav() {
             })}
 
             {/* Spacer that visually reserves room under the FAB */}
-            <div className="w-16 shrink-0" />
+            <div className="w-14 shrink-0" />
 
             {items.slice(2).map(({ href, icon: Icon, label }) => {
               const active = pathname === href;
@@ -105,11 +105,11 @@ export default function BottomNav() {
                 <Link
                   key={href}
                   href={href}
-                  className="flex flex-col items-center gap-[3px] px-3 py-1 select-none flex-1"
+                  className="flex flex-col items-center gap-[3px] px-1 py-1 select-none flex-1"
                 >
                   <div
                     className={cn(
-                      "flex items-center justify-center w-11 h-8 rounded-2xl transition-all duration-200",
+                      "flex items-center justify-center w-10 h-8 rounded-2xl transition-all duration-200",
                       active ? "bg-foreground shadow-card" : "bg-transparent active:bg-border/40"
                     )}
                   >

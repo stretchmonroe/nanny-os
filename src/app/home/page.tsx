@@ -5,7 +5,6 @@ import ChildProfileHeader from "@/components/home/ChildProfileHeader";
 import RecommendationCard from "@/components/home/RecommendationCard";
 import ActivityPlan from "@/components/home/ActivityPlan";
 import TimelineFeed from "@/components/home/TimelineFeed";
-import QuickActions from "@/components/home/QuickActions";
 import MomentsCarousel from "@/components/home/MomentsCarousel";
 import PatternsSection from "@/components/insights/PatternsSection";
 import ResearchSheet from "@/components/shared/ResearchSheet";
@@ -31,10 +30,6 @@ export default function HomePage() {
 
         <div className="mt-6">
           <ActivityPlan focus={focus} />
-        </div>
-
-        <div className="mt-7">
-          <QuickActions />
         </div>
 
         <div className="mt-8">

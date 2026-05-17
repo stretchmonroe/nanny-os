@@ -20,8 +20,8 @@ export default function TogetherPage() {
             <h1 className="text-[30px] font-extrabold text-foreground tracking-tight leading-none">
               Together
             </h1>
-            <p className="text-[11px] font-semibold text-muted-foreground/45 uppercase tracking-widest mt-1.5">
-              Shared decisions · Mateo
+            <p className="text-[11px] font-medium text-muted-foreground/40 mt-1.5">
+              Sofia · Elena · for Mateo
             </p>
           </div>
           <motion.button
@@ -36,8 +36,8 @@ export default function TogetherPage() {
 
       {/* Intro strip */}
       <div className="px-5 py-4">
-        <p className="text-[13px] text-muted-foreground/60 leading-relaxed">
-          A space to share ideas and make decisions together — no pressure, just conversation.
+        <p className="text-[13px] text-muted-foreground/55 leading-relaxed">
+          A quiet space to share what you&apos;re noticing, ask questions, and stay aligned — not a task list, just conversation.
         </p>
       </div>
 

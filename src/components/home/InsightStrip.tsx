@@ -69,8 +69,8 @@ export default function InsightStrip({ onResearch }: Props) {
         className="w-3.5 h-3.5 mx-auto mb-2"
         style={{ color: "var(--accent-primary)", opacity: 0.4 }}
       />
-      <p className="text-[9px] font-bold text-muted-foreground/30 uppercase tracking-widest mb-2">
-        AI · Evidence-informed
+      <p className="text-[9px] font-medium text-muted-foreground/25 tracking-wide mb-2">
+        Sunny notices
       </p>
       <p className="text-[13px] text-foreground/45 leading-relaxed italic">
         {insight}
@@ -80,7 +80,7 @@ export default function InsightStrip({ onResearch }: Props) {
           onClick={onResearch}
           className="mt-3 text-[11px] font-semibold text-muted-foreground/35 active:opacity-70 transition-opacity"
         >
-          Research a topic →
+          Explore a topic →
         </button>
       )}
     </motion.div>

@@ -80,6 +80,9 @@ export default function ChildProfileHeader({ focus, onFocusChange, onProfileOpen
         <p className="text-[13px] text-muted-foreground mt-2 font-medium">
           {child.age} · {child.moodLabel}
         </p>
+        <p className="text-[11px] text-muted-foreground/40 mt-1 font-medium">
+          with Elena today
+        </p>
       </div>
 
       {/* Focus + weather badges */}
@@ -128,16 +131,11 @@ export default function ChildProfileHeader({ focus, onFocusChange, onProfileOpen
         )}
       </AnimatePresence>
 
-      {/* Progress bar — today's schedule */}
+      {/* Ambient day rhythm bar */}
       <div className="mt-6">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest">
-            Today&apos;s schedule
-          </p>
-          <p className="text-[11px] font-semibold text-muted-foreground/40">
-            {done} of {total} done
-          </p>
-        </div>
+        <p className="text-[10px] font-medium text-muted-foreground/30 mb-2 tracking-widest uppercase">
+          Day&apos;s rhythm
+        </p>
         <div className="h-[3px] bg-black/5 dark:bg-white/7 rounded-full overflow-hidden">
           <motion.div
             className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400"

@@ -9,19 +9,14 @@ export default function MomentsCarousel() {
   return (
     <div>
       <div className="px-5 flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-[17px] font-bold text-foreground tracking-tight">
-            Today&rsquo;s Moments
-          </h2>
-          <p className="text-[12px] text-muted-foreground/60 mt-0.5">
-            {moments.length} from today
-          </p>
-        </div>
+        <h2 className="text-[17px] font-bold text-foreground tracking-tight">
+          From today
+        </h2>
         <Link
           href="/memory"
-          className="text-[12px] text-violet-500 dark:text-violet-400 font-bold active:opacity-60 transition-opacity"
+          className="text-[12px] text-muted-foreground/45 font-semibold active:opacity-60 transition-opacity"
         >
-          See all →
+          Journal →
         </Link>
       </div>
 

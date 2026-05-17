@@ -65,15 +65,15 @@ export default function PatternsSection({ onResearch }: Props) {
 
       {/* Divider + footer */}
       <div className="mt-5 pt-4 border-t border-soft flex items-center justify-between">
-        <p className="text-[9px] font-bold text-muted-foreground/25 uppercase tracking-widest">
-          AI · Evidence-informed · Updates daily
+        <p className="text-[9px] font-medium text-muted-foreground/25 tracking-wide">
+          Sunny · learns as {child.name}&apos;s days are logged
         </p>
         {onResearch && (
           <button
             onClick={onResearch}
             className="text-[11px] font-semibold text-muted-foreground/35 active:opacity-70 transition-opacity"
           >
-            Research a topic →
+            Explore a topic →
           </button>
         )}
       </div>

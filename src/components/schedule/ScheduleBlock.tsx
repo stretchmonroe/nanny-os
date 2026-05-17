@@ -48,9 +48,7 @@ export default function ScheduleBlock({ item }: { item: ScheduleItem }) {
           <p
             className={cn(
               "text-[14px] font-semibold leading-snug tracking-tight",
-              item.done
-                ? "line-through text-muted-foreground/60"
-                : "text-foreground"
+              item.done ? "text-muted-foreground/55" : "text-foreground"
             )}
           >
             {item.title}

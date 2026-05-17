@@ -96,15 +96,9 @@ export default function SchedulePage() {
         </div>
 
         {!isPastDay ? (
-          <div className="flex items-center gap-3 mt-2">
-            <span className="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
-              {completed.length} done
-            </span>
-            <span className="w-1 h-1 rounded-full bg-border" />
-            <span className="text-[12px] font-semibold text-muted-foreground">
-              {upcoming.length} remaining
-            </span>
-          </div>
+          <p className="text-[12px] font-medium text-muted-foreground/45 mt-1.5">
+            Mateo&apos;s day · with Elena
+          </p>
         ) : (
           <button
             onClick={() => setSelectedDate(null)}
@@ -115,11 +109,8 @@ export default function SchedulePage() {
           </button>
         )}
 
-        {/* Pattern insight — schedule-relevant */}
+        {/* Ambient pattern — fades in below header */}
         <section className="pt-2">
-          <p className="text-[10px] font-bold text-muted-foreground/35 uppercase tracking-widest px-1 mb-2.5">
-            Pattern · Mateo
-          </p>
           <PatternCard pattern={demoPatterns[0]} compact />
         </section>
       </div>
@@ -136,8 +127,8 @@ export default function SchedulePage() {
         >
           {isPastDay ? (
             <section>
-              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-3">
-                Completed · {selectedDate}
+              <p className="text-[11px] font-semibold text-muted-foreground/50 tracking-wide px-1 mb-3">
+                {selectedDate}
               </p>
               <div className="space-y-2">
                 {displayItems.map((item) => (
@@ -149,8 +140,8 @@ export default function SchedulePage() {
             <>
               {upcoming.length > 0 && (
                 <section>
-                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-3">
-                    Upcoming
+                  <p className="text-[11px] font-semibold text-muted-foreground/45 tracking-wide px-1 mb-3">
+                    Coming up
                   </p>
                   <div className="space-y-2">
                     {upcoming.map((item) => (
@@ -161,8 +152,8 @@ export default function SchedulePage() {
               )}
               {completed.length > 0 && (
                 <section>
-                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest px-1 mb-3">
-                    Completed
+                  <p className="text-[11px] font-semibold text-muted-foreground/45 tracking-wide px-1 mb-3">
+                    Earlier today
                   </p>
                   <div className="space-y-2">
                     {completed.map((item) => (

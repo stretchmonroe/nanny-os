@@ -61,12 +61,9 @@ export default function ActivityPlan({ focus }: Props) {
 
   return (
     <div>
-      <div className="flex items-center justify-between px-5 mb-4">
-        <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-[0.1em]">
-          Today&rsquo;s activities
-        </p>
-        <p className="text-[11px] font-semibold text-muted-foreground/50">
-          {activities.filter((a) => a.status === "done").length}/{activities.length} done
+      <div className="px-5 mb-4">
+        <p className="text-[11px] font-bold text-muted-foreground/35 uppercase tracking-[0.1em]">
+          What to explore today
         </p>
       </div>
 

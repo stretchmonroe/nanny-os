@@ -10,8 +10,8 @@ export default function TimelineFeed() {
   return (
     <div className="mx-5">
       {/* Section label */}
-      <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-[0.1em] mb-3">
-        Today
+      <p className="text-[11px] font-bold text-muted-foreground/35 uppercase tracking-[0.1em] mb-3">
+        How the day flowed
       </p>
 
       {/* Items */}
@@ -27,7 +27,7 @@ export default function TimelineFeed() {
               className={cn(
                 "flex items-start gap-3 px-4 py-4 rounded-2xl relative transition-colors",
                 item.active && "bg-amber-50/80 dark:bg-amber-950/20",
-                item.done && "opacity-25",
+                item.done && "opacity-35",
               )}
             >
               {/* Active left bar */}
@@ -63,9 +63,7 @@ export default function TimelineFeed() {
                   <p
                     className={cn(
                       "text-[14px] font-semibold leading-snug tracking-tight",
-                      item.done
-                        ? "line-through text-muted-foreground/50"
-                        : "text-foreground"
+                      item.done ? "text-muted-foreground/60" : "text-foreground"
                     )}
                   >
                     {item.title}

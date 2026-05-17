@@ -27,7 +27,7 @@ type View =
 const tabs: { label: string; value: Tab }[] = [
   { label: "Today",     value: "today"     },
   { label: "This Week", value: "week"       },
-  { label: "Favorites", value: "favorites" },
+  { label: "Cherished", value: "favorites" },
 ];
 
 const todayStr = new Date().toLocaleDateString("en-US", {
@@ -89,7 +89,7 @@ function QuickWrite() {
           ref={textareaRef}
           value={text}
           onChange={e => setText(e.target.value)}
-          placeholder="What's happening right now…"
+          placeholder="A moment worth remembering…"
           rows={2}
           className="flex-1 resize-none text-[14px] text-foreground leading-relaxed bg-transparent outline-none placeholder:text-muted-foreground/35 placeholder:italic font-medium"
         />
@@ -193,8 +193,8 @@ export default function MemoryPage() {
                 className="text-muted-foreground/35 group-hover:text-muted-foreground/60 transition-colors mb-2 shrink-0"
               />
             </button>
-            <p className="text-[11px] font-semibold text-muted-foreground/45 uppercase tracking-widest">
-              Mateo · 18 months
+            <p className="text-[11px] font-medium text-muted-foreground/40">
+              Mateo&apos;s story · 18 months
             </p>
           </div>
           <div className="flex items-center gap-2 mb-0.5 shrink-0">

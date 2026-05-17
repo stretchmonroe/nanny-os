@@ -52,7 +52,7 @@ export default function WeeklyRecap() {
       <div className="flex items-center gap-2 px-5 pt-5 pb-4 border-b border-emerald-100/50 dark:border-emerald-900/20">
         <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.2} />
         <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">
-          This week&rsquo;s recap
+          Mateo&rsquo;s week
         </span>
       </div>
 
@@ -73,7 +73,7 @@ export default function WeeklyRecap() {
             <div className="flex items-center gap-1.5 mb-3">
               <Star className="w-3 h-3 text-amber-500" fill="currentColor" strokeWidth={0} />
               <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">
-                Milestones this week
+                Moments that mattered
               </p>
             </div>
             <div className="space-y-2">
@@ -90,8 +90,8 @@ export default function WeeklyRecap() {
         {/* Skills practiced */}
         {skills.length > 0 && (
           <div className="pt-4 border-t border-emerald-100/50 dark:border-emerald-900/20">
-            <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest mb-2.5">
-              Skills practiced
+            <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest mb-2.5">
+              What Mateo explored
             </p>
             <div className="flex flex-wrap gap-1.5">
               {skills.map((skill) => (

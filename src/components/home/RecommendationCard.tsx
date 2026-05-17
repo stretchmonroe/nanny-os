@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Brain, ChevronDown, Send, MessageCircle, Check, Clock, X } from "lucide-react";
+import { Sparkles, Leaf, ChevronDown, Send, MessageCircle, Check, Clock, X } from "lucide-react";
 import { aiSuggestion, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
 import GuidanceTag from "@/components/ui/GuidanceTag";
@@ -94,7 +94,7 @@ export default function RecommendationCard() {
         <div className="mt-6">
           <div className="flex items-start gap-2.5 mb-3">
             <div className="w-6 h-6 rounded-full bg-violet-100/80 dark:bg-violet-900/30 flex items-center justify-center shrink-0 mt-0.5">
-              <Brain size={12} className="text-violet-500 dark:text-violet-400" />
+              <Leaf size={11} className="text-violet-500 dark:text-violet-400" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-violet-400/80 dark:text-violet-500/70 uppercase tracking-widest mb-0.5">
@@ -167,7 +167,7 @@ export default function RecommendationCard() {
                   className="flex items-center gap-1.5 text-[12px] font-semibold text-muted-foreground bg-muted px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform"
                 >
                   <MessageCircle size={11} />
-                  Ask Sofia first
+                  Check with Sofia
                 </button>
               </motion.div>
             )}

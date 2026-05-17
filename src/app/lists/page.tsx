@@ -73,10 +73,10 @@ export default function ListsPage() {
         style={{ background: "var(--surface-header)" }}
       >
         <h1 className="text-[26px] font-extrabold text-foreground tracking-tight">
-          Grocery List
+          This week
         </h1>
-        <p className="text-[12px] text-muted-foreground mt-0.5 font-medium">
-          {remaining} item{remaining !== 1 ? "s" : ""} remaining
+        <p className="text-[12px] text-muted-foreground/50 mt-0.5 font-medium">
+          Mateo&apos;s favorites + household staples
         </p>
       </div>
 
@@ -91,8 +91,8 @@ export default function ListsPage() {
             {done.length > 0 && (
               <>
                 {pending.length > 0 && <div className="h-4" />}
-                <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest px-1 pb-1">
-                  Picked up
+                <p className="text-[10px] font-semibold text-muted-foreground/40 tracking-wide px-1 pb-1">
+                  Got it
                 </p>
                 {done.map(item => (
                   <SwipeableRow key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} />

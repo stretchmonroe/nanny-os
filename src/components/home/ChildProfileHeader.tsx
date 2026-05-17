@@ -128,8 +128,16 @@ export default function ChildProfileHeader({ focus, onFocusChange, onProfileOpen
         )}
       </AnimatePresence>
 
-      {/* Progress bar — silent, editorial */}
+      {/* Progress bar — today's schedule */}
       <div className="mt-6">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest">
+            Today&apos;s schedule
+          </p>
+          <p className="text-[11px] font-semibold text-muted-foreground/40">
+            {done} of {total} done
+          </p>
+        </div>
         <div className="h-[3px] bg-black/5 dark:bg-white/7 rounded-full overflow-hidden">
           <motion.div
             className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400"

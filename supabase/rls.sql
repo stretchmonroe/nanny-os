@@ -42,7 +42,7 @@ CREATE OR REPLACE FUNCTION in_my_household(p_child_id TEXT)
 RETURNS BOOLEAN LANGUAGE SQL SECURITY DEFINER STABLE AS $$
   SELECT EXISTS (
     SELECT 1 FROM children
-    WHERE id = p_child_id AND household_id = my_household_id()
+    WHERE id::TEXT = p_child_id AND household_id = my_household_id()
   )
 $$;
 

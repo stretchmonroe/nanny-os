@@ -2,11 +2,15 @@
 
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import JournalSummary from "@/components/memory/JournalSummary";
 import TodayJournal from "@/components/memory/TodayJournal";
 import WeekView from "@/components/memory/WeekView";
 import FavoritesView from "@/components/memory/FavoritesView";
+import PastDayView from "@/components/memory/PastDayView";
+import PastWeekView from "@/components/memory/PastWeekView";
+import DatePicker from "@/components/memory/DatePicker";
 import PhotoUploader from "@/components/memory/PhotoUploader";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import { supabase } from "@/lib/supabase/client";
@@ -15,13 +19,18 @@ import { ArrowUp } from "lucide-react";
 
 type Tab = "today" | "week" | "favorites";
 
+type View =
+  | { type: "tab"; tab: Tab }
+  | { type: "day"; date: string }
+  | { type: "week"; label: string; range: string; dates: string[] };
+
 const tabs: { label: string; value: Tab }[] = [
   { label: "Today",     value: "today"     },
   { label: "This Week", value: "week"       },
   { label: "Favorites", value: "favorites" },
 ];
 
-const dateStr = new Date().toLocaleDateString("en-US", {
+const todayStr = new Date().toLocaleDateString("en-US", {
   weekday: "long",
   month:   "long",
   day:     "numeric",
@@ -108,7 +117,8 @@ function QuickWrite() {
 }
 
 export default function MemoryPage() {
-  const [tab, setTab] = useState<Tab>("today");
+  const [view, setView] = useState<View>({ type: "tab", tab: "today" });
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   async function handleVoiceSave(result: VoiceResult) {
     if (result.type !== "memory") return;
@@ -122,8 +132,47 @@ export default function MemoryPage() {
     });
   }
 
+  function handleSelectDay(date: string) {
+    if (date === "Today") {
+      setView({ type: "tab", tab: "today" });
+    } else {
+      setView({ type: "day", date });
+    }
+  }
+
+  function handleSelectWeek(label: string, range: string, dates: string[]) {
+    if (label === "This week") {
+      setView({ type: "tab", tab: "week" });
+    } else {
+      setView({ type: "week", label, range, dates });
+    }
+  }
+
+  const isPastView = view.type !== "tab";
+  const currentTab = view.type === "tab" ? view.tab : "today";
+
+  const headerTitle =
+    view.type === "day"
+      ? view.date
+      : view.type === "week"
+      ? `${view.label} · ${view.range}`
+      : todayStr;
+
+  const viewKey =
+    view.type === "tab"
+      ? `tab-${view.tab}`
+      : view.type === "day"
+      ? `day-${view.date}`
+      : `week-${view.label}`;
+
   return (
     <div className="min-h-screen bg-surface-page">
+      <DatePicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelectDay={handleSelectDay}
+        onSelectWeek={handleSelectWeek}
+      />
 
       {/* Header */}
       <div
@@ -131,49 +180,68 @@ export default function MemoryPage() {
         style={{ background: "var(--surface-header)" }}
       >
         <div className="flex items-end justify-between mb-5">
-          <div>
-            <h1 className="text-[30px] font-extrabold text-foreground tracking-tight leading-none mb-1.5">
-              {dateStr}
-            </h1>
+          <div className="min-w-0 flex-1 mr-3">
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="flex items-end gap-1.5 group text-left w-full"
+            >
+              <h1 className="text-[28px] font-extrabold text-foreground tracking-tight leading-none mb-1.5 truncate">
+                {headerTitle}
+              </h1>
+              <CalendarDays
+                size={15}
+                className="text-muted-foreground/35 group-hover:text-muted-foreground/60 transition-colors mb-2 shrink-0"
+              />
+            </button>
             <p className="text-[11px] font-semibold text-muted-foreground/45 uppercase tracking-widest">
               Mateo · 18 months
             </p>
           </div>
-          <div className="flex items-center gap-2 mb-0.5">
+          <div className="flex items-center gap-2 mb-0.5 shrink-0">
             <VoiceRecorder context="memory" onSave={handleVoiceSave} className="w-9 h-9" />
             <PhotoUploader />
           </div>
         </div>
 
-        {/* Tab pills */}
-        <div className="flex gap-1.5">
-          {tabs.map(({ label, value }) => (
-            <button
-              key={value}
-              onClick={() => setTab(value)}
-              className={cn(
-                "px-4 py-2 rounded-full text-[12px] font-bold transition-all duration-200 active:scale-[0.96]",
-                tab === value
-                  ? "bg-foreground text-background shadow-card"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        {/* Tab pills or back button */}
+        {!isPastView ? (
+          <div className="flex gap-1.5">
+            {tabs.map(({ label, value }) => (
+              <button
+                key={value}
+                onClick={() => setView({ type: "tab", tab: value })}
+                className={cn(
+                  "px-4 py-2 rounded-full text-[12px] font-bold transition-all duration-200 active:scale-[0.96]",
+                  currentTab === value
+                    ? "bg-foreground text-background shadow-card"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button
+            onClick={() => setView({ type: "tab", tab: "today" })}
+            className="flex items-center gap-1 text-[13px] font-semibold text-muted-foreground active:opacity-60 transition-opacity"
+          >
+            <ChevronLeft size={15} strokeWidth={2.5} />
+            Back to Today
+          </button>
+        )}
       </div>
 
-      {/* Tab content */}
+      {/* Content */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={tab}
+          key={viewKey}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
         >
-          {tab === "today" && (
+          {view.type === "tab" && view.tab === "today" && (
             <div>
               <QuickWrite />
               <div className="pt-1">
@@ -182,8 +250,12 @@ export default function MemoryPage() {
               <TodayJournal />
             </div>
           )}
-          {tab === "week"      && <div className="pt-4"><WeekView /></div>}
-          {tab === "favorites" && <FavoritesView />}
+          {view.type === "tab" && view.tab === "week"      && <div className="pt-4"><WeekView /></div>}
+          {view.type === "tab" && view.tab === "favorites" && <FavoritesView />}
+          {view.type === "day"  && <PastDayView date={view.date} />}
+          {view.type === "week" && (
+            <PastWeekView weekLabel={view.label} range={view.range} dates={view.dates} />
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

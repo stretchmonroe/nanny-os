@@ -47,6 +47,10 @@
 ### Memory / Journal Screen (`/memory`)
 - [x] Three-tab interface: **Today** / **This Week** / **Favorites** with AnimatePresence crossfade
 - [x] Page header — live date display ("Thursday, May 14"), editorial "Mateo's Journal" label, backdrop-blur; no border-b utility look
+- [x] `DatePicker` — bottom-sheet modal with "Today / This week" shortcuts + last 4 weeks + last 4 individual days; selects past day or past week view
+- [x] `PastDayView` — renders a single past date's journal entries from `dailySummaries` + `recentMemories` demo data; back button returns to tab view
+- [x] `PastWeekView` — renders a labeled past week (e.g. "Last week · May 5–11"); back button returns
+- [x] View state machine: `{ type: "tab" | "day" | "week" }` drives header title, back button visibility, and AnimatePresence content swap
 - [x] `JournalSummary` — dark gradient AI summary card, `24px` headline, highlight pills, care notes (Sleep / Nutrition / Growth); live `dailySummary` + `insights` fetch; subtle AI attribution badge at footer
 - [x] `TodayJournal` — full-bleed `3:4` hero photo (no border-radius, edge-to-edge); milestone as centered typographic panel with `36px` ✦ glyph + generous `py-14`; notes with `56px` serif `"` drop mark + no card background; secondary photos inset `mx-4 rounded-[1.5rem]`
 - [x] `WeekView` — all photos full-bleed (first per day `3:4` portrait, subsequent `16:9` landscape); milestones + notes rendered as open typographic sections with no card backgrounds; day headers `px-5` inline
@@ -83,6 +87,8 @@
 ### Schedule Screen (`/schedule`)
 - [x] Two-section layout: Upcoming / Completed
 - [x] `ScheduleBlock` — colored left accent bar, time, type pill, NOW badge, check circle
+- [x] Converted to `"use client"` with `useEffect` Supabase fetch; typed `ScheduleItem` + safe `normalize()` function
+- [x] Date picker integration — calendar icon in header opens `DatePicker`; selecting a past day filters schedule to that date with back-navigation
 
 ### Lists Screen (`/lists`)
 - [x] Grocery list with round checkbox toggle, completed section
@@ -118,6 +124,17 @@
 - [x] `favoriteMemories` — 9 entries spanning April 2025–March 2026 (first food, first bath, first Mama, first steps, etc.)
 - [x] `supabase/seed.sql` — full schema + 49 memory events, 13 AI summaries, 26 grocery items, all idempotent
 - [x] `supabase/seed.ts` — TypeScript runner using service role key; `npx tsx supabase/seed.ts`
+
+### Full 7-Layer Live Seed (`supabase/seed.ts`, `supabase/setup.sql`)
+- [x] **Layer 1 — Foundation**: 1 household (Rivera family), 3 auth users (Sofia, Marco, Elena), 3 household_members
+- [x] **Layer 2 — Child & Profile**: Mateo + child_profiles, developmental snapshot, sleep profile, 17 activity preferences, 7 sensory preferences, language snapshot, feeding preferences, 2 parent relationships, 1 nanny relationship
+- [x] **Layer 3 — Activity Planning**: 25 activity_library entries, 5 schedule_templates, 58 schedule_blocks, 20 activity_recommendations, 54 schedule_items (May 12–20 + milestone day May 14)
+- [x] **Layer 4 — Journal & Memory**: 21 journal_entries (j01–j21, May 1–14, Elena/Sofia/Marco voices, multi-paragraph narratives, photos JSONB, mood emoji, is_favorite)
+- [x] **Layer 5 — Grocery & Household Ops**: 5 grocery_lists (archived May 5 week, active May 12 week, household/baby/pharmacy), 47 grocery_list_items with category/priority/recurring metadata, 16 household_notes (handoffs, reminders, supply-low, routine-updates)
+- [x] **Layer 6 — AI Insights**: 19 ai_insights (pattern/correlation/developmental-observation/language/sleep/feeding/recommendation), 3 extended ai_summaries (May 14–16 with headline + highlights JSONB)
+- [x] **Layer 7 — Realism & Interactions**: 28 memory_reactions (emoji reactions on events/journal/summaries), 28 threaded_replies across 10 conversation threads, 16 activity_completions (with replaced/skipped statuses), 6 voice_notes with transcripts, 6 approval_requests (all approved)
+- [x] `supabase/setup.sql` — single combined DDL file: drops all tables in dependency order, recreates with correct TEXT ids, installs RLS helper functions + all policies; resolves circular dependency between schema and RLS files
+- [x] Live Supabase project seeded at `mgbzsikninkwmlqtastg.supabase.co`
 
 ### Voice Input Layer (`src/hooks/`, `src/lib/voice/`, `src/components/voice/`)
 - [x] `useVoiceInput` hook — SpeechRecognition wrapper with `idle/listening/done/error/unsupported` states

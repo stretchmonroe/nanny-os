@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import ChildProfileHeader from "@/components/home/ChildProfileHeader";
-import RecommendationCard from "@/components/home/RecommendationCard";
+import SproutCard from "@/components/home/SproutCard";
 import ActivityPlan from "@/components/home/ActivityPlan";
 import TimelineFeed from "@/components/home/TimelineFeed";
 import MomentsCarousel from "@/components/home/MomentsCarousel";
-import PatternsSection from "@/components/insights/PatternsSection";
 import ResearchSheet from "@/components/shared/ResearchSheet";
 import ProfileSheet from "@/components/profile/ProfileSheet";
 import type { FocusArea } from "@/lib/data/demo";
@@ -26,7 +25,7 @@ export default function HomePage() {
 
       {/* Intentional spacing rhythm — not uniform */}
       <div className="pt-2 pb-12">
-        <RecommendationCard />
+        <SproutCard onResearch={() => setResearchOpen(true)} />
 
         <div className="mt-6">
           <ActivityPlan focus={focus} />
@@ -38,10 +37,6 @@ export default function HomePage() {
 
         <div className="mt-9">
           <TimelineFeed />
-        </div>
-
-        <div className="mt-8">
-          <PatternsSection onResearch={() => setResearchOpen(true)} />
         </div>
       </div>
 

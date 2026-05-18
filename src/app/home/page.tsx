@@ -6,14 +6,12 @@ import SproutCard from "@/components/home/SproutCard";
 import ActivityPlan from "@/components/home/ActivityPlan";
 import TimelineFeed from "@/components/home/TimelineFeed";
 import MomentsCarousel from "@/components/home/MomentsCarousel";
-import ResearchSheet from "@/components/shared/ResearchSheet";
 import ProfileSheet from "@/components/profile/ProfileSheet";
 import type { FocusArea } from "@/lib/data/demo";
 
 export default function HomePage() {
-  const [focus,         setFocus]         = useState<FocusArea>("language");
-  const [researchOpen,  setResearchOpen]  = useState(false);
-  const [profileOpen,   setProfileOpen]   = useState(false);
+  const [focus,       setFocus]       = useState<FocusArea>("language");
+  const [profileOpen, setProfileOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] dark:bg-[#1A1714]">
@@ -25,7 +23,7 @@ export default function HomePage() {
 
       {/* Intentional spacing rhythm — not uniform */}
       <div className="pt-2 pb-12">
-        <SproutCard onResearch={() => setResearchOpen(true)} />
+        <SproutCard />
 
         <div className="mt-6">
           <ActivityPlan focus={focus} />
@@ -39,11 +37,6 @@ export default function HomePage() {
           <TimelineFeed />
         </div>
       </div>
-
-      <ResearchSheet
-        open={researchOpen}
-        onClose={() => setResearchOpen(false)}
-      />
 
       <ProfileSheet
         open={profileOpen}

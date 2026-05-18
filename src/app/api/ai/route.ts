@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       prompt = activityPlanPrompt(input);
     } else if (type === "research") {
       const { researchPrompt } = await import("@/lib/ai/prompts/research");
-      prompt = researchPrompt(input as { question: string; childAge: string; childName: string });
+      prompt = researchPrompt(input as { question: string; childAge: string; childName: string; category?: string });
     } else if (type === "patterns") {
       const { patternsPrompt } = await import("@/lib/ai/prompts/patterns");
       prompt = patternsPrompt(input as { childName: string; childAge: string; developmentalFocus: string; journalHighlights: string[] });

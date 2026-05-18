@@ -6,14 +6,10 @@ import { Lightbulb, FileText, Clock, Search } from "lucide-react";
 import { aiSuggestion, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
 import SproutSheet from "./SproutSheet";
+import SproutResearchSheet from "./SproutResearchSheet";
 import type { SproutMode } from "./SproutSheet";
 
-// Warm, observational voice — not a data readout
 const DEMO_OBS = aiSuggestion.body;
-
-interface Props {
-  onResearch(): void;
-}
 
 const ACTIONS: { mode: SproutMode; icon: React.ElementType; label: string }[] = [
   { mode: "suggest",   icon: Lightbulb, label: "Suggest"   },
@@ -21,9 +17,10 @@ const ACTIONS: { mode: SproutMode; icon: React.ElementType; label: string }[] = 
   { mode: "history",   icon: Clock,     label: "History"   },
 ];
 
-export default function SproutCard({ onResearch }: Props) {
-  const [observation, setObservation] = useState(DEMO_OBS);
-  const [sheetMode,   setSheetMode]   = useState<SproutMode | null>(null);
+export default function SproutCard() {
+  const [observation,    setObservation]    = useState(DEMO_OBS);
+  const [sheetMode,      setSheetMode]      = useState<SproutMode | null>(null);
+  const [researchOpen,   setResearchOpen]   = useState(false);
 
   useEffect(() => {
     const done    = schedule.filter((s) => s.done).map((s) => s.title);
@@ -100,7 +97,7 @@ export default function SproutCard({ onResearch }: Props) {
               ))}
 
               <button
-                onClick={onResearch}
+                onClick={() => setResearchOpen(true)}
                 className="ml-auto flex items-center gap-1 text-[11px] font-semibold text-muted-foreground/40 active:opacity-70 transition-opacity"
               >
                 <Search size={10} strokeWidth={2} />
@@ -116,6 +113,11 @@ export default function SproutCard({ onResearch }: Props) {
         open={sheetMode !== null}
         onClose={() => setSheetMode(null)}
         initialMode={sheetMode ?? "suggest"}
+      />
+
+      <SproutResearchSheet
+        open={researchOpen}
+        onClose={() => setResearchOpen(false)}
       />
     </>
   );

@@ -51,11 +51,12 @@ function PolaroidPhoto({ moment, isFirst }: { moment: JournalMoment; isFirst: bo
       <div className="relative mt-4">
         <TapeStrip id={moment.id} />
         <motion.div
+          whileHover={{ y: -5 }}
           whileTap={{ scale: 0.97 }}
           className="rounded-[3px] pt-3 px-3 pb-8"
           style={{
             background: "#fff",
-            transform: `rotate(${rot}deg)`,
+            rotate: rot,
             boxShadow: isFirst
               ? "0 6px 32px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.06)"
               : "0 4px 20px rgba(0,0,0,0.11), 0 1px 3px rgba(0,0,0,0.05)",

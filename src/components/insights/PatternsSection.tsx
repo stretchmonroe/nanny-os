@@ -47,10 +47,15 @@ export default function PatternsSection({ onResearch }: Props) {
     >
       {/* Section header */}
       <div className="flex items-center gap-2 mb-3 px-1">
-        <Sparkles
-          className="w-3 h-3 shrink-0"
-          style={{ color: "var(--accent-primary)", opacity: 0.45 }}
-        />
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", repeatDelay: 2.5 }}
+        >
+          <Sparkles
+            className="w-3 h-3 shrink-0"
+            style={{ color: "var(--accent-primary)" }}
+          />
+        </motion.div>
         <span className="text-[10px] font-bold text-muted-foreground/35 uppercase tracking-widest">
           What we&apos;re noticing · {child.name}
         </span>

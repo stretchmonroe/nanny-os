@@ -109,9 +109,10 @@ function PolaroidPhoto({ moment, isWide }: { moment: JournalMoment; isWide: bool
       style={{ paddingLeft: isLeft ? "18px" : "42px", paddingRight: isLeft ? "42px" : "18px" }}
     >
       <motion.div
+        whileHover={{ y: -6 }}
         whileTap={{ scale: 0.97 }}
         className="relative mt-4"
-        style={{ transform: `rotate(${rot}deg)` }}
+        style={{ rotate: rot }}
       >
         <TapeStrip id={moment.id} />
         <div

@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { typeConfig } from "@/lib/data/demo";
 import { Check } from "lucide-react";
+import { motion } from "framer-motion";
 
 type ScheduleItem = {
   id: string;
@@ -16,7 +17,9 @@ export default function ScheduleBlock({ item }: { item: ScheduleItem }) {
   const config = typeConfig[item.type] ?? typeConfig.play;
 
   return (
-    <div
+    <motion.div
+      whileTap={!item.done ? { scale: 0.985 } : undefined}
+      transition={{ type: "spring", stiffness: 420, damping: 28 }}
       className={cn(
         "relative flex items-start gap-4 bg-surface-card rounded-2xl px-4 py-4 shadow-card border-soft overflow-hidden transition-opacity",
         item.active && "ring-1 ring-amber-300/60 dark:ring-amber-800/40",
@@ -78,6 +81,6 @@ export default function ScheduleBlock({ item }: { item: ScheduleItem }) {
           </p>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

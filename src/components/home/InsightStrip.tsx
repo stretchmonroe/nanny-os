@@ -65,10 +65,16 @@ export default function InsightStrip({ onResearch }: Props) {
       transition={{ delay: 0.8, duration: 0.9 }}
       className="px-7 py-2 text-center"
     >
-      <Sparkles
-        className="w-3.5 h-3.5 mx-auto mb-2"
-        style={{ color: "var(--accent-primary)", opacity: 0.4 }}
-      />
+      <motion.div
+        className="inline-block mb-2"
+        animate={{ scale: [1, 1.22, 1], opacity: [0.38, 0.6, 0.38] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <Sparkles
+          className="w-3.5 h-3.5"
+          style={{ color: "var(--accent-primary)" }}
+        />
+      </motion.div>
       <p className="text-[9px] font-medium text-muted-foreground/25 tracking-wide mb-2">
         Sunny notices
       </p>

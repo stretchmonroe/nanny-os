@@ -56,9 +56,13 @@ export default function JournalSummary() {
       <div className="px-6 pt-7 pb-8">
         {/* Label */}
         <div className="flex items-center gap-2 mb-5">
-          <div className="w-7 h-7 rounded-full bg-amber-400/15 flex items-center justify-center">
+          <motion.div
+            className="w-7 h-7 rounded-full bg-amber-400/15 flex items-center justify-center"
+            animate={{ scale: [1, 1.14, 1], opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", repeatDelay: 2 }}
+          >
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-          </div>
+          </motion.div>
           <span className="text-[10px] font-bold text-amber-300/55 uppercase tracking-widest">
             Sunny&apos;s read on today
           </span>

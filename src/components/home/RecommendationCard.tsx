@@ -59,14 +59,28 @@ export default function RecommendationCard() {
   }, []);
 
   return (
-    <div className="mx-4 rounded-[1.5rem] overflow-hidden bg-gradient-to-br from-trust-light/60 via-surface-card to-amber-50/20 dark:from-trust-light/10 dark:via-surface-raised dark:to-amber-950/20 border-soft shadow-elevated">
+    <motion.div
+      className="mx-4 rounded-[1.5rem] overflow-hidden bg-gradient-to-br from-trust-light/60 via-surface-card to-amber-50/20 dark:from-trust-light/10 dark:via-surface-raised dark:to-amber-950/20 border-soft shadow-elevated"
+      animate={{ y: [0, -2, 0] }}
+      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+    >
       <div className="p-6">
 
         {/* Header row */}
         <div className="flex items-start gap-3.5">
-          <div className="w-10 h-10 rounded-2xl bg-trust flex items-center justify-center shrink-0 shadow-elevated">
+          <motion.div
+            className="w-10 h-10 rounded-2xl bg-trust flex items-center justify-center shrink-0 shadow-elevated"
+            animate={{
+              boxShadow: [
+                "0 4px 12px rgba(0,0,0,0.15), 0 0 0 0px rgba(91,127,160,0)",
+                "0 4px 12px rgba(0,0,0,0.15), 0 0 0 7px rgba(91,127,160,0.18)",
+                "0 4px 12px rgba(0,0,0,0.15), 0 0 0 0px rgba(91,127,160,0)",
+              ],
+            }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", repeatDelay: 1.5 }}
+          >
             <Sparkles size={16} className="text-white" />
-          </div>
+          </motion.div>
 
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold text-trust dark:text-trust-muted uppercase tracking-widest mb-1">
@@ -219,6 +233,6 @@ export default function RecommendationCard() {
         </div>
 
       </div>
-    </div>
+    </motion.div>
   );
 }

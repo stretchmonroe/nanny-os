@@ -51,10 +51,12 @@ export default function FavoritesView() {
           <TapeStrip id={featured.id} />
           <motion.div
             whileTap={{ scale: 0.98 }}
+            animate={{ y: [0, -2.5, 0] }}
+            transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
             className="rounded-[3px] pt-3 px-3 pb-11"
             style={{
               background: "#fff",
-              transform: `rotate(${idRotation(featured.id, 0.65)}deg)`,
+              rotate: idRotation(featured.id, 0.65),
               boxShadow: "0 10px 48px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.07)",
             }}
           >
@@ -117,11 +119,12 @@ export default function FavoritesView() {
                 <div className="relative mt-4">
                   <TapeStrip id={item.id} />
                   <motion.div
+                    whileHover={{ y: -6 }}
                     whileTap={{ scale: 0.97 }}
                     className="rounded-[3px] pt-2.5 px-2.5 pb-8"
                     style={{
                       background: "#fff",
-                      transform: `rotate(${rot}deg)`,
+                      rotate: rot,
                       boxShadow: "0 4px 24px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.06)",
                     }}
                   >

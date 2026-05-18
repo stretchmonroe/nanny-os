@@ -26,8 +26,10 @@ export default function MomentsCarousel() {
             key={item.id}
             initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
+            whileHover={{ y: -5, scale: 1.015 }}
+            whileTap={{ scale: 0.97 }}
             transition={{ delay: i * 0.07 + 0.1, duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
-            className="w-[78%] max-w-[296px] shrink-0 snap-start last:mr-5"
+            className="w-[78%] max-w-[296px] shrink-0 snap-start last:mr-5 cursor-pointer"
           >
             {item.type === "photo" ? (
               <div className="relative rounded-[1.4rem] overflow-hidden aspect-[3/4] bg-muted shadow-elevated">

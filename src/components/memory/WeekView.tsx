@@ -33,6 +33,31 @@ const CAT_CTX: Record<string, string> = {
   nap:      "before rest",
 };
 
+// ── Grouping ──────────────────────────────────────────────────────────────────
+
+type MomentRender =
+  | { kind: "single"; moment: JournalMoment }
+  | { kind: "cluster"; pair: [JournalMoment, JournalMoment] };
+
+function groupMoments(moments: JournalMoment[], heroId: string | undefined): MomentRender[] {
+  const result: MomentRender[] = [];
+  let i = 0;
+  while (i < moments.length) {
+    const m = moments[i];
+    const isNonHero = m.type === "photo" && m.id !== heroId;
+    const next      = moments[i + 1];
+    const nextIsNonHero = next?.type === "photo" && next.id !== heroId;
+    if (isNonHero && nextIsNonHero) {
+      result.push({ kind: "cluster", pair: [m, next] });
+      i += 2;
+    } else {
+      result.push({ kind: "single", moment: m });
+      i++;
+    }
+  }
+  return result;
+}
+
 // ── TapeStrip ─────────────────────────────────────────────────────────────────
 
 function TapeStrip({ id }: { id: string }) {
@@ -49,6 +74,24 @@ function TapeStrip({ id }: { id: string }) {
         boxShadow: "inset 0 0 0 1px rgba(180,130,40,0.09)",
       }}
     />
+  );
+}
+
+// ── PageDivider — scrapbook page turn ─────────────────────────────────────────
+
+function PageDivider() {
+  return (
+    <div className="flex items-center gap-4 px-8 py-3">
+      <div
+        className="flex-1 h-px"
+        style={{ background: "linear-gradient(to right, transparent, var(--border-soft), transparent)" }}
+      />
+      <span className="text-amber-300/35 text-[9px] select-none shrink-0">✦ · ✦</span>
+      <div
+        className="flex-1 h-px"
+        style={{ background: "linear-gradient(to left, transparent, var(--border-soft), transparent)" }}
+      />
+    </div>
   );
 }
 
@@ -149,6 +192,73 @@ function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
   );
 }
 
+// ── PhotoClusterPair — two photos scattered on the page ───────────────────────
+
+function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
+  const [left, right] = pair;
+  const leftRot  = idRotation(left.id, 0.9);
+  const rightRot = idRotation(right.id, 0.9);
+  const rightMt  = 16 + (stableN(right.id) % 3) * 10;
+
+  return (
+    <div className="flex items-start gap-2.5 px-3 py-4">
+      {/* Left polaroid */}
+      <div className="flex-1 relative mt-5">
+        <TapeStrip id={left.id} />
+        <motion.div
+          whileHover={{ y: -5 }}
+          whileTap={{ scale: 0.97 }}
+          className="rounded-[3px] pt-2.5 px-2.5 pb-7"
+          style={{
+            background: "#fff",
+            rotate: leftRot,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.05)",
+          }}
+        >
+          <div className="w-full rounded-[2px] overflow-hidden bg-muted relative" style={{ aspectRatio: "3/4" }}>
+            {left.imageUrl && (
+              <Image src={left.imageUrl} alt={left.content} fill className="object-cover" sizes="45vw" />
+            )}
+          </div>
+          <p className="text-[9px] text-stone-700 font-medium mt-2 leading-snug line-clamp-2">{left.content}</p>
+          {left.createdBy && (
+            <div className="mt-1 opacity-40">
+              <AuthorBadge author={left.createdBy} showRole={false} />
+            </div>
+          )}
+        </motion.div>
+      </div>
+
+      {/* Right polaroid — staggered lower */}
+      <div className="flex-1 relative" style={{ marginTop: rightMt }}>
+        <TapeStrip id={right.id} />
+        <motion.div
+          whileHover={{ y: -5 }}
+          whileTap={{ scale: 0.97 }}
+          className="rounded-[3px] pt-2.5 px-2.5 pb-7"
+          style={{
+            background: "#fff",
+            rotate: rightRot,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.05)",
+          }}
+        >
+          <div className="w-full rounded-[2px] overflow-hidden bg-muted relative" style={{ aspectRatio: "1/1" }}>
+            {right.imageUrl && (
+              <Image src={right.imageUrl} alt={right.content} fill className="object-cover" sizes="45vw" />
+            )}
+          </div>
+          <p className="text-[9px] text-stone-700 font-medium mt-2 leading-snug line-clamp-2">{right.content}</p>
+          {right.createdBy && (
+            <div className="mt-1 opacity-40">
+              <AuthorBadge author={right.createdBy} showRole={false} />
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
 // ── MilestoneMoment — ceremonial centrepiece ──────────────────────────────────
 
 function MilestoneMoment({ moment }: { moment: JournalMoment }) {
@@ -232,13 +342,13 @@ export default function WeekView() {
         <WeeklyRecap />
       </div>
 
-      <div className="space-y-14">
+      <div className="space-y-10">
         {weeklyMoments.map((dayData, dayIndex) => {
-          const firstPhotoId    = dayData.moments.find((m) => m.type === "photo")?.id;
-          const milestoneCount  = dayData.moments.filter((m) => m.type === "milestone").length;
-          const momentCount     = dayData.moments.length;
+          const firstPhotoId   = dayData.moments.find((m) => m.type === "photo")?.id;
+          const milestoneCount = dayData.moments.filter((m) => m.type === "milestone").length;
+          const momentCount    = dayData.moments.length;
+          const grouped        = groupMoments(dayData.moments, firstPhotoId);
 
-          // Extract just the numeric day from "Today · May 14" or "May 13"
           const dateParts = dayData.date.replace("Today · ", "").split(" ");
           const dayNum    = dateParts[dateParts.length - 1];
 
@@ -249,8 +359,11 @@ export default function WeekView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: dayIndex * 0.06, duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
             >
+              {/* Page divider between days */}
+              {dayIndex > 0 && <PageDivider />}
+
               {/* Editorial day header */}
-              <div className="flex items-end justify-between mb-4 px-5">
+              <div className="flex items-end justify-between mb-4 px-5 mt-2">
                 <div>
                   <p className={cn(
                     "text-[10px] font-bold uppercase tracking-widest mb-1",
@@ -275,11 +388,25 @@ export default function WeekView() {
 
               {/* Moments */}
               <div>
-                {dayData.moments.map((moment) => {
+                {grouped.map((render, ri) => {
+                  if (render.kind === "cluster") {
+                    return (
+                      <motion.div
+                        key={`cluster-${render.pair[0].id}`}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: dayIndex * 0.06 + ri * 0.04, duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
+                      >
+                        <PhotoClusterPair pair={render.pair} />
+                      </motion.div>
+                    );
+                  }
+
+                  const { moment } = render;
                   const isHero = moment.type === "photo" && moment.id === firstPhotoId;
                   return (
                     <div key={moment.id}>
-                      {moment.type === "photo" && isHero   && <DayHeroPhoto moment={moment} />}
+                      {isHero                              && <DayHeroPhoto moment={moment} />}
                       {moment.type === "photo" && !isHero  && <PolaroidPhoto moment={moment} />}
                       {moment.type === "milestone"          && <MilestoneMoment moment={moment} />}
                       {moment.type === "note"               && <NoteMoment moment={moment} />}

@@ -298,6 +298,7 @@ export const weeklyMoments: JournalDay[] = [
         ],
       },
       { id: "t3", type: "photo",     content: "12 straight minutes on stacking rings — new personal focus record",                  time: "11:20 am", imageUrl: "https://picsum.photos/seed/toddler2/400/500",    category: "play",     createdBy: "nanny"  },
+      { id: "t3b", type: "photo",   content: "Sensory bin discovery — buried his whole forearm and couldn't stop grinning",           time: "11:50 am", imageUrl: "https://picsum.photos/seed/sensory3/400/400",    category: "play",     createdBy: "nanny"  },
       { id: "t4", type: "note",      content: "Cuddly and calm before sensory bin. Very sweet mood all morning.",                   time: "10:55 am", category: "play",     createdBy: "nanny",
         reactions: [{ emoji: "❤️", authors: ["parent"] }],
         replies: [
@@ -313,6 +314,7 @@ export const weeklyMoments: JournalDay[] = [
       { id: "w2", type: "milestone", content: "Climbed the full staircase unassisted for the first time — so proud at the top 🏔️", time: "3:45 pm",  category: "learning", createdBy: "nanny"  },
       { id: "w3", type: "note",      content: "Best nap of the month — 1hr 45min. Woke up glowing.",                               time: "2:15 pm",  category: "nap",      createdBy: "nanny"  },
       { id: "w4", type: "photo",     content: "Brown Bear for the fourth time today — he never gets bored of it 📖",               time: "4:00 pm",  imageUrl: "https://picsum.photos/seed/book7/400/500",       category: "learning", createdBy: "nanny"  },
+      { id: "w4b", type: "photo",   content: "Puddle jumping in wellies after the water table — completely unstoppable",             time: "4:30 pm",  imageUrl: "https://picsum.photos/seed/wellies/400/500",     category: "outdoor",  createdBy: "nanny"  },
     ],
   },
   {
@@ -405,6 +407,7 @@ export const recentMemories: MemoryEvent[] = [
   { id: "r11", type: "milestone", content: "Stacked 6 blocks before the dramatic knockdown — new personal best 🏗️",                                                 category: "play",     date: "May 12", time: "11:00 am", createdBy: "nanny"  },
   { id: "r12", type: "note",      content: "Tried avocado again — 3 bites without making the face. Real progress on texture acceptance.",                            category: "meal",     date: "May 12", time: "12:30 pm", createdBy: "nanny"  },
   { id: "r13", type: "photo",     content: "Oliver playdate — Oliver gave him a truck and he carried it for 20 solid minutes",                                       category: "play",     date: "May 12", time: "3:30 pm",  imageUrl: "https://picsum.photos/seed/playdate17/400/500",   createdBy: "nanny"  },
+  { id: "r13b", type: "photo",   content: "Building towers side by side — same obsession, finally playing next to each other",                                        category: "play",     date: "May 12", time: "3:55 pm",  imageUrl: "https://picsum.photos/seed/blocks2/400/400",      createdBy: "nanny"  },
   { id: "r14", type: "note",      content: "Starting to acknowledge Oliver directly — made eye contact and offered him a block. Not just parallel play anymore.",    category: "play",     date: "May 12", time: "4:15 pm",  createdBy: "nanny"  },
 
   // ── May 11 · Monday ──────────────────────────────────────────────────────

@@ -11,6 +11,8 @@ import ReplyThread from "@/components/memory/ReplyThread";
 
 const today = weeklyMoments[0];
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 function stableN(id: string) {
   return id.split("").reduce((s, c) => s + c.charCodeAt(0), 0);
 }
@@ -20,9 +22,24 @@ function idRotation(id: string, scale = 1): number {
   return rots[stableN(id) % rots.length] * scale;
 }
 
+const PHOTO_ASPECTS = ["3/4", "4/3", "1/1"] as const;
+function photoAspect(id: string): string {
+  return PHOTO_ASPECTS[stableN(id) % PHOTO_ASPECTS.length];
+}
+
+const CAT_CTX: Record<string, string> = {
+  outdoor:  "at the park",
+  play:     "during play",
+  meal:     "at mealtime",
+  learning: "during learning time",
+  nap:      "before rest",
+};
+
+// ── TapeStrip ─────────────────────────────────────────────────────────────────
+
 function TapeStrip({ id }: { id: string }) {
   const n = stableN(id);
-  const rot = [-3, 2, -1.5, 3.5, -2.2, 1.8][(n + 1) % 6];
+  const rot  = [-3, 2, -1.5, 3.5, -2.2, 1.8][(n + 1) % 6];
   const left = [40, 54, 36, 58, 45, 51][n % 6];
   return (
     <div
@@ -37,7 +54,9 @@ function TapeStrip({ id }: { id: string }) {
   );
 }
 
-function PhotoHeart() {
+// ── PhotoHeart ────────────────────────────────────────────────────────────────
+
+function PhotoHeart({ size = "md" }: { size?: "sm" | "md" }) {
   const [liked, setLiked] = useState(false);
   const [popped, setPopped] = useState(false);
 
@@ -52,7 +71,11 @@ function PhotoHeart() {
       animate={popped ? { scale: [1, 1.5, 0.85, 1.1, 1] } : { scale: 1 }}
       whileTap={{ scale: 0.85 }}
       transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
-      className="w-8 h-8 rounded-full bg-black/22 backdrop-blur-sm flex items-center justify-center"
+      className={
+        size === "sm"
+          ? "w-7 h-7 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center"
+          : "w-8 h-8 rounded-full bg-black/22 backdrop-blur-sm flex items-center justify-center"
+      }
     >
       <AnimatePresence mode="wait">
         <motion.span
@@ -61,7 +84,7 @@ function PhotoHeart() {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.6, opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="text-[14px] leading-none"
+          className={size === "sm" ? "text-[11px] leading-none" : "text-[14px] leading-none"}
         >
           {liked ? "❤️" : "🤍"}
         </motion.span>
@@ -70,10 +93,12 @@ function PhotoHeart() {
   );
 }
 
-// First photo of the day — full-bleed cinematic
+// ── HeroPhoto — cinematic day opener ─────────────────────────────────────────
+
 function HeroPhoto({ moment }: { moment: JournalMoment }) {
+  const ctx = CAT_CTX[moment.category] ?? "";
   return (
-    <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: "3/4" }}>
+    <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: "3/4", minHeight: 380 }}>
       {moment.imageUrl && (
         <Image
           src={moment.imageUrl}
@@ -83,30 +108,44 @@ function HeroPhoto({ moment }: { moment: JournalMoment }) {
           sizes="(max-width: 448px) 100vw, 448px"
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
+      {/* Rich gradient — dark at bottom for text legibility */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
       <div className="absolute top-4 right-4"><PhotoHeart /></div>
-      <div className="absolute bottom-0 left-0 right-0 px-8 pb-10">
-        <p className="text-[20px] font-bold text-white leading-snug tracking-tight mb-3">
+
+      <div className="absolute bottom-0 left-0 right-0 px-7 pb-10">
+        {/* Time + context stamp */}
+        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2.5">
+          {moment.time}{ctx ? ` · ${ctx}` : ""}
+        </p>
+        {/* Headline */}
+        <p className="text-[22px] font-extrabold text-white leading-snug tracking-tight mb-3.5">
           {moment.content}
         </p>
         {moment.createdBy && (
-          <AuthorBadge author={moment.createdBy} time={moment.time} light />
+          <AuthorBadge author={moment.createdBy} light showRole={false} />
         )}
       </div>
     </div>
   );
 }
 
-// Subsequent photos — polaroid frame with tape strip and rotation
+// ── PolaroidPhoto — variable aspect, scrapbook ────────────────────────────────
+
 function PolaroidPhoto({ moment, isWide }: { moment: JournalMoment; isWide: boolean }) {
-  const rot = idRotation(moment.id);
-  const n = stableN(moment.id);
+  const rot  = idRotation(moment.id);
+  const n    = stableN(moment.id);
   const isLeft = n % 2 === 0;
+  const aspect = isWide ? "4/3" : photoAspect(moment.id);
+  const ctx    = CAT_CTX[moment.category] ?? "";
 
   return (
     <div
       className="py-4"
-      style={{ paddingLeft: isLeft ? "18px" : "42px", paddingRight: isLeft ? "42px" : "18px" }}
+      style={{
+        paddingLeft:  isLeft ? "18px" : "44px",
+        paddingRight: isLeft ? "44px" : "18px",
+      }}
     >
       <motion.div
         whileHover={{ y: -6 }}
@@ -124,7 +163,7 @@ function PolaroidPhoto({ moment, isWide }: { moment: JournalMoment; isWide: bool
         >
           <div
             className="w-full rounded-[2px] overflow-hidden bg-muted relative"
-            style={{ aspectRatio: isWide ? "4/3" : "3/4" }}
+            style={{ aspectRatio: aspect }}
           >
             {moment.imageUrl && (
               <Image
@@ -135,15 +174,18 @@ function PolaroidPhoto({ moment, isWide }: { moment: JournalMoment; isWide: bool
                 sizes="(max-width: 400px) 90vw, 400px"
               />
             )}
-            <div className="absolute top-2 right-2"><PhotoHeart /></div>
+            <div className="absolute top-2 right-2"><PhotoHeart size="sm" /></div>
           </div>
           <div className="mt-3 px-0.5">
             <p className="text-[12px] text-stone-700 font-medium leading-snug">
               {moment.content}
             </p>
             {moment.createdBy && (
-              <div className="mt-2 flex items-center gap-1.5 opacity-55">
+              <div className="mt-2 opacity-55">
                 <AuthorBadge author={moment.createdBy} time={moment.time} showRole={false} />
+                {ctx && (
+                  <p className="text-[9px] text-stone-400 italic mt-0.5 pl-8">{ctx}</p>
+                )}
               </div>
             )}
           </div>
@@ -153,32 +195,40 @@ function PolaroidPhoto({ moment, isWide }: { moment: JournalMoment; isWide: bool
   );
 }
 
-// Note — warm paper card with gentle rotation
+// ── NoteCard — handwritten diary ──────────────────────────────────────────────
+
 function NoteCard({ moment }: { moment: JournalMoment }) {
   const rot = idRotation(moment.id, 0.45);
+  const ctx = CAT_CTX[moment.category] ?? "";
 
   return (
-    <div className="px-5 py-4">
+    <div className="px-5 py-5">
       <motion.div
+        whileHover={{ y: -3 }}
         whileTap={{ scale: 0.985 }}
-        style={{ transform: `rotate(${rot}deg)` }}
+        style={{ rotate: rot }}
       >
         <div
           className="rounded-[1.75rem] px-7 pt-7 pb-7"
           style={{
             background: "var(--surface-card)",
             border: "1.5px solid var(--border-soft)",
-            boxShadow: "0 2px 20px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.03)",
+            boxShadow: "0 4px 28px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.03)",
           }}
         >
-          <p className="text-[52px] leading-[0.7] text-amber-300 dark:text-amber-700 font-serif mb-3 select-none">
+          <p className="text-[54px] leading-[0.68] text-amber-300 dark:text-amber-700 font-serif mb-3 select-none">
             &ldquo;
           </p>
-          <p className="text-[18px] font-medium text-foreground leading-[1.65] mb-5">
+          <p className="text-[18px] font-medium text-foreground leading-[1.7] mb-5">
             {moment.content}
           </p>
           {moment.createdBy ? (
-            <AuthorBadge author={moment.createdBy} time={moment.time} className="mb-5" />
+            <div className="mb-5">
+              <AuthorBadge author={moment.createdBy} time={moment.time} />
+              {ctx && (
+                <p className="text-[10px] text-muted-foreground/40 italic mt-1 ml-8">{ctx}</p>
+              )}
+            </div>
           ) : (
             <p className="text-[12px] text-muted-foreground font-semibold mb-5">{moment.time}</p>
           )}
@@ -192,19 +242,45 @@ function NoteCard({ moment }: { moment: JournalMoment }) {
   );
 }
 
-// Milestone — centered editorial, triple-sparkle cluster
+// ── MilestonePanel — editorial centrepiece ────────────────────────────────────
+
 function MilestonePanel({ moment }: { moment: JournalMoment }) {
   return (
-    <div className="px-6 py-14 text-center">
+    <div className="px-6 py-14 text-center relative overflow-hidden">
+      {/* Ambient amber wash */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse 70% 50% at 50% 30%, rgba(251,191,36,0.07) 0%, transparent 70%)",
+        }}
+      />
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: "spring", damping: 18, stiffness: 260 }}
       >
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <span className="text-[12px] text-amber-300/55 select-none">✦</span>
-          <span className="text-[28px] text-amber-400 dark:text-amber-500 leading-none select-none">✦</span>
-          <span className="text-[12px] text-amber-300/55 select-none">✦</span>
+        <div className="flex items-center justify-center gap-3 mb-7">
+          <motion.span
+            className="text-[12px] text-amber-300/55 select-none"
+            animate={{ opacity: [0.4, 0.9, 0.4] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+          >
+            ✦
+          </motion.span>
+          <motion.span
+            className="text-[30px] text-amber-400 dark:text-amber-500 leading-none select-none"
+            animate={{ scale: [1, 1.08, 1], opacity: [0.85, 1, 0.85] }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            ✦
+          </motion.span>
+          <motion.span
+            className="text-[12px] text-amber-300/55 select-none"
+            animate={{ opacity: [0.4, 0.9, 0.4] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          >
+            ✦
+          </motion.span>
         </div>
         <p className="text-[30px] font-extrabold text-foreground leading-snug tracking-tight mb-5 max-w-[270px] mx-auto">
           {moment.content}
@@ -225,6 +301,8 @@ function MilestonePanel({ moment }: { moment: JournalMoment }) {
   );
 }
 
+// ── TodayJournal ──────────────────────────────────────────────────────────────
+
 export default function TodayJournal() {
   const firstPhotoId = today.moments.find((m) => m.type === "photo")?.id;
 
@@ -236,25 +314,33 @@ export default function TodayJournal() {
     }
   }
 
+  // Entrance delays: hero immediate, rest staggered
+  const delayFor = (i: number, type: string) =>
+    type === "photo" && i === 0 ? 0 : 0.05 + i * 0.08;
+
   return (
     <div className="pb-8">
       {today.moments.map((moment, i) => {
-        const isHero = moment.type === "photo" && moment.id === firstPhotoId;
+        const isHero   = moment.type === "photo" && moment.id === firstPhotoId;
         const photoIdx = photoIndexMap[moment.id] ?? 0;
 
         return (
           <motion.div
             key={moment.id}
-            initial={{ opacity: 0, y: 28 }}
+            initial={{ opacity: 0, y: isHero ? 0 : 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.04 + i * 0.1, duration: 0.65, ease: [0.25, 1, 0.5, 1] }}
+            transition={{
+              delay:    delayFor(i, moment.type),
+              duration: isHero ? 0.4 : 0.65,
+              ease:     [0.25, 1, 0.5, 1],
+            }}
           >
             {isHero && <HeroPhoto moment={moment} />}
             {moment.type === "photo" && !isHero && (
               <PolaroidPhoto moment={moment} isWide={photoIdx % 2 === 1} />
             )}
             {moment.type === "milestone" && <MilestonePanel moment={moment} />}
-            {moment.type === "note" && <NoteCard moment={moment} />}
+            {moment.type === "note"      && <NoteCard moment={moment} />}
           </motion.div>
         );
       })}

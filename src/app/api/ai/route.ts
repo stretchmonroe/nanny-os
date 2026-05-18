@@ -43,11 +43,14 @@ export async function POST(req: Request) {
     } else if (type === "profileUpdate") {
       const { profileUpdatePrompt } = await import("@/lib/ai/prompts/profileUpdate");
       prompt = profileUpdatePrompt(input as Parameters<typeof profileUpdatePrompt>[0]);
+    } else if (type === "memorySearch") {
+      const { memorySearchPrompt } = await import("@/lib/ai/prompts/memorySearch");
+      prompt = memorySearchPrompt(input as { query: string; childName: string; childAge: string; memoryIndex: string });
     } else {
       return Response.json({ error: "unknown_type" });
     }
 
-    const needsMoreTokens = type === "research" || type === "patterns" || type === "profileUpdate";
+    const needsMoreTokens = type === "research" || type === "patterns" || type === "profileUpdate" || type === "memorySearch";
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",

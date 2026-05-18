@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Lightbulb, FileText, Clock, Search, Loader2 } from "lucide-react";
+import { X, Lightbulb, FileText, Clock, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { callAI, parseAIJson } from "@/lib/ai/client";
 import GuidanceTag from "@/components/ui/GuidanceTag";
@@ -10,8 +10,8 @@ import {
   aiSuggestion,
   aiJournalSummary,
   careNotes,
-  recentMemories,
 } from "@/lib/data/demo";
+import MemorySearchPane from "./MemorySearchPane";
 import { isValidGuidanceSource } from "@/lib/ai/guidance";
 import type { GuidanceSource } from "@/lib/ai/guidance";
 
@@ -251,93 +251,10 @@ function SummarizePane() {
   );
 }
 
-// ── History mode ──────────────────────────────────────────────────────────────
+// ── History mode — delegates to AI-powered MemorySearchPane ──────────────────
 
 function HistoryPane() {
-  const [query, setQuery] = useState("");
-
-  const filtered = query.trim().length < 2
-    ? recentMemories.slice(0, 20)
-    : recentMemories.filter((m) =>
-        m.content.toLowerCase().includes(query.toLowerCase()) ||
-        m.category.toLowerCase().includes(query.toLowerCase()) ||
-        m.date.toLowerCase().includes(query.toLowerCase())
-      );
-
-  // Group by date
-  const grouped: { date: string; items: typeof recentMemories }[] = [];
-  filtered.forEach((m) => {
-    const last = grouped[grouped.length - 1];
-    if (last?.date === m.date) {
-      last.items.push(m);
-    } else {
-      grouped.push({ date: m.date, items: [m] });
-    }
-  });
-
-  const typeIcon: Record<string, string> = {
-    photo: "📷",
-    milestone: "⭐",
-    note: "📝",
-  };
-
-  return (
-    <div className="flex-1 overflow-y-auto pb-10">
-      {/* Search bar */}
-      <div className="px-5 mb-4">
-        <div
-          className="flex items-center gap-2.5 rounded-2xl px-4 py-3"
-          style={{ background: "var(--surface-raised)", border: "1.5px solid var(--border-soft)" }}
-        >
-          <Search size={13} strokeWidth={2} className="text-muted-foreground/40 shrink-0" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search memories…"
-            className="flex-1 text-[13px] text-foreground bg-transparent outline-none placeholder:text-muted-foreground/35 placeholder:italic font-medium"
-          />
-          {query && (
-            <button onClick={() => setQuery("")} className="shrink-0 active:opacity-70">
-              <X size={12} className="text-muted-foreground/50" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Results */}
-      {grouped.length === 0 ? (
-        <div className="px-5 py-10 text-center">
-          <p className="text-[13px] text-muted-foreground/40 italic">No memories found</p>
-        </div>
-      ) : (
-        grouped.map(({ date, items }) => (
-          <div key={date} className="mb-4">
-            <p className="px-5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-2">
-              {date}
-            </p>
-            <div className="space-y-1 px-5">
-              {items.map((m) => (
-                <motion.div
-                  key={m.id}
-                  whileTap={{ scale: 0.985 }}
-                  className="flex items-start gap-3 rounded-2xl px-4 py-3"
-                  style={{ background: "var(--surface-card)", border: "1px solid var(--border-soft)" }}
-                >
-                  <span className="text-[13px] leading-none mt-0.5 shrink-0">
-                    {typeIcon[m.type] ?? "📝"}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] text-foreground/80 leading-snug">{m.content}</p>
-                    <p className="text-[10px] text-muted-foreground/40 mt-1 font-medium">{m.time}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  );
+  return <MemorySearchPane />;
 }
 
 // ── Sheet container ───────────────────────────────────────────────────────────

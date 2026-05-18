@@ -2,16 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  X, ArrowUp, Loader2, Search,
-  Bookmark, Share2, ShieldCheck, BookOpen,
-} from "lucide-react";
+import { X, ArrowUp, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { callAI, parseAIJson } from "@/lib/ai/client";
 import GuidanceTag from "@/components/ui/GuidanceTag";
-import { recentMemories } from "@/lib/data/demo";
 import { isValidGuidanceSource } from "@/lib/ai/guidance";
 import type { GuidanceSource } from "@/lib/ai/guidance";
+import SproutResultActions from "./SproutResultActions";
+import MemorySearchPane from "./MemorySearchPane";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -54,74 +52,6 @@ const SUGGESTIONS: Record<Exclude<ResearchCategory, "history">, string[]> = {
     "When does pretend play start?",
   ],
 };
-
-// ── Action row ────────────────────────────────────────────────────────────────
-
-interface ActionConfig {
-  id:        string;
-  icon:      React.ElementType;
-  label:     string;
-  doneLabel: string;
-  doneStyle: string;
-}
-
-const ACTION_CONFIGS: ActionConfig[] = [
-  { id: "save",    icon: Bookmark,    label: "Save",      doneLabel: "Saved",         doneStyle: "text-amber-500" },
-  { id: "share",   icon: Share2,      label: "Share",     doneLabel: "Sent to Sofia", doneStyle: "text-trust"     },
-  { id: "approve", icon: ShieldCheck, label: "Approve",   doneLabel: "Approved",      doneStyle: "text-sage"      },
-  { id: "journal", icon: BookOpen,    label: "Journal",   doneLabel: "Journalled",    doneStyle: "text-lavender"  },
-];
-
-function ResultActions({ resetKey }: { resetKey: string }) {
-  const [done, setDone] = useState<Set<string>>(new Set());
-
-  // reset when a new result arrives
-  useEffect(() => { setDone(new Set()); }, [resetKey]);
-
-  function toggle(id: string) {
-    setDone((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
-
-  return (
-    <div
-      className="flex items-center gap-1.5 px-5 py-4 border-t shrink-0"
-      style={{ borderColor: "var(--border-soft)" }}
-    >
-      {ACTION_CONFIGS.map(({ id, icon: Icon, label, doneLabel, doneStyle }) => {
-        const active = done.has(id);
-        return (
-          <motion.button
-            key={id}
-            whileTap={{ scale: 0.86 }}
-            onClick={() => toggle(id)}
-            animate={active ? { scale: [1, 1.15, 1] } : { scale: 1 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-            className="flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-colors duration-200"
-            style={{ background: active ? "var(--surface-raised)" : "var(--surface-raised)" }}
-          >
-            <Icon
-              size={16}
-              strokeWidth={active ? 2.2 : 1.7}
-              className={cn("transition-colors duration-200", active ? doneStyle : "text-muted-foreground/45")}
-            />
-            <span
-              className={cn(
-                "text-[9px] font-bold tracking-wide transition-colors duration-200",
-                active ? doneStyle : "text-muted-foreground/35"
-              )}
-            >
-              {active ? doneLabel : label}
-            </span>
-          </motion.button>
-        );
-      })}
-    </div>
-  );
-}
 
 // ── Ask pane ──────────────────────────────────────────────────────────────────
 
@@ -325,7 +255,7 @@ function AskPane({ category }: { category: Exclude<ResearchCategory, "history"> 
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
           >
-            <ResultActions resetKey={submitted} />
+            <SproutResultActions resetKey={submitted} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -333,151 +263,10 @@ function AskPane({ category }: { category: Exclude<ResearchCategory, "history"> 
   );
 }
 
-// ── History pane ──────────────────────────────────────────────────────────────
-
-const TYPE_ICON: Record<string, string> = { photo: "📷", milestone: "⭐", note: "📝" };
-
-const HIGHLIGHTS = recentMemories.filter(
-  (m) => m.type === "milestone" || m.isFavorite
-).slice(0, 8);
+// ── History pane — delegates to AI-powered MemorySearchPane ──────────────────
 
 function HistoryPane() {
-  const [query, setQuery] = useState("");
-
-  const isSearching = query.trim().length >= 2;
-
-  const results = isSearching
-    ? recentMemories.filter((m) =>
-        m.content.toLowerCase().includes(query.toLowerCase()) ||
-        m.category.toLowerCase().includes(query.toLowerCase()) ||
-        m.date.toLowerCase().includes(query.toLowerCase())
-      )
-    : null;
-
-  // Group by date for search results
-  const grouped: { date: string; items: typeof recentMemories }[] = [];
-  (results ?? []).forEach((m) => {
-    const last = grouped[grouped.length - 1];
-    if (last?.date === m.date) last.items.push(m);
-    else grouped.push({ date: m.date, items: [m] });
-  });
-
-  return (
-    <div className="flex-1 flex flex-col min-h-0">
-      {/* Search */}
-      <div className="px-5 mb-4 shrink-0">
-        <div
-          className="flex items-center gap-2.5 rounded-2xl px-4 py-3"
-          style={{ background: "var(--surface-raised)", border: "1.5px solid var(--border-soft)" }}
-        >
-          <Search size={13} strokeWidth={2} className="text-muted-foreground/40 shrink-0" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search Mateo's story…"
-            className="flex-1 text-[14px] text-foreground bg-transparent outline-none placeholder:text-muted-foreground/35 placeholder:italic font-medium"
-          />
-          {query && (
-            <button onClick={() => setQuery("")} className="shrink-0 active:opacity-70">
-              <X size={12} className="text-muted-foreground/50" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto pb-10">
-        <AnimatePresence mode="wait">
-
-          {/* Default: highlights */}
-          {!isSearching && (
-            <motion.div
-              key="highlights"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-            >
-              <p className="px-5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-3">
-                Milestones &amp; Highlights
-              </p>
-              <div className="space-y-1.5 px-5">
-                {HIGHLIGHTS.map((m) => (
-                  <motion.div
-                    key={m.id}
-                    whileTap={{ scale: 0.985 }}
-                    className="flex items-start gap-3 rounded-2xl px-4 py-3"
-                    style={{ background: "var(--surface-card)", border: "1px solid var(--border-soft)" }}
-                  >
-                    <span className="text-[13px] leading-none mt-0.5 shrink-0">
-                      {TYPE_ICON[m.type] ?? "📝"}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] text-foreground/80 leading-snug">{m.content}</p>
-                      <p className="text-[10px] text-muted-foreground/40 mt-1 font-medium">
-                        {m.date} · {m.time}
-                      </p>
-                    </div>
-                    {m.isFavorite && (
-                      <span className="text-[12px] shrink-0 mt-0.5">❤️</span>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* Search results */}
-          {isSearching && (
-            <motion.div
-              key="search-results"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-            >
-              {grouped.length === 0 ? (
-                <div className="px-5 py-10 text-center">
-                  <p className="text-[13px] text-muted-foreground/40 italic">No entries found</p>
-                </div>
-              ) : (
-                grouped.map(({ date, items }) => (
-                  <div key={date} className="mb-5">
-                    <p className="px-5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-2">
-                      {date}
-                    </p>
-                    <div className="space-y-1.5 px-5">
-                      {items.map((m) => (
-                        <motion.div
-                          key={m.id}
-                          whileTap={{ scale: 0.985 }}
-                          className="flex items-start gap-3 rounded-2xl px-4 py-3"
-                          style={{ background: "var(--surface-card)", border: "1px solid var(--border-soft)" }}
-                        >
-                          <span className="text-[13px] leading-none mt-0.5 shrink-0">
-                            {TYPE_ICON[m.type] ?? "📝"}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[13px] text-foreground/80 leading-snug">{m.content}</p>
-                            <p className="text-[10px] text-muted-foreground/40 mt-1 font-medium">
-                              {m.time}
-                            </p>
-                          </div>
-                          {m.isFavorite && (
-                            <span className="text-[12px] shrink-0 mt-0.5">❤️</span>
-                          )}
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
-            </motion.div>
-          )}
-
-        </AnimatePresence>
-      </div>
-    </div>
-  );
+  return <MemorySearchPane />;
 }
 
 // ── Sheet ─────────────────────────────────────────────────────────────────────

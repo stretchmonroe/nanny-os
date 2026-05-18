@@ -46,12 +46,12 @@ export default function WeeklyRecap() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
-      className="rounded-[1.5rem] bg-emerald-50/60 dark:bg-emerald-950/15 border border-emerald-100/60 dark:border-emerald-900/25 shadow-card overflow-hidden"
+      className="rounded-[1.5rem] bg-sage-light/70 dark:bg-sage-light/5 border border-sage-light dark:border-sage-light/15 shadow-card overflow-hidden"
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-5 pt-5 pb-4 border-b border-emerald-100/50 dark:border-emerald-900/20">
-        <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.2} />
-        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">
+      <div className="flex items-center gap-2 px-5 pt-5 pb-4 border-b border-sage-light dark:border-sage-light/15">
+        <TrendingUp className="w-3.5 h-3.5 text-sage dark:text-sage-muted" strokeWidth={2.2} />
+        <span className="text-[10px] font-bold text-sage dark:text-sage-muted uppercase tracking-widest">
           Mateo&rsquo;s week
         </span>
       </div>
@@ -61,7 +61,7 @@ export default function WeeklyRecap() {
         <ul className="space-y-3">
           {observations.map((obs, i) => (
             <li key={i} className="flex items-start gap-3">
-              <span className="text-emerald-300 dark:text-emerald-700 text-[16px] leading-none mt-0.5 shrink-0 select-none">—</span>
+              <span className="text-sage-muted dark:text-sage-muted/40 text-[16px] leading-none mt-0.5 shrink-0 select-none">—</span>
               <p className="text-[14px] text-foreground/80 dark:text-stone-300 leading-snug font-medium">{obs}</p>
             </li>
           ))}
@@ -69,7 +69,7 @@ export default function WeeklyRecap() {
 
         {/* Milestone highlights */}
         {milestones.length > 0 && (
-          <div className="pt-4 border-t border-emerald-100/50 dark:border-emerald-900/20">
+          <div className="pt-4 border-t border-sage-light dark:border-sage-light/15">
             <div className="flex items-center gap-1.5 mb-3">
               <Star className="w-3 h-3 text-amber-500" fill="currentColor" strokeWidth={0} />
               <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">
@@ -89,7 +89,7 @@ export default function WeeklyRecap() {
 
         {/* Skills practiced */}
         {skills.length > 0 && (
-          <div className="pt-4 border-t border-emerald-100/50 dark:border-emerald-900/20">
+          <div className="pt-4 border-t border-sage-light dark:border-sage-light/15">
             <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest mb-2.5">
               What Mateo explored
             </p>
@@ -97,7 +97,7 @@ export default function WeeklyRecap() {
               {skills.map((skill) => (
                 <span
                   key={skill}
-                  className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100/80 dark:bg-emerald-900/30 px-3 py-1.5 rounded-full"
+                  className="text-[11px] font-semibold text-sage dark:text-sage-muted bg-sage-light dark:bg-sage-light/20 px-3 py-1.5 rounded-full"
                 >
                   {skill}
                 </span>

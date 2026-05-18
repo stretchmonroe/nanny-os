@@ -59,17 +59,17 @@ export default function RecommendationCard() {
   }, []);
 
   return (
-    <div className="mx-4 rounded-[1.5rem] overflow-hidden bg-gradient-to-br from-violet-50 via-white to-amber-50/40 dark:from-violet-950/50 dark:via-surface-raised dark:to-amber-950/30 border-soft shadow-elevated">
+    <div className="mx-4 rounded-[1.5rem] overflow-hidden bg-gradient-to-br from-trust-light/60 via-surface-card to-amber-50/20 dark:from-trust-light/10 dark:via-surface-raised dark:to-amber-950/20 border-soft shadow-elevated">
       <div className="p-6">
 
         {/* Header row */}
         <div className="flex items-start gap-3.5">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-600 dark:from-violet-600 dark:to-violet-700 flex items-center justify-center shrink-0 shadow-elevated">
+          <div className="w-10 h-10 rounded-2xl bg-trust flex items-center justify-center shrink-0 shadow-elevated">
             <Sparkles size={16} className="text-white" />
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-violet-500 dark:text-violet-400 uppercase tracking-widest mb-1">
+            <p className="text-[10px] font-bold text-trust dark:text-trust-muted uppercase tracking-widest mb-1">
               Right now
             </p>
             <p className="text-[17px] font-bold text-foreground leading-snug tracking-tight">
@@ -80,7 +80,7 @@ export default function RecommendationCard() {
             </p>
 
             <div className="mt-3 flex items-center gap-2.5 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 bg-white/80 dark:bg-surface-raised border-soft text-violet-700 dark:text-violet-300 text-[12px] font-semibold px-3 py-1.5 rounded-full shadow-card">
+              <span className="inline-flex items-center gap-1.5 bg-white/80 dark:bg-surface-raised border-soft text-trust dark:text-trust-muted text-[12px] font-semibold px-3 py-1.5 rounded-full shadow-card">
                 🎯 {aiSuggestion.activity}
               </span>
               <span className="text-[12px] text-muted-foreground/70 font-medium">
@@ -93,11 +93,11 @@ export default function RecommendationCard() {
         {/* Developmental guidance — no border, flows naturally */}
         <div className="mt-6">
           <div className="flex items-start gap-2.5 mb-3">
-            <div className="w-6 h-6 rounded-full bg-violet-100/80 dark:bg-violet-900/30 flex items-center justify-center shrink-0 mt-0.5">
-              <Leaf size={11} className="text-violet-500 dark:text-violet-400" />
+            <div className="w-6 h-6 rounded-full bg-trust-light dark:bg-trust-light/15 flex items-center justify-center shrink-0 mt-0.5">
+              <Leaf size={11} className="text-trust dark:text-trust-muted" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-violet-400/80 dark:text-violet-500/70 uppercase tracking-widest mb-0.5">
+              <p className="text-[10px] font-bold text-trust-muted uppercase tracking-widest mb-0.5">
                 {aiSuggestion.developmentalFocus}
               </p>
               <p className="text-[13px] text-muted-foreground leading-relaxed">
@@ -110,7 +110,7 @@ export default function RecommendationCard() {
             <GuidanceTag source={action.guidanceSource} />
             <button
               onClick={() => setExpanded((v) => !v)}
-              className="flex items-center gap-1 text-[11px] font-semibold text-violet-500 dark:text-violet-400 active:opacity-70 transition-opacity"
+              className="flex items-center gap-1 text-[11px] font-semibold text-trust dark:text-trust-muted active:opacity-70 transition-opacity"
             >
               Why this works
               <ChevronDown
@@ -157,7 +157,7 @@ export default function RecommendationCard() {
               >
                 <button
                   onClick={() => setApproval("shared")}
-                  className="flex items-center gap-1.5 text-[12px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 border border-violet-100 dark:border-violet-900/40 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform"
+                  className="flex items-center gap-1.5 text-[12px] font-semibold text-trust dark:text-trust-muted bg-trust-light dark:bg-trust-light/10 border border-trust-light dark:border-trust-light/20 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform"
                 >
                   <Send size={11} />
                   Share with Sofia
@@ -181,7 +181,7 @@ export default function RecommendationCard() {
                 transition={{ duration: 0.2 }}
                 className="flex items-center gap-2"
               >
-                <span className="flex items-center gap-1.5 text-[12px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/30 px-3 py-1.5 rounded-full">
+                <span className="flex items-center gap-1.5 text-[12px] font-semibold text-sage dark:text-sage-muted bg-sage-light dark:bg-sage-light/10 border border-sage-light dark:border-sage-light/20 px-3 py-1.5 rounded-full">
                   <Check size={11} strokeWidth={2.5} />
                   Shared with Sofia
                 </span>

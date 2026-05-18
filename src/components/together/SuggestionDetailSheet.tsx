@@ -105,7 +105,7 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
                       {cat.emoji} {cat.label}
                     </span>
                     {suggestion.status === "approved" && (
-                      <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">
+                      <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-sage-light text-sage dark:text-sage-muted">
                         ✓ Approved
                       </span>
                     )}
@@ -216,8 +216,8 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
                 {suggestion.status !== "pending" && (
                   <div className="mb-6">
                     {suggestion.status === "approved" && (
-                      <div className="rounded-2xl px-4 py-3.5" style={{ background: "rgba(16,185,129,0.07)" }}>
-                        <p className="text-[12px] font-semibold text-emerald-700 dark:text-emerald-400 mb-0.5">
+                      <div className="rounded-2xl px-4 py-3.5 bg-sage-light dark:bg-sage-light/10">
+                        <p className="text-[12px] font-semibold text-sage dark:text-sage-muted mb-0.5">
                           Sofia approved this
                         </p>
                         {suggestion.response_note && (

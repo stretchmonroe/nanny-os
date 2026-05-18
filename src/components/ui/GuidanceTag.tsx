@@ -9,24 +9,24 @@ import type { GuidanceSource } from "@/lib/ai/guidance";
 
 const colorMap = {
   emerald: {
-    pill: "bg-emerald-50 dark:bg-emerald-950/25 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/35",
-    panel: "bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30",
-    icon: "text-emerald-500 dark:text-emerald-400",
+    pill: "bg-sage-light text-sage dark:bg-sage-light/20 dark:text-sage-muted border-sage-light",
+    panel: "bg-sage-light/60 dark:bg-sage-light/10 border-sage-light",
+    icon: "text-sage dark:text-sage-muted",
   },
   sky: {
-    pill: "bg-sky-50 dark:bg-sky-950/25 text-sky-700 dark:text-sky-400 border-sky-100 dark:border-sky-900/35",
-    panel: "bg-sky-50/80 dark:bg-sky-950/20 border-sky-100 dark:border-sky-900/30",
-    icon: "text-sky-500 dark:text-sky-400",
+    pill: "bg-trust-light text-trust dark:bg-trust-light/15 dark:text-trust-muted border-trust-light",
+    panel: "bg-trust-light/60 dark:bg-trust-light/10 border-trust-light",
+    icon: "text-trust dark:text-trust-muted",
   },
   teal: {
-    pill: "bg-teal-50 dark:bg-teal-950/25 text-teal-700 dark:text-teal-400 border-teal-100 dark:border-teal-900/35",
-    panel: "bg-teal-50/80 dark:bg-teal-950/20 border-teal-100 dark:border-teal-900/30",
-    icon: "text-teal-500 dark:text-teal-400",
+    pill: "bg-sage-light text-sage dark:bg-sage-light/15 dark:text-sage-muted border-sage-light",
+    panel: "bg-sage-light/60 dark:bg-sage-light/10 border-sage-light",
+    icon: "text-sage dark:text-sage-muted",
   },
   stone: {
-    pill: "bg-stone-100 dark:bg-stone-800/40 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-700/30",
-    panel: "bg-stone-50/80 dark:bg-stone-900/20 border-stone-200 dark:border-stone-700/30",
-    icon: "text-stone-500 dark:text-stone-400",
+    pill: "bg-muted text-muted-foreground border-border",
+    panel: "bg-muted/60 border-border",
+    icon: "text-muted-foreground",
   },
 };
 

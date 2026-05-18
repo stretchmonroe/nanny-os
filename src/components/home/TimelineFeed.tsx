@@ -76,8 +76,8 @@ export default function TimelineFeed() {
                       </span>
                     )}
                     {item.done ? (
-                      <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center">
-                        <Check size={11} strokeWidth={2.5} className="text-emerald-600 dark:text-emerald-400" />
+                      <div className="w-5 h-5 rounded-full bg-sage-light flex items-center justify-center">
+                        <Check size={11} strokeWidth={2.5} className="text-sage" />
                       </div>
                     ) : !item.active ? (
                       <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full", config.color)}>

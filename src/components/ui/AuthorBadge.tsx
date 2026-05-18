@@ -8,7 +8,7 @@ export type AuthorType = "nanny" | "parent" | "ai";
 const cfg = {
   nanny:  { name: "Elena",  role: "Nanny",  initial: "E", circleBg: "bg-amber-100 dark:bg-amber-900/50",   circleText: "text-amber-700 dark:text-amber-300"  },
   parent: { name: "Sofia",  role: "Parent", initial: "S", circleBg: "bg-rose-100 dark:bg-rose-900/40",     circleText: "text-rose-600 dark:text-rose-300"    },
-  ai:     { name: "Claude", role: "AI",     initial: null, circleBg: "bg-violet-100 dark:bg-violet-900/30", circleText: "text-violet-600 dark:text-violet-400" },
+  ai:     { name: "Claude", role: "AI",     initial: null, circleBg: "bg-lavender-light dark:bg-lavender/20", circleText: "text-lavender dark:text-lavender" },
 } as const;
 
 interface Props {

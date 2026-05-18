@@ -47,7 +47,7 @@ export default function ChildProfileHeader({ focus, onFocusChange, onProfileOpen
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, ease: [0.25, 1, 0.5, 1] }}
-      className="px-5 pt-10 pb-7 bg-gradient-to-b from-amber-50/90 via-amber-50/40 to-transparent dark:from-amber-950/30 dark:via-stone-950/10 dark:to-transparent"
+      className="px-5 pt-10 pb-7 bg-gradient-to-b from-[#F0E8D8]/80 via-[#F4EDE0]/30 to-transparent dark:from-amber-950/20 dark:via-stone-950/8 dark:to-transparent"
     >
       {/* Top row: date + floating avatar */}
       <div className="flex items-start justify-between mb-6">
@@ -60,7 +60,7 @@ export default function ChildProfileHeader({ focus, onFocusChange, onProfileOpen
           onClick={onProfileOpen}
           className="relative active:scale-[0.94] transition-transform"
         >
-          <div className="w-14 h-14 rounded-[1.3rem] bg-gradient-to-br from-amber-200 to-orange-300 dark:from-amber-900/80 dark:to-orange-900/60 flex items-center justify-center text-[28px] shadow-elevated ring-[3px] ring-amber-200/50 dark:ring-amber-800/25">
+          <div className="w-14 h-14 rounded-[1.3rem] bg-gradient-to-br from-amber-200 to-orange-300 dark:from-amber-900/80 dark:to-orange-900/60 flex items-center justify-center text-[28px] shadow-elevated ring-[3px] ring-[#D4A882]/30 dark:ring-amber-800/20">
             {child.emoji}
           </div>
           <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-xl bg-surface-card shadow-card flex items-center justify-center text-[13px] border-soft">

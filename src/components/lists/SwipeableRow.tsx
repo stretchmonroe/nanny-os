@@ -56,7 +56,7 @@ export default function SwipeableRow({ item, onToggle, onDelete }: Props) {
             <div
               className={cn(
                 "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200",
-                item.completed ? "bg-emerald-500 border-emerald-500" : "border-border"
+                item.completed ? "bg-sage border-sage" : "border-border"
               )}
             >
               {item.completed && (

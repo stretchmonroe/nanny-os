@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils";
 import type { PlannedActivity, FocusArea } from "@/lib/data/demo";
 
 const areaConfig = {
-  "language":       { emoji: "🗣️", label: "Language",      bg: "bg-violet-50  dark:bg-violet-950/25", accent: "bg-violet-500" },
-  "sensory":        { emoji: "🫧", label: "Sensory",        bg: "bg-amber-50   dark:bg-amber-950/25",  accent: "bg-amber-400"  },
-  "movement":       { emoji: "🏃", label: "Movement",       bg: "bg-emerald-50 dark:bg-emerald-950/25", accent: "bg-emerald-500" },
-  "practical-life": { emoji: "🏠", label: "Practical Life", bg: "bg-orange-50  dark:bg-orange-950/25", accent: "bg-orange-400"  },
-  "creativity":     { emoji: "🎨", label: "Creativity",     bg: "bg-rose-50    dark:bg-rose-950/25",   accent: "bg-rose-400"    },
+  "language":       { emoji: "🗣️", label: "Language",      bg: "bg-lavender-light dark:bg-lavender/10", accent: "bg-lavender" },
+  "sensory":        { emoji: "🫧", label: "Sensory",        bg: "bg-amber-50   dark:bg-amber-950/25",    accent: "bg-amber-400"  },
+  "movement":       { emoji: "🏃", label: "Movement",       bg: "bg-sage-light dark:bg-sage/10",         accent: "bg-sage" },
+  "practical-life": { emoji: "🏠", label: "Practical Life", bg: "bg-orange-50  dark:bg-orange-950/25",   accent: "bg-orange-400"  },
+  "creativity":     { emoji: "🎨", label: "Creativity",     bg: "bg-rose-50    dark:bg-rose-950/25",     accent: "bg-rose-400"    },
 } as const;
 
 interface Props {
@@ -109,8 +109,8 @@ export default function ActivityPlan({ focus }: Props) {
                     </div>
                   </div>
                   {isDone && (
-                    <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center shrink-0">
-                      <Check size={12} strokeWidth={2.5} className="text-emerald-600 dark:text-emerald-400" />
+                    <div className="w-6 h-6 rounded-full bg-sage-light dark:bg-sage-light/10 flex items-center justify-center shrink-0">
+                      <Check size={12} strokeWidth={2.5} className="text-sage dark:text-sage-muted" />
                     </div>
                   )}
                   {isActive && (
@@ -163,7 +163,7 @@ export default function ActivityPlan({ focus }: Props) {
                     {activity.status === "active" && (
                       <button
                         onClick={() => setStatus(activity.id, "done")}
-                        className="flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/40 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform"
+                        className="flex items-center gap-1.5 text-[12px] font-semibold text-sage dark:text-sage-muted bg-sage-light dark:bg-sage-light/10 border border-sage-light dark:border-sage-light/20 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform"
                       >
                         <Check size={11} strokeWidth={2.5} />
                         Done

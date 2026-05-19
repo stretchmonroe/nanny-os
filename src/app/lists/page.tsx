@@ -7,6 +7,7 @@ import { groceryItems as demoItems } from "@/lib/data/demo";
 import { ArrowUp } from "lucide-react";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import SwipeableRow from "@/components/lists/SwipeableRow";
+import { NavMenuButton } from "@/components/layout/NavMenuButton";
 import type { VoiceResult } from "@/lib/voice/transcriptParser";
 
 const CHIPS = ["Bananas", "Milk", "Eggs", "Avocado", "Yogurt", "Blueberries", "Cheese", "Crackers"];
@@ -72,9 +73,12 @@ export default function ListsPage() {
         className="px-5 pt-7 pb-5 border-b border-soft"
         style={{ background: "var(--surface-header)" }}
       >
-        <h1 className="text-[26px] font-extrabold text-foreground tracking-tight">
-          This week
-        </h1>
+        <div className="flex items-center gap-2.5 -ml-1.5 mb-0.5">
+          <NavMenuButton />
+          <h1 className="text-[26px] font-extrabold text-foreground tracking-tight">
+            This week
+          </h1>
+        </div>
         <p className="text-[12px] text-muted-foreground/50 mt-0.5 font-medium">
           Mateo&apos;s favorites + household staples
         </p>

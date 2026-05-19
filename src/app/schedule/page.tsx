@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, ChevronLeft } from "lucide-react";
+import { NavMenuButton } from "@/components/layout/NavMenuButton";
 import { schedule as demoSchedule, typeConfig, demoPatterns } from "@/lib/data/demo";
 import { supabase } from "@/lib/supabase/client";
 import ScheduleBlock from "@/components/schedule/ScheduleBlock";
@@ -81,18 +82,21 @@ export default function SchedulePage() {
         style={{ background: "var(--surface-header)" }}
       >
         <div className="flex items-start justify-between mb-1">
-          <button
-            onClick={() => setPickerOpen(true)}
-            className="flex items-end gap-1.5 group text-left"
-          >
-            <h1 className="text-[26px] font-extrabold text-foreground tracking-tight leading-none">
-              {headerDate}
-            </h1>
-            <CalendarDays
-              size={14}
-              className="text-muted-foreground/35 group-hover:text-muted-foreground/60 transition-colors mb-0.5 shrink-0"
-            />
-          </button>
+          <div className="flex items-start gap-2.5">
+            <NavMenuButton className="mt-0.5 -ml-1.5 shrink-0" />
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="flex items-end gap-1.5 group text-left"
+            >
+              <h1 className="text-[26px] font-extrabold text-foreground tracking-tight leading-none">
+                {headerDate}
+              </h1>
+              <CalendarDays
+                size={14}
+                className="text-muted-foreground/35 group-hover:text-muted-foreground/60 transition-colors mb-0.5 shrink-0"
+              />
+            </button>
+          </div>
         </div>
 
         {!isPastDay ? (

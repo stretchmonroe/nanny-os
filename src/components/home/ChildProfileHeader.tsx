@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { child, schedule, focusAreas } from "@/lib/data/demo";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { NavMenuButton } from "@/components/layout/NavMenuButton";
 import type { FocusArea } from "@/lib/data/demo";
 
 function getGreeting() {
@@ -49,11 +50,14 @@ export default function ChildProfileHeader({ focus, onFocusChange, onProfileOpen
       transition={{ duration: 0.55, ease: [0.25, 1, 0.5, 1] }}
       className="px-5 pt-10 pb-7 bg-gradient-to-b from-[#F0E8D8]/80 via-[#F4EDE0]/30 to-transparent dark:from-amber-950/20 dark:via-stone-950/8 dark:to-transparent"
     >
-      {/* Top row: date + floating avatar */}
+      {/* Top row: hamburger + date + floating avatar */}
       <div className="flex items-start justify-between mb-6">
-        <p className="text-[11px] font-semibold text-amber-600/50 dark:text-amber-500/35 tracking-widest uppercase pt-1">
-          {today}
-        </p>
+        <div className="flex items-center gap-2.5">
+          <NavMenuButton className="-ml-1.5" />
+          <p className="text-[11px] font-semibold text-amber-600/50 dark:text-amber-500/35 tracking-widest uppercase pt-0.5">
+            {today}
+          </p>
+        </div>
 
         {/* Avatar — tappable, opens profile */}
         <button

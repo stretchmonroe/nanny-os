@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, CalendarDays } from "lucide-react";
+import { NavMenuButton } from "@/components/layout/NavMenuButton";
 import { cn } from "@/lib/utils";
 import JournalSummary from "@/components/memory/JournalSummary";
 import TodayJournal from "@/components/memory/TodayJournal";
@@ -197,7 +198,9 @@ export default function MemoryPage() {
         style={{ background: "var(--surface-header)" }}
       >
         <div className="flex items-end justify-between mb-5">
-          <div className="min-w-0 flex-1 mr-3">
+          <div className="min-w-0 flex-1 mr-3 flex items-start gap-2.5">
+            <NavMenuButton className="mt-0.5 -ml-1.5 shrink-0" />
+            <div className="min-w-0 flex-1">
             <button
               onClick={() => setPickerOpen(true)}
               className="flex items-end gap-1.5 group text-left w-full"
@@ -213,6 +216,7 @@ export default function MemoryPage() {
             <p className="text-[11px] font-medium text-muted-foreground/40">
               Mateo&apos;s story · 18 months
             </p>
+            </div>
           </div>
           <div className="flex items-center gap-2 mb-0.5 shrink-0">
             <VoiceRecorder context="memory" onSave={handleVoiceSave} className="w-9 h-9" />

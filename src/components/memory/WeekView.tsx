@@ -1,12 +1,17 @@
 "use client";
 
+import React from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { weeklyMoments } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
 import WeeklyRecap from "./WeeklyRecap";
+import WeeklyStory from "./WeeklyStory";
+import MemoryHighlight from "./MemoryHighlight";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 import ReactionBar from "@/components/memory/ReactionBar";
+import ReplyThread from "@/components/memory/ReplyThread";
+import AudioMoment from "@/components/memory/AudioMoment";
 import type { JournalMoment } from "@/lib/data/demo";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -100,33 +105,39 @@ function PageDivider() {
 function DayHeroPhoto({ moment }: { moment: JournalMoment }) {
   const ctx = CAT_CTX[moment.category] ?? "";
   return (
-    <motion.div
-      whileTap={{ scale: 0.99 }}
-      className="relative overflow-hidden bg-muted mx-4 rounded-2xl"
-      style={{ aspectRatio: "4/3" }}
-    >
-      {moment.imageUrl && (
-        <Image
-          src={moment.imageUrl}
-          alt={moment.content}
-          fill
-          className="object-cover"
-          sizes="(max-width: 448px) 90vw, 400px"
-        />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 px-6 pb-6">
-        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
-          {moment.time}{ctx ? ` · ${ctx}` : ""}
-        </p>
-        <p className="text-[18px] font-extrabold text-white leading-snug tracking-tight mb-2.5">
-          {moment.content}
-        </p>
-        {moment.createdBy && (
-          <AuthorBadge author={moment.createdBy} light showRole={false} />
+    <>
+      <motion.div
+        whileTap={{ scale: 0.99 }}
+        className="relative overflow-hidden bg-muted mx-4 rounded-2xl"
+        style={{ aspectRatio: "4/3" }}
+      >
+        {moment.imageUrl && (
+          <Image
+            src={moment.imageUrl}
+            alt={moment.content}
+            fill
+            className="object-cover"
+            sizes="(max-width: 448px) 90vw, 400px"
+          />
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-6 pb-6">
+          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">
+            {moment.time}{ctx ? ` · ${ctx}` : ""}
+          </p>
+          <p className="text-[18px] font-extrabold text-white leading-snug tracking-tight mb-2.5">
+            {moment.content}
+          </p>
+          {moment.createdBy && (
+            <AuthorBadge author={moment.createdBy} light showRole={false} />
+          )}
+        </div>
+      </motion.div>
+      <div className="px-6 pt-4 pb-2 space-y-4">
+        <ReactionBar initialReactions={moment.reactions} />
+        <ReplyThread initialReplies={moment.replies} />
       </div>
-    </motion.div>
+    </>
   );
 }
 
@@ -152,7 +163,7 @@ function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
         <motion.div
           whileHover={{ y: -5 }}
           whileTap={{ scale: 0.97 }}
-          className="rounded-[3px] pt-3 px-3 pb-8"
+          className="rounded-[3px] pt-3 px-3 pb-4"
           style={{
             background: "#fff",
             rotate: rot,
@@ -186,7 +197,13 @@ function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
               </div>
             )}
           </div>
+          <div className="mt-3 pt-2.5 border-t border-stone-100/70">
+            <ReactionBar initialReactions={moment.reactions} />
+          </div>
         </motion.div>
+      </div>
+      <div className="mt-3">
+        <ReplyThread initialReplies={moment.replies} />
       </div>
     </div>
   );
@@ -201,6 +218,7 @@ function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
   const rightMt  = 16 + (stableN(right.id) % 3) * 10;
 
   return (
+    <>
     <div className="flex items-start gap-2.5 px-3 py-4">
       {/* Left polaroid */}
       <div className="flex-1 relative mt-5">
@@ -256,6 +274,10 @@ function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
         </motion.div>
       </div>
     </div>
+    <div className="px-5 pb-3 -mt-1">
+      <ReactionBar />
+    </div>
+    </>
   );
 }
 
@@ -285,7 +307,10 @@ function MilestoneMoment({ moment }: { moment: JournalMoment }) {
           {moment.time}
         </p>
       )}
-      <ReactionBar initialReactions={moment.reactions} className="justify-center" />
+      <div className="flex flex-col items-center gap-4 max-w-[300px] mx-auto">
+        <ReactionBar initialReactions={moment.reactions} className="justify-center" />
+        <ReplyThread initialReplies={moment.replies} className="w-full text-left" />
+      </div>
     </div>
   );
 }
@@ -326,7 +351,10 @@ function NoteMoment({ moment }: { moment: JournalMoment }) {
           ) : (
             <p className="text-[11px] text-muted-foreground font-semibold mb-4">{moment.time}</p>
           )}
-          <ReactionBar initialReactions={moment.reactions} />
+          <div className="space-y-3">
+            <ReactionBar initialReactions={moment.reactions} />
+            <ReplyThread initialReplies={moment.replies} />
+          </div>
         </div>
       </motion.div>
     </div>
@@ -338,6 +366,12 @@ function NoteMoment({ moment }: { moment: JournalMoment }) {
 export default function WeekView() {
   return (
     <div className="pb-8">
+      {/* Narrative story */}
+      <div className="mb-6">
+        <WeeklyStory />
+      </div>
+
+      {/* Factual observations */}
       <div className="px-4 mb-10">
         <WeeklyRecap />
       </div>
@@ -353,8 +387,8 @@ export default function WeekView() {
           const dayNum    = dateParts[dateParts.length - 1];
 
           return (
+            <React.Fragment key={dayData.date}>
             <motion.div
-              key={dayData.date}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: dayIndex * 0.06, duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
@@ -410,11 +444,20 @@ export default function WeekView() {
                       {moment.type === "photo" && !isHero  && <PolaroidPhoto moment={moment} />}
                       {moment.type === "milestone"          && <MilestoneMoment moment={moment} />}
                       {moment.type === "note"               && <NoteMoment moment={moment} />}
+                      {moment.type === "audio"              && <AudioMoment moment={moment} />}
                     </div>
                   );
                 })}
               </div>
             </motion.div>
+
+            {/* Memory highlight — between day 0 (Thursday) and the rest */}
+            {dayIndex === 0 && (
+              <div className="pt-2 pb-4">
+                <MemoryHighlight />
+              </div>
+            )}
+            </React.Fragment>
           );
         })}
       </div>

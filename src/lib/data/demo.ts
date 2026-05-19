@@ -246,7 +246,7 @@ export const aiJournalSummary = {
   highlights: ["Said 'more' for the first time 🌟", "Big slide, solo 🛝", "12-min focus record 🧩", "Stairs milestone yesterday 🏔️"],
 }
 
-export type JournalMomentType = "photo" | "note" | "milestone"
+export type JournalMomentType = "photo" | "note" | "milestone" | "audio"
 export type ActivityCategory  = "meal" | "outdoor" | "play" | "nap" | "learning"
 
 export interface MomentReaction {
@@ -267,6 +267,8 @@ export interface JournalMoment {
   content: string
   time: string
   imageUrl?: string
+  audioUrl?: string
+  duration?: number
   category: ActivityCategory
   createdBy?: "nanny" | "parent"
   reactions?: MomentReaction[]
@@ -299,6 +301,7 @@ export const weeklyMoments: JournalDay[] = [
       },
       { id: "t3", type: "photo",     content: "12 straight minutes on stacking rings — new personal focus record",                  time: "11:20 am", imageUrl: "https://picsum.photos/seed/toddler2/400/500",    category: "play",     createdBy: "nanny"  },
       { id: "t3b", type: "photo",   content: "Sensory bin discovery — buried his whole forearm and couldn't stop grinning",           time: "11:50 am", imageUrl: "https://picsum.photos/seed/sensory3/400/400",    category: "play",     createdBy: "nanny"  },
+      { id: "t_a1", type: "audio",   content: "He kept saying 'more' on repeat — I had to capture it before the moment passed", duration: 16, time: "10:22 am", category: "learning", createdBy: "nanny" as const },
       { id: "t4", type: "note",      content: "Cuddly and calm before sensory bin. Very sweet mood all morning.",                   time: "10:55 am", category: "play",     createdBy: "nanny",
         reactions: [{ emoji: "❤️", authors: ["parent"] }],
         replies: [
@@ -312,6 +315,7 @@ export const weeklyMoments: JournalDay[] = [
     moments: [
       { id: "w1", type: "photo",     content: "Water table in the backyard — completely soaked and absolutely ecstatic",            time: "10:30 am", imageUrl: "https://picsum.photos/seed/water5/400/500",      category: "outdoor",  createdBy: "nanny"  },
       { id: "w2", type: "milestone", content: "Climbed the full staircase unassisted for the first time — so proud at the top 🏔️", time: "3:45 pm",  category: "learning", createdBy: "nanny"  },
+      { id: "w_a1", type: "audio",  content: "The little triumph sound he made at the top — you could hear it in his whole body", duration: 13, time: "3:51 pm",  category: "learning", createdBy: "nanny" as const, imageUrl: "https://picsum.photos/seed/stairs_top/400/500" },
       { id: "w3", type: "note",      content: "Best nap of the month — 1hr 45min. Woke up glowing.",                               time: "2:15 pm",  category: "nap",      createdBy: "nanny"  },
       { id: "w4", type: "photo",     content: "Brown Bear for the fourth time today — he never gets bored of it 📖",               time: "4:00 pm",  imageUrl: "https://picsum.photos/seed/book7/400/500",       category: "learning", createdBy: "nanny"  },
       { id: "w4b", type: "photo",   content: "Puddle jumping in wellies after the water table — completely unstoppable",             time: "4:30 pm",  imageUrl: "https://picsum.photos/seed/wellies/400/500",     category: "outdoor",  createdBy: "nanny"  },
@@ -347,6 +351,7 @@ export const weeklyMoments: JournalDay[] = [
     moments: [
       { id: "sa1", type: "photo",     content: "Saturday library story time — mesmerized by the puppet show for 8 full minutes",  time: "10:00 am", imageUrl: "https://picsum.photos/seed/library15/400/500",   category: "learning", createdBy: "nanny"  },
       { id: "sa2", type: "milestone", content: "Clapped along to the song at library — first time clapping on cue! Elena nearly cried 👏", time: "10:45 am", category: "learning", createdBy: "nanny"  },
+      { id: "sa_a1", type: "audio", content: "The giggle when the puppets appeared — completely uncontrolled, pure joy", duration: 21, time: "10:28 am", category: "learning", createdBy: "nanny" as const },
       { id: "sa3", type: "note",      content: "Post-library energy was high. Great appetite at lunch — ate absolutely everything.", time: "12:00 pm", category: "meal",     createdBy: "nanny"  },
     ],
   },
@@ -378,24 +383,28 @@ export const favoriteMemories = [
 
 export interface MemoryEvent {
   id: string
-  type: "photo" | "note" | "milestone"
+  type: "photo" | "note" | "milestone" | "audio"
   content: string
   category: ActivityCategory
   date: string
   time: string
   imageUrl?: string
+  audioUrl?: string
+  duration?: number
   createdBy: "nanny" | "parent"
   isFavorite?: boolean
 }
 
 export const recentMemories: MemoryEvent[] = [
   // ── May 14 · Thursday (Today) ────────────────────────────────────────────
+  { id: "r_a1", type: "audio",   content: "He kept saying 'more' on repeat — I had to capture it before the moment passed", duration: 16, category: "learning", date: "Today",  time: "10:22 am", createdBy: "nanny" as const },
   { id: "r1",  type: "photo",     content: "First time down the big slide by himself — pure pride on his face",                                                     category: "outdoor",  date: "Today",  time: "9:47 am",  imageUrl: "https://picsum.photos/seed/baby1/400/600",        createdBy: "nanny"  },
   { id: "r2",  type: "milestone", content: "Said 'more' clearly — first functional word! 🌟",                                                                       category: "learning", date: "Today",  time: "10:15 am", createdBy: "nanny",  isFavorite: true  },
   { id: "r3",  type: "photo",     content: "12 minutes on stacking rings — serious focus face the whole time",                                                       category: "play",     date: "Today",  time: "11:20 am", imageUrl: "https://picsum.photos/seed/toddler2/400/600",      createdBy: "nanny"  },
   { id: "r4",  type: "note",      content: "Cuddly and calm before sensory bin. Very sweet mood all morning.",                                                       category: "play",     date: "Today",  time: "10:55 am", createdBy: "nanny"  },
 
   // ── May 13 · Wednesday ───────────────────────────────────────────────────
+  { id: "r_a2", type: "audio",   content: "The triumph sound at the top — you could hear it in his whole body", duration: 13, category: "learning", date: "May 13", time: "3:51 pm",  createdBy: "nanny" as const, imageUrl: "https://picsum.photos/seed/stairs_top/400/500" },
   { id: "r5",  type: "milestone", content: "Climbed the full staircase unassisted for the first time 🏔️",                                                           category: "learning", date: "May 13", time: "3:45 pm",  createdBy: "nanny",  isFavorite: true  },
   { id: "r6",  type: "photo",     content: "Water table in the backyard — completely soaked, zero regrets",                                                          category: "outdoor",  date: "May 13", time: "10:30 am", imageUrl: "https://picsum.photos/seed/water5/400/500",       createdBy: "nanny"  },
   { id: "r7",  type: "note",      content: "1hr 45min nap — best sleep of the month. Woke up glowing and immediately happy.",                                        category: "nap",      date: "May 13", time: "2:15 pm",  createdBy: "nanny"  },

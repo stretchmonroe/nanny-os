@@ -8,6 +8,7 @@ import type { JournalMoment } from "@/lib/data/demo";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 import ReactionBar from "@/components/memory/ReactionBar";
 import ReplyThread from "@/components/memory/ReplyThread";
+import AudioMoment from "@/components/memory/AudioMoment";
 
 const today = weeklyMoments[0];
 
@@ -81,40 +82,62 @@ function TapeStrip({ id }: { id: string }) {
 
 // ── PhotoHeart ────────────────────────────────────────────────────────────────
 
+const SPARKLE_OFFSETS = [
+  { x: -16, y: -14 }, { x: 0, y: -20 }, { x: 16, y: -14 },
+  { x: 18, y: 4 },    { x: 8, y: 18 },  { x: -8, y: 18 },
+  { x: -18, y: 4 },
+] as const;
+
 function PhotoHeart({ size = "md" }: { size?: "sm" | "md" }) {
   const [liked, setLiked] = useState(false);
   const [popped, setPopped] = useState(false);
+  const [burstKey, setBurstKey] = useState(0);
 
   function tap() {
-    if (!liked) { setPopped(true); setTimeout(() => setPopped(false), 600); }
+    if (!liked) {
+      setPopped(true);
+      setBurstKey((k) => k + 1);
+      setTimeout(() => setPopped(false), 650);
+    }
     setLiked((v) => !v);
   }
 
   return (
-    <motion.button
-      onClick={tap}
-      animate={popped ? { scale: [1, 1.5, 0.85, 1.1, 1] } : { scale: 1 }}
-      whileTap={{ scale: 0.85 }}
-      transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
-      className={
-        size === "sm"
-          ? "w-7 h-7 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center"
-          : "w-8 h-8 rounded-full bg-black/22 backdrop-blur-sm flex items-center justify-center"
-      }
-    >
-      <AnimatePresence mode="wait">
+    <div className="relative">
+      {popped && SPARKLE_OFFSETS.map((s, i) => (
         <motion.span
-          key={liked ? "filled" : "empty"}
-          initial={{ scale: 0.6, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.6, opacity: 0 }}
-          transition={{ duration: 0.15 }}
-          className={size === "sm" ? "text-[11px] leading-none" : "text-[14px] leading-none"}
-        >
-          {liked ? "❤️" : "🤍"}
-        </motion.span>
-      </AnimatePresence>
-    </motion.button>
+          key={`${burstKey}-${i}`}
+          initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
+          animate={{ opacity: 0, x: s.x, y: s.y, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut", delay: i * 0.02 }}
+          className="absolute top-1/2 left-1/2 w-1.5 h-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-amber-400 pointer-events-none"
+        />
+      ))}
+      <motion.button
+        onClick={tap}
+        animate={popped ? { scale: [1, 1.5, 0.85, 1.1, 1] } : { scale: 1 }}
+        whileTap={{ scale: 0.85 }}
+        transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
+        className={
+          size === "sm"
+            ? "w-7 h-7 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center"
+            : "w-8 h-8 rounded-full bg-black/22 backdrop-blur-sm flex items-center justify-center"
+        }
+      >
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={liked ? "filled" : "empty"}
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.6, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className={size === "sm" ? "text-[11px] leading-none" : "text-[14px] leading-none"}
+          >
+            {liked ? "❤️" : "🤍"}
+          </motion.span>
+        </AnimatePresence>
+      </motion.button>
+    </div>
   );
 }
 
@@ -123,30 +146,36 @@ function PhotoHeart({ size = "md" }: { size?: "sm" | "md" }) {
 function HeroPhoto({ moment }: { moment: JournalMoment }) {
   const ctx = CAT_CTX[moment.category] ?? "";
   return (
-    <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: "3/4", minHeight: 380 }}>
-      {moment.imageUrl && (
-        <Image
-          src={moment.imageUrl}
-          alt={moment.content}
-          fill priority
-          className="object-cover"
-          sizes="(max-width: 448px) 100vw, 448px"
-        />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-      <div className="absolute top-4 right-4"><PhotoHeart /></div>
-      <div className="absolute bottom-0 left-0 right-0 px-7 pb-10">
-        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2.5">
-          {moment.time}{ctx ? ` · ${ctx}` : ""}
-        </p>
-        <p className="text-[22px] font-extrabold text-white leading-snug tracking-tight mb-3.5">
-          {moment.content}
-        </p>
-        {moment.createdBy && (
-          <AuthorBadge author={moment.createdBy} light showRole={false} />
+    <>
+      <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: "3/4", minHeight: 380 }}>
+        {moment.imageUrl && (
+          <Image
+            src={moment.imageUrl}
+            alt={moment.content}
+            fill priority
+            className="object-cover"
+            sizes="(max-width: 448px) 100vw, 448px"
+          />
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+        <div className="absolute top-4 right-4"><PhotoHeart /></div>
+        <div className="absolute bottom-0 left-0 right-0 px-7 pb-10">
+          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2.5">
+            {moment.time}{ctx ? ` · ${ctx}` : ""}
+          </p>
+          <p className="text-[22px] font-extrabold text-white leading-snug tracking-tight mb-3.5">
+            {moment.content}
+          </p>
+          {moment.createdBy && (
+            <AuthorBadge author={moment.createdBy} light showRole={false} />
+          )}
+        </div>
       </div>
-    </div>
+      <div className="px-7 pt-5 pb-2 space-y-4">
+        <ReactionBar initialReactions={moment.reactions} />
+        <ReplyThread initialReplies={moment.replies} />
+      </div>
+    </>
   );
 }
 
@@ -175,7 +204,7 @@ function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
       >
         <TapeStrip id={moment.id} />
         <div
-          className="rounded-[3px] pt-3 px-3 pb-9"
+          className="rounded-[3px] pt-3 px-3 pb-4"
           style={{
             background: "#fff",
             boxShadow: "0 6px 32px rgba(0,0,0,0.13), 0 1px 4px rgba(0,0,0,0.06)",
@@ -209,8 +238,14 @@ function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
               </div>
             )}
           </div>
+          <div className="mt-3 pt-2.5 border-t border-stone-100/70">
+            <ReactionBar initialReactions={moment.reactions} />
+          </div>
         </div>
       </motion.div>
+      <div className="mt-3">
+        <ReplyThread initialReplies={moment.replies} />
+      </div>
     </div>
   );
 }
@@ -224,6 +259,7 @@ function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
   const rightMt  = 16 + (stableN(right.id) % 3) * 10;
 
   return (
+    <>
     <div className="flex items-start gap-2.5 px-3 py-5">
       {/* Left polaroid */}
       <div className="flex-1 relative mt-5">
@@ -283,6 +319,10 @@ function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
         </motion.div>
       </div>
     </div>
+    <div className="px-5 pb-4 -mt-1">
+      <ReactionBar />
+    </div>
+    </>
   );
 }
 
@@ -393,9 +433,14 @@ function MilestonePanel({ moment }: { moment: JournalMoment }) {
 
 // ── TodayJournal ──────────────────────────────────────────────────────────────
 
-export default function TodayJournal() {
-  const firstPhotoId = today.moments.find((m) => m.type === "photo")?.id;
-  const grouped = groupMoments(today.moments, firstPhotoId);
+interface TodayJournalProps {
+  extras?: JournalMoment[];
+}
+
+export default function TodayJournal({ extras = [] }: TodayJournalProps) {
+  const allMoments = [...extras, ...today.moments];
+  const firstPhotoId = allMoments.find((m) => m.type === "photo")?.id;
+  const grouped = groupMoments(allMoments, firstPhotoId);
 
   return (
     <div className="pb-8">
@@ -434,6 +479,7 @@ export default function TodayJournal() {
             {moment.type === "photo" && !isHero  && <PolaroidPhoto moment={moment} />}
             {moment.type === "milestone"          && <MilestonePanel moment={moment} />}
             {moment.type === "note"               && <NoteCard moment={moment} />}
+            {moment.type === "audio"              && <AudioMoment moment={moment} />}
           </motion.div>
         );
       })}

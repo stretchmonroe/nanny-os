@@ -7,6 +7,7 @@ import type { DailySummary, MemoryEvent } from "@/lib/data/demo";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 import ReactionBar from "@/components/memory/ReactionBar";
 import ReplyThread from "@/components/memory/ReplyThread";
+import AudioMoment from "@/components/memory/AudioMoment";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -111,27 +112,33 @@ function SummaryBanner({ summary }: { summary: DailySummary }) {
 function HeroPhoto({ moment }: { moment: MemoryEvent }) {
   const ctx = CAT_CTX[moment.category] ?? "";
   return (
-    <div className="relative w-full overflow-hidden bg-muted mb-4" style={{ aspectRatio: "3/4", minHeight: 360 }}>
-      {moment.imageUrl && (
-        <Image
-          src={moment.imageUrl}
-          alt={moment.content}
-          fill priority
-          className="object-cover"
-          sizes="(max-width: 448px) 100vw, 448px"
-        />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/25 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 px-8 pb-10">
-        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2.5">
-          {moment.time}{ctx ? ` · ${ctx}` : ""}
-        </p>
-        <p className="text-[20px] font-bold text-white leading-snug tracking-tight mb-3">
-          {moment.content}
-        </p>
-        <AuthorBadge author={moment.createdBy} time={moment.time} light />
+    <>
+      <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: "3/4", minHeight: 360 }}>
+        {moment.imageUrl && (
+          <Image
+            src={moment.imageUrl}
+            alt={moment.content}
+            fill priority
+            className="object-cover"
+            sizes="(max-width: 448px) 100vw, 448px"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/25 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-8 pb-10">
+          <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2.5">
+            {moment.time}{ctx ? ` · ${ctx}` : ""}
+          </p>
+          <p className="text-[20px] font-bold text-white leading-snug tracking-tight mb-3">
+            {moment.content}
+          </p>
+          <AuthorBadge author={moment.createdBy} time={moment.time} light />
+        </div>
       </div>
-    </div>
+      <div className="px-7 pt-5 pb-2 mb-4 space-y-4">
+        <ReactionBar />
+        <ReplyThread />
+      </div>
+    </>
   );
 }
 
@@ -157,7 +164,7 @@ function PolaroidPhoto({ moment }: { moment: MemoryEvent }) {
         <motion.div
           whileHover={{ y: -6 }}
           whileTap={{ scale: 0.97 }}
-          className="rounded-[3px] pt-3 px-3 pb-8"
+          className="rounded-[3px] pt-3 px-3 pb-4"
           style={{
             background: "#fff",
             rotate: rot,
@@ -187,7 +194,13 @@ function PolaroidPhoto({ moment }: { moment: MemoryEvent }) {
               )}
             </div>
           </div>
+          <div className="mt-3 pt-2.5 border-t border-stone-100/70">
+            <ReactionBar />
+          </div>
         </motion.div>
+      </div>
+      <div className="mt-3">
+        <ReplyThread />
       </div>
     </div>
   );
@@ -202,6 +215,7 @@ function PhotoClusterPair({ pair }: { pair: [MemoryEvent, MemoryEvent] }) {
   const rightMt  = 16 + (stableN(right.id) % 3) * 10;
 
   return (
+    <>
     <div className="flex items-start gap-2.5 px-3 py-5">
       <div className="flex-1 relative mt-5">
         <TapeStrip id={left.id} />
@@ -251,6 +265,10 @@ function PhotoClusterPair({ pair }: { pair: [MemoryEvent, MemoryEvent] }) {
         </motion.div>
       </div>
     </div>
+    <div className="px-5 pb-3 -mt-1">
+      <ReactionBar />
+    </div>
+    </>
   );
 }
 
@@ -274,7 +292,10 @@ function MilestoneMoment({ moment }: { moment: MemoryEvent }) {
         {moment.content}
       </p>
       <AuthorBadge author={moment.createdBy} time={moment.time} className="justify-center mb-6" />
-      <ReactionBar className="justify-center" />
+      <div className="flex flex-col items-center gap-4 max-w-[300px] mx-auto">
+        <ReactionBar className="justify-center" />
+        <ReplyThread className="w-full text-left" />
+      </div>
     </div>
   );
 }
@@ -374,6 +395,9 @@ export default function PastDayView({ date }: Props) {
           )}
           {render.kind === "single" && render.moment.type === "note" && (
             <NoteMoment moment={render.moment} />
+          )}
+          {render.kind === "single" && render.moment.type === "audio" && (
+            <AudioMoment moment={render.moment} />
           )}
         </motion.div>
       ))}

@@ -5,6 +5,9 @@ import Image from "next/image";
 import { Heart } from "lucide-react";
 import { favoriteMemories } from "@/lib/data/demo";
 import AuthorBadge from "@/components/ui/AuthorBadge";
+import ReactionBar from "@/components/memory/ReactionBar";
+import ReplyThread from "@/components/memory/ReplyThread";
+import MonthlyStory from "@/components/memory/MonthlyStory";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -47,6 +50,7 @@ type FavoriteItem = typeof favoriteMemories[number];
 
 function FeaturedHero({ item }: { item: FavoriteItem }) {
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
@@ -82,6 +86,11 @@ function FeaturedHero({ item }: { item: FavoriteItem }) {
         )}
       </div>
     </motion.div>
+    <div className="px-7 pt-5 pb-2 space-y-4">
+      <ReactionBar />
+      <ReplyThread />
+    </div>
+    </>
   );
 }
 
@@ -108,7 +117,7 @@ function PolaroidPhoto({ item, index }: { item: FavoriteItem; index: number }) {
         <motion.div
           whileHover={{ y: -6 }}
           whileTap={{ scale: 0.97 }}
-          className="rounded-[3px] pt-2.5 px-2.5 pb-8"
+          className="rounded-[3px] pt-2.5 px-2.5 pb-4"
           style={{
             background: "#fff",
             rotate: rot,
@@ -140,7 +149,13 @@ function PolaroidPhoto({ item, index }: { item: FavoriteItem; index: number }) {
             )}
             <p className="text-[9px] text-stone-400 mt-1 font-medium">{item.date}</p>
           </div>
+          <div className="mt-3 pt-2.5 border-t border-stone-100/70">
+            <ReactionBar />
+          </div>
         </motion.div>
+      </div>
+      <div className="mt-3">
+        <ReplyThread />
       </div>
     </motion.div>
   );
@@ -173,11 +188,15 @@ function MilestoneQuote({ item, index }: { item: FavoriteItem; index: number }) 
         <p className="text-[23px] font-extrabold text-foreground leading-snug tracking-tight mb-5 -mt-1">
           {item.content}
         </p>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 mb-5">
           <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest">
             {item.date}
           </p>
           {item.createdBy && <AuthorBadge author={item.createdBy} />}
+        </div>
+        <div className="space-y-4">
+          <ReactionBar />
+          <ReplyThread />
         </div>
       </div>
     </motion.div>
@@ -193,6 +212,9 @@ export default function FavoritesView() {
 
   return (
     <div className="pb-12 pt-2">
+
+      {/* Monthly narrative */}
+      <MonthlyStory />
 
       {/* Featured — editorial hero, no polaroid frame */}
       <FeaturedHero item={featured} />

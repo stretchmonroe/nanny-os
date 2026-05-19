@@ -46,11 +46,27 @@ export async function POST(req: Request) {
     } else if (type === "memorySearch") {
       const { memorySearchPrompt } = await import("@/lib/ai/prompts/memorySearch");
       prompt = memorySearchPrompt(input as { query: string; childName: string; childAge: string; memoryIndex: string });
+    } else if (type === "weeklyStory") {
+      const { weeklyStoryPrompt } = await import("@/lib/ai/prompts/weeklyStory");
+      prompt = weeklyStoryPrompt(input);
+    } else if (type === "monthlyStory") {
+      const { monthlyStoryPrompt } = await import("@/lib/ai/prompts/monthlyStory");
+      prompt = monthlyStoryPrompt(input);
+    } else if (type === "memoryHighlight") {
+      const { memoryHighlightPrompt } = await import("@/lib/ai/prompts/memoryHighlight");
+      prompt = memoryHighlightPrompt(input);
+    } else if (type === "developmentStory") {
+      const { developmentStoryPrompt } = await import("@/lib/ai/prompts/developmentStory");
+      prompt = developmentStoryPrompt(input);
+    } else if (type === "onThisDay") {
+      const { onThisDayPrompt } = await import("@/lib/ai/prompts/onThisDay");
+      prompt = onThisDayPrompt(input);
     } else {
       return Response.json({ error: "unknown_type" });
     }
 
-    const needsMoreTokens = type === "research" || type === "patterns" || type === "profileUpdate" || type === "memorySearch";
+    const needsMoreTokens = type === "research" || type === "patterns" || type === "profileUpdate" || type === "memorySearch"
+      || type === "weeklyStory" || type === "monthlyStory" || type === "memoryHighlight" || type === "developmentStory" || type === "onThisDay";
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",

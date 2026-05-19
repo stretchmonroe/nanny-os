@@ -12,9 +12,13 @@ import PastDayView from "@/components/memory/PastDayView";
 import PastWeekView from "@/components/memory/PastWeekView";
 import DatePicker from "@/components/memory/DatePicker";
 import PhotoUploader from "@/components/memory/PhotoUploader";
+import OnThisDay from "@/components/memory/OnThisDay";
+import DevelopmentStory from "@/components/memory/DevelopmentStory";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
+import VoiceMemorySheet from "@/components/memory/VoiceMemorySheet";
 import { supabase } from "@/lib/supabase/client";
 import type { VoiceResult } from "@/lib/voice/transcriptParser";
+import type { JournalMoment } from "@/lib/data/demo";
 import { ArrowUp } from "lucide-react";
 
 type Tab = "today" | "week" | "favorites";
@@ -119,6 +123,13 @@ function QuickWrite() {
 export default function MemoryPage() {
   const [view, setView] = useState<View>({ type: "tab", tab: "today" });
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
+  const [localMoments, setLocalMoments] = useState<JournalMoment[]>([]);
+
+  function handleAudioSave(moment: Omit<JournalMoment, "id">) {
+    const newMoment: JournalMoment = { ...moment, id: `local_${Date.now()}` };
+    setLocalMoments(prev => [newMoment, ...prev]);
+  }
 
   async function handleVoiceSave(result: VoiceResult) {
     if (result.type !== "memory") return;
@@ -167,6 +178,12 @@ export default function MemoryPage() {
 
   return (
     <div className="min-h-screen bg-surface-page">
+      <VoiceMemorySheet
+        open={voiceSheetOpen}
+        onClose={() => setVoiceSheetOpen(false)}
+        onSave={handleAudioSave}
+      />
+
       <DatePicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
@@ -199,6 +216,21 @@ export default function MemoryPage() {
           </div>
           <div className="flex items-center gap-2 mb-0.5 shrink-0">
             <VoiceRecorder context="memory" onSave={handleVoiceSave} className="w-9 h-9" />
+            {/* Voice memory recorder */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setVoiceSheetOpen(true)}
+              className="w-9 h-9 rounded-full flex items-center justify-center"
+              style={{ background: "var(--surface-raised)", border: "1.5px solid var(--border-soft)" }}
+              aria-label="Record voice memory"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <rect x="9" y="2" width="6" height="11" rx="3" fill="currentColor" className="text-foreground/60" />
+                <path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" className="text-foreground/60" strokeWidth="2" strokeLinecap="round" />
+                <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" className="text-foreground/60" strokeWidth="2" strokeLinecap="round" />
+                <line x1="8" y1="22" x2="16" y2="22" stroke="currentColor" className="text-foreground/60" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </motion.button>
             <PhotoUploader />
           </div>
         </div>
@@ -244,10 +276,16 @@ export default function MemoryPage() {
           {view.type === "tab" && view.tab === "today" && (
             <div>
               <QuickWrite />
+              <div className="mt-3">
+                <OnThisDay />
+              </div>
               <div className="pt-1">
                 <JournalSummary />
               </div>
-              <TodayJournal />
+              <div className="mt-3 mb-1">
+                <DevelopmentStory />
+              </div>
+              <TodayJournal extras={localMoments} />
             </div>
           )}
           {view.type === "tab" && view.tab === "week"      && <div className="pt-4"><WeekView /></div>}

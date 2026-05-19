@@ -1,8 +1,8 @@
-# Nanny OS
+# Ankur
 
-Shared childcare operating system for the Rivera family — Elena (nanny), Sofia and Marco (parents), Mateo (18 months).
+*Rooted in care, growing together.*
 
-A mobile-first Next.js app that gives the nanny and parents a single place to log moments, coordinate schedules, manage groceries, and surface AI-powered developmental insights about Mateo's day.
+A premium mobile-first childcare coordination app for the Rivera family — Elena (nanny), Sofia and Marco (parents), Mateo (18 months). One place to log moments, coordinate schedules, manage groceries, surface AI-powered developmental insights, and preserve the story of Mateo's days.
 
 ## Stack
 
@@ -58,28 +58,33 @@ src/
   app/
     home/         # Home screen — recommendation, activity plan, moments, timeline
     schedule/     # Day schedule with date picker
-    memory/       # Journal — Today / This Week / Favorites tabs + past day/week views
+    memory/       # Journal — Today / This Week / Cherished + past day/week views
     lists/        # Grocery list with voice input
     together/     # Parent–nanny collaboration feed
-    api/ai/       # Unified Claude handler (dailySummary, nextBestAction, activityPlan, research, profileUpdate)
+    api/ai/       # Unified Claude handler (12 prompt types)
     api/upload/   # Supabase Storage photo upload
   components/
+    brand/        # AnkurWordmark — reusable wordmark component
     layout/       # BottomNav (glass pill), GlobalFAB (expandable action tray)
-    home/         # ChildProfileHeader, RecommendationCard, ActivityPlan, TimelineFeed, MomentsCarousel
-    memory/       # TodayJournal, WeekView, FavoritesView, JournalSummary, DatePicker, PhotoUploader
-    insights/     # PatternsSection, WeeklyRecap, InsightStrip
-    profile/      # ProfileSheet (adaptive child learning profile, AI-updated)
+    home/         # ChildProfileHeader, RecommendationCard, ActivityPlan, TimelineFeed
+    memory/       # TodayJournal, WeekView, FavoritesView, JournalSummary, DatePicker,
+                  # AudioMoment, VoiceMemorySheet, WeeklyStory, MonthlyStory,
+                  # MemoryHighlight, DevelopmentStory, OnThisDay, PhotoUploader
+    onboarding/   # WelcomeSplash (Ankur brand), OnboardingFlow, ProfileComplete
+    profile/      # ProfileSheet (adaptive child learning profile + brand footer)
     shared/       # QuickCaptureSheet, ResearchSheet
-    voice/        # VoiceRecorder, VoiceButton, VoiceInputModal, VoiceOrb
+    voice/        # VoiceRecorder, VoiceButton, VoiceInputModal
     ui/           # GuidanceTag, AuthorBadge
   hooks/
     useVoiceInput.ts   # SpeechRecognition wrapper
   lib/
-    ai/           # callAI(), parseAIJson(), prompts, guidance registry
+    ai/           # callAI(), parseAIJson(), 12 prompt files, guidance registry
     data/demo.ts  # Full demo dataset — app works without Supabase
     voice/        # speechRecognition.ts, transcriptParser.ts
     adaptive-profile.ts  # localStorage-cached AI child profile
     supabase/     # client.ts, server.ts
+public/
+  ankur-wordmark.png   # Primary brand wordmark
 supabase/
   setup.sql       # Full DDL — drops + recreates all tables + RLS
   seed.ts         # 7-layer TypeScript seed runner
@@ -90,11 +95,17 @@ supabase/
 
 **Demo data first** — every screen renders immediately from `src/lib/data/demo.ts`. Supabase and Claude quietly upgrade data on success. No loading skeletons visible to the user.
 
+**AI storytelling** — five storytelling surfaces (WeeklyStory, MonthlyStory, MemoryHighlight, DevelopmentStory, OnThisDay) each render warm demo copy instantly and silently replace it when Claude responds. Prompts enforce narrative, non-clinical, human prose.
+
 **Bottom sheets** — all capture/display sheets use `fixed bottom-0` Framer Motion slide-up with `pb-28` interior padding to clear the nav pill. Safe-area insets handled via `env(safe-area-inset-bottom)`.
 
-**Global FAB** — `GlobalFAB` renders in the root layout above the nav bar. Tapping "+" expands a tray: Quick Note → QuickCaptureSheet, Add Item → QuickCaptureSheet (grocery), Voice → VoiceInputModal, Research → ResearchSheet. Accessible from every page.
+**Global FAB** — renders in the root layout above the nav bar. Tapping "+" expands a tray: Quick Note, Add Item, Voice, Research. Accessible from every page.
 
 **Trusted intelligence layer** — AI responses cite a `guidanceSource` (CDC, AAP, WHO, etc.) rendered as tappable `GuidanceTag` pills. Copy is observer-voice ("Mateo tends to…"), never prescriptive.
+
+**Warm palette** — 60/30/10 system: warm linen surfaces (`--surface-page/card/raised`), sage/trust-blue structure, terracotta-coral accents. No pure grays or default Tailwind semantics.
+
+**Ankur brand** — `AnkurWordmark` component drops in anywhere. Primary surfaces: WelcomeSplash (splash/auth), ProfileComplete (onboarding close), ProfileSheet footer (settings-adjacent), home page footer. Brand tokens (`--brand`, `--brand-amber`, `.btn-brand`) available globally.
 
 **RLS** — all tables have row-level security. Nannies can read everything, create memories/grocery items, update schedule. Parents have full write access. Cross-household isolation enforced at DB level.
 

@@ -1,4 +1,4 @@
-# Nanny OS — Progress
+# Ankur — Progress
 
 ## Stack
 - **Next.js 16.2.6** (App Router, Turbopack)
@@ -162,6 +162,42 @@
 - [x] Bottom sheet padding — all sheets (`QuickCaptureSheet`, `ResearchSheet`, `VoiceInputModal`, `ProfileSheet`, `DatePicker`, `CreateSuggestionSheet`, `PhotoUploader`) use `pb-28` to clear the nav pill; `DatePicker` calendar/week list uses `max(100px, calc(88px + env(safe-area-inset-bottom)))` for safe-area coverage
 - [x] BottomNav overflow fix — reduced item padding so all 5 tabs fit on 360px Android viewport without clipping
 
+### Premium Palette Refactor
+- [x] Warm 60/30/10 system: `--surface-page/card/raised` (warm linen / off-white / cream); ShadCN oklch tokens shifted warm
+- [x] Semantic palette: `--sage/#6A9C80` (growth/health), `--trust/#5B7FA0` (calm/AI), `--lavender/#8A7AB8` (thoughtful)
+- [x] Accent: `--accent-primary/#D4694A` (terracotta), warm text browns, no pure dashboard grays
+- [x] `@theme inline` registrations: `bg-sage`, `text-trust`, `bg-lavender-light` etc. available as Tailwind utilities
+- [x] All components migrated from violet/emerald/indigo defaults: `RecommendationCard`, `WeeklyRecap`, `GuidanceTag`, `ActivityPlan`, `ScheduleBlock`, `TimelineFeed`, `AuthorBadge`, `SwipeableRow`, `SuggestionDetailSheet`, `ChildProfileHeader`, `AICard`, `QuickActions`, `RecentMomentsGrid`, `WeeklyInsightCard`
+
+### Audio Memories (`src/components/memory/AudioMoment.tsx`, `VoiceMemorySheet.tsx`)
+- [x] `VoiceMemorySheet` — premium bottom-sheet recorder: idle → recording → review state machine; 36-bar animated waveform (deterministic maxH/minH/dur per bar); live SpeechRecognition transcript preview; optional photo attachment via file input; editable caption; playback before save; spring animation; warm backdrop blur; `onSave` emits `JournalMoment` with audio metadata
+- [x] `AudioMoment` — XOR-shift PRNG waveform seeded from moment ID (44 bars, sine envelope taper); real audio via `<audio>` + `timeupdate` or simulated playback via `setInterval`; playhead bar `scaleY` animation while playing; `PhotoStamp` polaroid overlay (deterministic rotation); transcript behind border-t; reactions/replies via type narrowing (`"reactions" in moment`)
+- [x] Audio moments seeded in `demo.ts` — 3 entries across Today/May13/May9 with realistic voice content
+- [x] Audio type renders in all journal views: `TodayJournal`, `WeekView`, `PastDayView`, `PastWeekView`
+- [x] Mic button in memory page header opens `VoiceMemorySheet`; saved moments prepend to Today feed via `localMoments` state + `extras` prop on `TodayJournal`
+- [x] `JournalMomentType` extended: `"photo" | "note" | "milestone" | "audio"`; `audioUrl?` and `duration?` on `JournalMoment` and `MemoryEvent`
+
+### AI Storytelling (`src/components/memory/` story cards)
+- [x] `WeeklyStory` — editorial narrative opener at top of week view; warm cream card, amber rule, large headline + prose; live `weeklyStory` AI call; demo: "The week he found his voice"
+- [x] `MonthlyStory` — monthly theme narrative in Cherished/Favorites tab; "MAY 2026" label, title, flowing body; live `monthlyStory` AI call; demo: "The month he started talking back"
+- [x] `MemoryHighlight` — pull-quote editorial card between days in week view; 56px amber `"` glyph, featured moment in italic, AI caption framing why it matters; live `memoryHighlight` AI call
+- [x] `DevelopmentStory` — quiet trust-light card in Today tab (between JournalSummary and journal feed); pulsing teal dot, observational growth prose without clinical language; live `developmentStory` AI call
+- [x] `OnThisDay` — past memory card above JournalSummary in Today tab; thumbnail or emoji, date chip, moment content, AI reflection connecting past to now; live `onThisDay` AI call
+- [x] 5 new prompt files in `src/lib/ai/prompts/` — each crafts warm, narrative, non-clinical prose with specific tone rules; all return JSON
+- [x] `api/ai/route.ts` — 5 new branches (`weeklyStory`, `monthlyStory`, `memoryHighlight`, `developmentStory`, `onThisDay`); all added to `needsMoreTokens` (1200 token budget)
+- [x] All story cards render compelling demo copy instantly; Claude silently replaces on success — no loading states, no spinners
+
+### Ankur Brand Identity (`src/components/brand/`, `public/ankur-wordmark.png`)
+- [x] Primary wordmark PNG (`/public/ankur-wordmark.png`) — deep teal letterforms, seedling sprout on "n", amber smile arc on "ü", tagline "rooted in care, growing together"
+- [x] `AnkurWordmark` component — Next.js `Image` wrapper; `width` prop (auto-proportioned 2.7:1); `priority` flag for above-fold use
+- [x] `WelcomeSplash` fully rebranded: Ankur wordmark hero (260px) on warm cream `#F4EFE8` matching logo background; `.btn-brand` CTA (teal gradient); pills rewritten to brand values (Rooted in care / Family collaboration / Thoughtfully intelligent / Premium experience)
+- [x] `ProfileComplete` hero: brand teal gradient card (`#2A6965 → #3D8480`) with 160px wordmark embedded; Sunny attribution icon updated from orange to teal; CTA uses `.btn-brand`
+- [x] `ProfileSheet` brand footer: full-bleed teal card at end of scrollable content — wordmark, tagline, version; primary settings-adjacent surface (accessible via child avatar on home)
+- [x] Home page: 30% opacity brand footer at scroll end (88px wordmark + tagline)
+- [x] `layout.tsx`: `title: "Ankur"`, `description: "Rooted in care, growing together"`
+- [x] CSS brand tokens: `--brand/#2A6965`, `--brand-mid/#3D8480`, `--brand-light/#E2EEEE`, `--brand-amber/#C9912B`, `--brand-amber-light/#F5EAD5` in `:root` + `@theme inline`
+- [x] `.btn-brand` global class — teal gradient, matching depth shadow, active/disabled states
+
 ---
 
 ## Known / Deferred
@@ -172,3 +208,5 @@
 - [ ] `MemoryCard.tsx` placeholder component not yet used
 - [ ] Push notifications for nanny → parent updates
 - [ ] Multi-child support
+- [ ] Settings page — brand accessible via ProfileSheet footer; dedicated `/settings` route not yet built
+- [ ] Audio playback from real recorded blobs — `VoiceMemorySheet` saves metadata; `audioUrl` plumbing to Supabase Storage pending

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, CalendarDays } from "lucide-react";
 import { NavMenuButton } from "@/components/layout/NavMenuButton";
@@ -17,7 +17,7 @@ import OnThisDay from "@/components/memory/OnThisDay";
 import DevelopmentStory from "@/components/memory/DevelopmentStory";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import VoiceMemorySheet from "@/components/memory/VoiceMemorySheet";
-import { supabase } from "@/lib/supabase/client";
+import { fetchTodayMoments, insertMoment } from "@/lib/supabase/moments";
 import type { VoiceResult } from "@/lib/voice/transcriptParser";
 import type { JournalMoment } from "@/lib/data/demo";
 import { ArrowUp } from "lucide-react";
@@ -43,7 +43,7 @@ const todayStr = new Date().toLocaleDateString("en-US", {
 
 const NOTE_EMOJIS = ["😄", "🌿", "⭐", "🎯", "🍼", "💛"];
 
-function QuickWrite() {
+function QuickWrite({ onSaved }: { onSaved: (m: JournalMoment) => void }) {
   const [text,          setText]          = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState("");
   const [saving,        setSaving]        = useState(false);
@@ -56,10 +56,8 @@ function QuickWrite() {
     if (!canSave || saving) return;
     setSaving(true);
     const content = selectedEmoji ? `${selectedEmoji} ${text.trim()}` : text.trim();
-    await supabase.from("memory_events").insert({
-      type: "note", content, child_id: "default", created_by: "parent",
-      created_at: new Date().toISOString(),
-    });
+    const moment = await insertMoment("note", content, "play", "parent");
+    onSaved(moment);
     setSaving(false);
     setSaved(true);
     navigator.vibrate?.(40);
@@ -125,23 +123,25 @@ export default function MemoryPage() {
   const [view, setView] = useState<View>({ type: "tab", tab: "today" });
   const [pickerOpen, setPickerOpen] = useState(false);
   const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
+  const [dbMoments,    setDbMoments]    = useState<JournalMoment[]>([]);
   const [localMoments, setLocalMoments] = useState<JournalMoment[]>([]);
 
+  useEffect(() => {
+    fetchTodayMoments().then(setDbMoments);
+  }, []);
+
+  function addMoment(moment: JournalMoment) {
+    setLocalMoments(prev => [moment, ...prev]);
+  }
+
   function handleAudioSave(moment: Omit<JournalMoment, "id">) {
-    const newMoment: JournalMoment = { ...moment, id: `local_${Date.now()}` };
-    setLocalMoments(prev => [newMoment, ...prev]);
+    addMoment({ ...moment, id: `local_${Date.now()}` });
   }
 
   async function handleVoiceSave(result: VoiceResult) {
     if (result.type !== "memory") return;
-    await supabase.from("memory_events").insert({
-      type:       "note",
-      content:    result.content,
-      category:   result.category,
-      child_id:   "default",
-      created_by: "nanny",
-      created_at: new Date().toISOString(),
-    });
+    const moment = await insertMoment("note", result.content, result.category ?? "play", "nanny");
+    addMoment(moment);
   }
 
   function handleSelectDay(date: string) {
@@ -279,7 +279,7 @@ export default function MemoryPage() {
         >
           {view.type === "tab" && view.tab === "today" && (
             <div>
-              <QuickWrite />
+              <QuickWrite onSaved={addMoment} />
               <div className="mt-3">
                 <OnThisDay />
               </div>
@@ -289,7 +289,7 @@ export default function MemoryPage() {
               <div className="mt-3 mb-1">
                 <DevelopmentStory />
               </div>
-              <TodayJournal extras={localMoments} />
+              <TodayJournal extras={localMoments} moments={dbMoments.length > 0 ? dbMoments : undefined} />
             </div>
           )}
           {view.type === "tab" && view.tab === "week"      && <div className="pt-4"><WeekView /></div>}

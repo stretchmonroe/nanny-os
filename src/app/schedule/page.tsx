@@ -54,6 +54,14 @@ export default function SchedulePage() {
     setSelectedDate(date === "Today" ? null : date);
   }
 
+  async function handleToggleDone(id: string) {
+    const item = items.find(i => i.id === id);
+    if (!item || isPastDay) return;
+    const newDone = !item.done;
+    setItems(prev => prev.map(i => i.id === id ? { ...i, done: newDone, active: newDone ? false : i.active } : i));
+    await supabase.from("schedule_items").update({ done: newDone, active: newDone ? false : item.active }).eq("id", id);
+  }
+
   const isPastDay = selectedDate !== null;
 
   // For past days we show the full schedule as a historical snapshot
@@ -136,7 +144,7 @@ export default function SchedulePage() {
               </p>
               <div className="space-y-2">
                 {displayItems.map((item) => (
-                  <ScheduleBlock key={item.id} item={item} />
+                  <ScheduleBlock key={item.id} item={item} onToggle={handleToggleDone} />
                 ))}
               </div>
             </section>
@@ -149,7 +157,7 @@ export default function SchedulePage() {
                   </p>
                   <div className="space-y-2">
                     {upcoming.map((item) => (
-                      <ScheduleBlock key={item.id} item={item} />
+                      <ScheduleBlock key={item.id} item={item} onToggle={handleToggleDone} />
                     ))}
                   </div>
                 </section>
@@ -161,7 +169,7 @@ export default function SchedulePage() {
                   </p>
                   <div className="space-y-2">
                     {completed.map((item) => (
-                      <ScheduleBlock key={item.id} item={item} />
+                      <ScheduleBlock key={item.id} item={item} onToggle={handleToggleDone} />
                     ))}
                   </div>
                 </section>

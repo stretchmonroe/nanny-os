@@ -33,12 +33,17 @@ export default function ListsPage() {
   async function addItem(name?: string) {
     const n = (name ?? input).trim();
     if (!n) return;
-    const newItem: Item = { id: Date.now().toString() + Math.random(), name: n, completed: false };
-    setItems(prev => [...prev, newItem]);
+    const tempId = `temp_${Date.now()}`;
+    setItems(prev => [...prev, { id: tempId, name: n, completed: false }]);
     if (!name) setInput("");
-    await supabase
+    const { data } = await supabase
       .from("grocery_items")
-      .insert({ name: n, child_id: "default", created_by: "parent" });
+      .insert({ name: n, child_id: "default", created_by: "parent" })
+      .select("id")
+      .single();
+    if (data) {
+      setItems(prev => prev.map(i => i.id === tempId ? { ...i, id: String(data.id) } : i));
+    }
   }
 
   function handleVoiceSave(result: VoiceResult) {

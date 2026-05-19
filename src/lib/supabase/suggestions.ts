@@ -79,3 +79,24 @@ export async function addSuggestionReply(
     // silent fail
   }
 }
+
+export async function updateSuggestionWorkflow(
+  id: string,
+  patch: {
+    scheduledDay?:  string
+    outcomeRating?: "great" | "noted"
+    outcomeNote?:   string
+  }
+): Promise<void> {
+  try {
+    const update: Record<string, unknown> = {}
+    if (patch.scheduledDay  !== undefined) update.scheduled_day   = patch.scheduledDay
+    if (patch.outcomeRating !== undefined) update.outcome_rating  = patch.outcomeRating
+    if (patch.outcomeNote   !== undefined) update.outcome_note    = patch.outcomeNote
+    if (Object.keys(update).length > 0) {
+      await supabase.from("suggestions").update(update).eq("id", id)
+    }
+  } catch {
+    // silent fail
+  }
+}

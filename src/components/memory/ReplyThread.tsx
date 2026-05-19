@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { addReply } from "@/lib/supabase/replies";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 import type { MomentReply } from "@/lib/data/demo";
 
@@ -11,10 +12,11 @@ const authorNames: Record<"nanny" | "parent", string> = { nanny: "Elena", parent
 
 interface Props {
   initialReplies?: MomentReply[];
+  momentId?: string;
   className?: string;
 }
 
-export default function ReplyThread({ initialReplies = [], className }: Props) {
+export default function ReplyThread({ initialReplies = [], momentId, className }: Props) {
   const [replies, setReplies] = useState<MomentReply[]>(initialReplies);
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
@@ -29,24 +31,26 @@ export default function ReplyThread({ initialReplies = [], className }: Props) {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  function submit() {
+  async function submit() {
     const trimmed = text.trim();
     if (!trimmed) return;
-    const id = `local_${Date.now()}`;
-    setReplies((prev) => [
-      ...prev,
-      {
-        id,
-        author: "nanny" as const,
-        content: trimmed,
-        time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-      },
-    ]);
-    setNewId(id);
+    const tempId = `local_${Date.now()}`;
+    const optimistic: MomentReply = {
+      id:     tempId,
+      author: "nanny" as const,
+      content: trimmed,
+      time:   new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+    };
+    setReplies((prev) => [...prev, optimistic]);
+    setNewId(tempId);
     setTimeout(() => setNewId(null), 1000);
     setText("");
     setExpanded(true);
     setOpen(false);
+    if (momentId) {
+      const saved = await addReply(momentId, trimmed, "nanny");
+      setReplies((prev) => prev.map(r => r.id === tempId ? { ...r, id: saved.id } : r));
+    }
   }
 
   return (

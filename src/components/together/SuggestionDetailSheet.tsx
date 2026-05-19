@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import AuthorBadge from "@/components/ui/AuthorBadge"
 import ReplyThread from "@/components/memory/ReplyThread"
 import AddToPlanSheet from "@/components/together/AddToPlanSheet"
-import { fetchReplies, updateSuggestionStatus } from "@/lib/supabase/suggestions"
+import { fetchReplies, updateSuggestionStatus, updateSuggestionWorkflow } from "@/lib/supabase/suggestions"
 import type { Suggestion, SuggestionReply, SuggestionStatus } from "@/lib/data/demo"
 
 const CATEGORY_CONFIG = {
@@ -75,11 +75,13 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
   function handleScheduled(day: string) {
     if (!suggestion) return
     onWorkflowUpdate?.(suggestion.id, { scheduledDay: day })
+    updateSuggestionWorkflow(suggestion.id, { scheduledDay: day })
   }
 
   function handleOutcome(rating: "great" | "noted", note?: string) {
     if (!suggestion) return
     onWorkflowUpdate?.(suggestion.id, { outcomeRating: rating, outcomeNote: note })
+    updateSuggestionWorkflow(suggestion.id, { outcomeRating: rating, outcomeNote: note })
   }
 
   if (!suggestion) return null

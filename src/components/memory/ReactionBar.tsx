@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { toggleReaction } from "@/lib/supabase/reactions";
 import type { MomentReaction } from "@/lib/data/demo";
 
 const REACTIONS = ["❤️", "🥹", "👏"] as const;
@@ -10,10 +11,11 @@ type Emoji = (typeof REACTIONS)[number];
 
 interface Props {
   initialReactions?: MomentReaction[];
+  momentId?: string;
   className?: string;
 }
 
-export default function ReactionBar({ initialReactions = [], className }: Props) {
+export default function ReactionBar({ initialReactions = [], momentId, className }: Props) {
   const [map, setMap] = useState<Record<Emoji, ("nanny" | "parent")[]>>(() => {
     const seed = {} as Record<Emoji, ("nanny" | "parent")[]>;
     REACTIONS.forEach((e) => { seed[e] = []; });
@@ -40,6 +42,7 @@ export default function ReactionBar({ initialReactions = [], className }: Props)
       setPopCount((prev) => ({ ...prev, [emoji]: prev[emoji] + 1 }));
       setTimeout(() => setPopping(null), 700);
     }
+    if (momentId) toggleReaction(momentId, emoji, "nanny");
   }
 
   const reactors = [...new Set(Object.values(map).flat())];

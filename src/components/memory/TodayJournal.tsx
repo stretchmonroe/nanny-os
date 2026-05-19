@@ -10,7 +10,7 @@ import ReactionBar from "@/components/memory/ReactionBar";
 import ReplyThread from "@/components/memory/ReplyThread";
 import AudioMoment from "@/components/memory/AudioMoment";
 
-const today = weeklyMoments[0];
+const demoDay = weeklyMoments[0];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -172,8 +172,8 @@ function HeroPhoto({ moment }: { moment: JournalMoment }) {
         </div>
       </div>
       <div className="px-7 pt-5 pb-2 space-y-4">
-        <ReactionBar initialReactions={moment.reactions} />
-        <ReplyThread initialReplies={moment.replies} />
+        <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
+        <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
       </div>
     </>
   );
@@ -239,12 +239,12 @@ function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
             )}
           </div>
           <div className="mt-3 pt-2.5 border-t border-stone-100/70">
-            <ReactionBar initialReactions={moment.reactions} />
+            <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
           </div>
         </div>
       </motion.div>
       <div className="mt-3">
-        <ReplyThread initialReplies={moment.replies} />
+        <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
       </div>
     </div>
   );
@@ -364,8 +364,8 @@ function NoteCard({ moment }: { moment: JournalMoment }) {
             <p className="text-[12px] text-muted-foreground font-semibold mb-5">{moment.time}</p>
           )}
           <div className="space-y-4">
-            <ReactionBar initialReactions={moment.reactions} />
-            <ReplyThread initialReplies={moment.replies} />
+            <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
+            <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
           </div>
         </div>
       </motion.div>
@@ -423,8 +423,8 @@ function MilestonePanel({ moment }: { moment: JournalMoment }) {
           </p>
         )}
         <div className="flex flex-col items-center gap-4 max-w-[300px] mx-auto">
-          <ReactionBar initialReactions={moment.reactions} className="justify-center" />
-          <ReplyThread initialReplies={moment.replies} className="w-full text-left" />
+          <ReactionBar initialReactions={moment.reactions} momentId={moment.id} className="justify-center" />
+          <ReplyThread initialReplies={moment.replies} momentId={moment.id} className="w-full text-left" />
         </div>
       </motion.div>
     </div>
@@ -434,11 +434,13 @@ function MilestonePanel({ moment }: { moment: JournalMoment }) {
 // ── TodayJournal ──────────────────────────────────────────────────────────────
 
 interface TodayJournalProps {
-  extras?: JournalMoment[];
+  extras?:  JournalMoment[];
+  moments?: JournalMoment[];
 }
 
-export default function TodayJournal({ extras = [] }: TodayJournalProps) {
-  const allMoments = [...extras, ...today.moments];
+export default function TodayJournal({ extras = [], moments }: TodayJournalProps) {
+  const base = moments ?? demoDay.moments;
+  const allMoments = [...extras, ...base];
   const firstPhotoId = allMoments.find((m) => m.type === "photo")?.id;
   const grouped = groupMoments(allMoments, firstPhotoId);
 

@@ -13,11 +13,12 @@ type ScheduleItem = {
   notes?: string;
 };
 
-export default function ScheduleBlock({ item }: { item: ScheduleItem }) {
+export default function ScheduleBlock({ item, onToggle }: { item: ScheduleItem; onToggle?: (id: string) => void }) {
   const config = typeConfig[item.type] ?? typeConfig.play;
 
   return (
     <motion.div
+      onClick={() => onToggle?.(item.id)}
       whileTap={!item.done ? { scale: 0.985 } : undefined}
       transition={{ type: "spring", stiffness: 420, damping: 28 }}
       className={cn(

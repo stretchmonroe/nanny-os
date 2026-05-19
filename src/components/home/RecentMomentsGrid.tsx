@@ -10,7 +10,7 @@ export default function RecentMomentsGrid() {
     <div className="mx-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-zinc-900">Recent Moments</h2>
-        <Link href="/memory" className="text-xs text-violet-500 font-medium">
+        <Link href="/memory" className="text-xs text-trust font-medium">
           See all →
         </Link>
       </div>

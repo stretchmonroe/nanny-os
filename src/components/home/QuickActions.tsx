@@ -67,7 +67,7 @@ export default function QuickActions() {
             onClick={() => setGroceryOpen(true)}
             className="flex-1 flex items-center justify-center gap-2 bg-surface-card border-soft shadow-card rounded-2xl py-4 text-[13px] font-semibold text-foreground select-none"
           >
-            <Plus size={15} className="text-violet-500 opacity-90" strokeWidth={2.5} />
+            <Plus size={15} className="text-trust opacity-90" strokeWidth={2.5} />
             Add Item
           </motion.button>
         </div>

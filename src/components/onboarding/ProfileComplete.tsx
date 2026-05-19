@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import AnkurWordmark from "@/components/brand/AnkurWordmark";
 import type { ChildProfile } from "@/lib/onboarding-flow";
 
 interface ProfileCompleteProps {
@@ -120,22 +121,34 @@ export function ProfileComplete({ profile }: ProfileCompleteProps) {
         opacity: showContent ? undefined : 0,
       }}
     >
-      {/* Hero */}
+      {/* Hero — Ankur brand teal */}
       <div
         style={{
-          background: "linear-gradient(135deg, #FF7B54 0%, #FFB085 100%)",
+          background: "linear-gradient(145deg, #2A6965 0%, #3D8480 100%)",
           borderRadius: 24,
-          padding: "28px 24px",
+          padding: "32px 24px 28px",
           textAlign: "center",
-          boxShadow: "0 8px 32px rgba(255, 123, 84, 0.25)",
+          boxShadow: "0 10px 40px rgba(42, 105, 101, 0.30)",
         }}
       >
-        <div style={{ fontSize: 56, marginBottom: 12 }}>🌟</div>
-        <h2 style={{ fontSize: 24, fontWeight: 700, color: "white", margin: "0 0 8px" }}>
-          {profile.name}&apos;s profile is ready!
+        {/* Wordmark on dark teal */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 20, opacity: 0.92 }}>
+          <AnkurWordmark width={160} priority />
+        </div>
+        <div
+          style={{
+            width: 48,
+            height: 2,
+            background: "rgba(255,255,255,0.25)",
+            borderRadius: 2,
+            margin: "0 auto 20px",
+          }}
+        />
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: "white", margin: "0 0 8px", lineHeight: 1.3 }}>
+          {profile.name}&apos;s profile is ready
         </h2>
-        <p style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", margin: 0, lineHeight: 1.5 }}>
-          Personalized activities coming your way
+        <p style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", margin: 0, lineHeight: 1.5 }}>
+          Personalized care, growing together
         </p>
       </div>
 
@@ -155,15 +168,15 @@ export function ProfileComplete({ profile }: ProfileCompleteProps) {
                 width: 32,
                 height: 32,
                 borderRadius: "50%",
-                background: "linear-gradient(135deg, #FF7B54, #FFB085)",
+                background: "linear-gradient(135deg, #2A6965, #3D8480)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 16,
+                fontSize: 15,
                 flexShrink: 0,
               }}
             >
-              ☀️
+              ✦
             </span>
             <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)" }}>
               Sunny&apos;s take
@@ -239,14 +252,14 @@ export function ProfileComplete({ profile }: ProfileCompleteProps) {
 
       {/* CTA */}
       <button
-        className="btn-primary"
+        className="btn-brand"
         style={{ marginTop: 4 }}
         onClick={() => {
           sessionStorage.setItem("nannyos_profile", JSON.stringify(profile));
           router.push("/activities");
         }}
       >
-        Start Exploring Activities →
+        Start Exploring →
       </button>
     </div>
   );

@@ -1,16 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AnkurWordmark from "@/components/brand/AnkurWordmark";
 
 interface WelcomeSplashProps {
   onEnter: () => void;
 }
 
+const PILLS = [
+  { emoji: "🌱", text: "Rooted in care" },
+  { emoji: "👨‍👩‍👧", text: "Family collaboration" },
+  { emoji: "✨", text: "Thoughtfully intelligent" },
+  { emoji: "🏡", text: "Premium experience" },
+];
+
 export function WelcomeSplash({ onEnter }: WelcomeSplashProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 50);
+    const t = setTimeout(() => setVisible(true), 60);
     return () => clearTimeout(t);
   }, []);
 
@@ -18,66 +26,24 @@ export function WelcomeSplash({ onEnter }: WelcomeSplashProps) {
     <div
       style={{
         minHeight: "100dvh",
-        background: "linear-gradient(160deg, #FFF0E8 0%, #FFF8F3 50%, #F0F5FF 100%)",
+        background: "#F4EFE8",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "40px 32px",
+        padding: "48px 28px 56px",
         maxWidth: 480,
         margin: "0 auto",
         opacity: visible ? 1 : 0,
-        transition: "opacity 0.4s ease",
+        transition: "opacity 0.45s ease",
       }}
     >
-      {/* Logo mark */}
+      {/* Wordmark — hero moment */}
       <div
         className="animate-pop-in"
-        style={{
-          width: 96,
-          height: 96,
-          borderRadius: 28,
-          background: "linear-gradient(135deg, #FF7B54, #FFB085)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 48,
-          marginBottom: 32,
-          boxShadow: "0 12px 40px rgba(255, 123, 84, 0.35)",
-        }}
+        style={{ marginBottom: 48, opacity: 0 }}
       >
-        ☀️
-      </div>
-
-      {/* Wordmark */}
-      <div style={{ textAlign: "center", marginBottom: 40 }}>
-        <h1
-          className="animate-fade-slide-up"
-          style={{
-            fontSize: 32,
-            fontWeight: 800,
-            color: "var(--text-primary)",
-            margin: "0 0 12px",
-            letterSpacing: "-0.5px",
-            opacity: 0,
-            animationDelay: "150ms",
-          }}
-        >
-          Nanny OS
-        </h1>
-        <p
-          className="animate-fade-slide-up"
-          style={{
-            fontSize: 17,
-            color: "var(--text-secondary)",
-            margin: 0,
-            lineHeight: 1.5,
-            opacity: 0,
-            animationDelay: "250ms",
-          }}
-        >
-          Personalized care, crafted<br />for your little one.
-        </p>
+        <AnkurWordmark width={260} priority />
       </div>
 
       {/* Feature pills */}
@@ -87,32 +53,28 @@ export function WelcomeSplash({ onEnter }: WelcomeSplashProps) {
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "center",
-          gap: 10,
-          marginBottom: 52,
+          gap: 8,
+          marginBottom: 56,
           opacity: 0,
-          animationDelay: "350ms",
+          animationDelay: "200ms",
         }}
       >
-        {[
-          { emoji: "🎯", text: "Tailored activities" },
-          { emoji: "🧠", text: "AI-powered" },
-          { emoji: "💛", text: "Child-centered" },
-          { emoji: "🌱", text: "Montessori-friendly" },
-        ].map(({ emoji, text }) => (
+        {PILLS.map(({ emoji, text }) => (
           <span
             key={text}
             style={{
-              background: "white",
-              border: "1.5px solid var(--border-soft)",
+              background: "rgba(255,255,255,0.72)",
+              border: "1.5px solid rgba(42,105,101,0.12)",
               borderRadius: 99,
-              padding: "7px 14px",
+              padding: "8px 16px",
               fontSize: 13,
               fontWeight: 600,
-              color: "var(--text-secondary)",
+              color: "#3D5550",
               display: "flex",
               alignItems: "center",
               gap: 6,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+              boxShadow: "0 1px 6px rgba(42,105,101,0.07)",
+              backdropFilter: "blur(8px)",
             }}
           >
             <span>{emoji}</span> {text}
@@ -123,20 +85,22 @@ export function WelcomeSplash({ onEnter }: WelcomeSplashProps) {
       {/* CTA */}
       <div
         className="animate-fade-slide-up"
-        style={{ width: "100%", opacity: 0, animationDelay: "450ms" }}
+        style={{ width: "100%", opacity: 0, animationDelay: "340ms" }}
       >
-        <button className="btn-primary" onClick={onEnter}>
-          Meet Your Little One →
+        <button className="btn-brand" onClick={onEnter}>
+          Begin your story →
         </button>
         <p
           style={{
             textAlign: "center",
             fontSize: 12,
-            color: "var(--text-light)",
+            color: "rgba(42,105,101,0.5)",
             marginTop: 14,
+            fontWeight: 500,
+            letterSpacing: "0.01em",
           }}
         >
-          Takes about 2 minutes · No account needed
+          Takes about 2 minutes · Free to start
         </p>
       </div>
     </div>

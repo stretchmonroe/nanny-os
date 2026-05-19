@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata = {
-  title: "Nanny OS",
-  description: "Shared childcare operating system",
+  title: "Ankur",
+  description: "Rooted in care, growing together",
 };
 
 export const viewport: Viewport = {

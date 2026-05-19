@@ -33,6 +33,13 @@
   --lavender:          #8A7AB8;   /* muted lavender — gentle, thoughtful */
   --lavender-light:    #EDEBF6;   /* pale lavender */
 
+  /* Ankur brand identity */
+  --brand:          #2A6965;   /* deep teal — primary wordmark color */
+  --brand-mid:      #3D8480;   /* mid teal — hover / lighter contexts */
+  --brand-light:    #E2EEEE;   /* pale teal — backgrounds */
+  --brand-amber:    #C9912B;   /* golden amber — the smile arc accent */
+  --brand-amber-light: #F5EAD5; /* pale amber */
+
   /* Accent — emotional warmth (10%) */
   --accent-primary: #D4694A;   /* terracotta-coral — warm, present, not shouting */
   --accent-soft:    #E89572;   /* peach */
@@ -192,6 +199,13 @@
   --color-trust-muted:    var(--trust-muted);
   --color-lavender:       var(--lavender);
   --color-lavender-light: var(--lavender-light);
+
+  /* Ankur brand */
+  --color-brand:               var(--brand);
+  --color-brand-mid:           var(--brand-mid);
+  --color-brand-light:         var(--brand-light);
+  --color-brand-amber:         var(--brand-amber);
+  --color-brand-amber-light:   var(--brand-amber-light);
 }
 
 /* ── Shadow & border utilities ───────────────────────────────────── */
@@ -320,6 +334,23 @@ input[type="text"]:focus { border-color: var(--accent-primary); box-shadow: 0 0 
 }
 .btn-primary:active   { transform: scale(0.98); box-shadow: 0 2px 8px rgba(212, 105, 74, 0.22); }
 .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-brand {
+  background: linear-gradient(135deg, #2A6965, #3D8480);
+  color: white;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 16px 32px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(42, 105, 101, 0.32);
+  cursor: pointer;
+  border: none;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-brand:active   { transform: scale(0.98); box-shadow: 0 2px 8px rgba(42, 105, 101, 0.24); }
+.btn-brand:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
 
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }

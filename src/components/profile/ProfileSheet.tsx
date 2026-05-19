@@ -12,6 +12,7 @@ import {
   saveAdaptiveProfile,
 } from "@/lib/adaptive-profile";
 import { EnergyRhythmMap } from "./EnergyRhythmMap";
+import AnkurWordmark from "@/components/brand/AnkurWordmark";
 import type { AdaptiveProfile } from "@/lib/adaptive-profile";
 import type { ChildProfile } from "@/lib/onboarding-flow";
 
@@ -353,12 +354,34 @@ export default function ProfileSheet({ open, onClose }: Props) {
 
                 <Divider />
 
-                {/* AI attribution footer */}
-                <p className="text-[10px] text-muted-foreground/25 text-center leading-relaxed pb-2">
+                {/* AI attribution */}
+                <p className="text-[10px] text-muted-foreground/25 text-center leading-relaxed mb-8">
                   AI · Evidence-informed · Not a clinical assessment
                   <br />
                   Profile updates as {childName}&apos;s days are logged
                 </p>
+
+                {/* Ankur brand footer — settings surface */}
+                <div
+                  className="rounded-[1.4rem] overflow-hidden mb-2"
+                  style={{
+                    background: "linear-gradient(145deg, #2A6965 0%, #3D8480 55%, #2A6965 100%)",
+                  }}
+                >
+                  <div className="px-5 py-6 flex flex-col items-center gap-3">
+                    <AnkurWordmark width={140} />
+                    <div
+                      className="h-[1px] w-12"
+                      style={{ background: "rgba(255,255,255,0.2)" }}
+                    />
+                    <p className="text-[11px] font-medium text-center" style={{ color: "rgba(255,255,255,0.55)" }}>
+                      rooted in care, growing together
+                    </p>
+                    <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+                      Version 1.0 · ankur.care
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Lightbulb, FileText, Clock, Search } from "lucide-react";
 import { aiSuggestion, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import SproutMark from "@/components/brand/SproutMark";
 import SproutSheet from "./SproutSheet";
 import SproutResearchSheet from "./SproutResearchSheet";
 import type { SproutMode } from "./SproutSheet";
@@ -52,17 +53,16 @@ export default function SproutCard() {
         <div className="px-5 pt-5 pb-5">
 
           {/* Identity row */}
-          <div className="flex items-center gap-2 mb-4">
-            <motion.span
-              className="text-[17px] leading-none select-none"
-              animate={{ rotate: [0, 5, -3, 0] }}
-              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", repeatDelay: 5 }}
-            >
-              🌱
-            </motion.span>
-            <span className="text-[10px] font-bold text-sage tracking-[0.13em] uppercase">
-              Sprout
-            </span>
+          <div className="flex items-center gap-2.5 mb-4">
+            <SproutMark size={28} priority />
+            <div className="flex flex-col justify-center">
+              <span className="text-[10px] font-bold text-sage tracking-[0.13em] uppercase leading-none">
+                Sprout
+              </span>
+              <span className="text-[8px] text-muted-foreground/30 font-medium tracking-wide leading-none mt-0.5">
+                by Ankur
+              </span>
+            </div>
             <div className="ml-auto flex items-center gap-1.5">
               <motion.div
                 className="w-1.5 h-1.5 rounded-full bg-sage"

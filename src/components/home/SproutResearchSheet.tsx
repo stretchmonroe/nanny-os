@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ArrowUp, Loader2 } from "lucide-react";
+import SproutMark from "@/components/brand/SproutMark";
 import { cn } from "@/lib/utils";
 import { callAI, parseAIJson } from "@/lib/ai/client";
 import GuidanceTag from "@/components/ui/GuidanceTag";
@@ -170,13 +171,12 @@ function AskPane({ category }: { category: Exclude<ResearchCategory, "history"> 
               exit={{ opacity: 0 }}
               className="px-5 py-12 flex flex-col items-center gap-3"
             >
-              <motion.span
-                className="text-[28px] leading-none select-none"
-                animate={{ rotate: [0, 10, -5, 0], scale: [1, 1.05, 1] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+              <motion.div
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               >
-                🌱
-              </motion.span>
+                <SproutMark size={52} />
+              </motion.div>
               <p className="text-[13px] text-muted-foreground/45 italic">
                 Thinking about Mateo…
               </p>
@@ -315,20 +315,14 @@ export default function SproutResearchSheet({ open, onClose }: Props) {
 
               {/* Header */}
               <div className="flex items-center justify-between px-5 mb-4 shrink-0">
-                <div className="flex items-center gap-2">
-                  <motion.span
-                    className="text-[18px] leading-none select-none"
-                    animate={{ rotate: [0, 5, -3, 0] }}
-                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", repeatDelay: 5 }}
-                  >
-                    🌱
-                  </motion.span>
-                  <div>
-                    <span className="text-[11px] font-bold text-sage tracking-[0.13em] uppercase">
+                <div className="flex items-center gap-2.5">
+                  <SproutMark size={30} />
+                  <div className="flex flex-col justify-center">
+                    <span className="text-[11px] font-bold text-sage tracking-[0.13em] uppercase leading-none">
                       Sprout
                     </span>
-                    <span className="text-[11px] text-muted-foreground/40 font-medium ml-1.5">
-                      · Research
+                    <span className="text-[9px] text-muted-foreground/30 font-medium tracking-wide leading-none mt-0.5">
+                      by Ankur
                     </span>
                   </div>
                 </div>

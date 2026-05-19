@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Lightbulb, FileText, Clock, Loader2 } from "lucide-react";
+import { X, Lightbulb, FileText, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { callAI, parseAIJson } from "@/lib/ai/client";
 import GuidanceTag from "@/components/ui/GuidanceTag";
+import SproutMark from "@/components/brand/SproutMark";
 import {
   aiSuggestion,
   aiJournalSummary,
@@ -78,8 +79,16 @@ function SuggestPane() {
   return (
     <div className="flex-1 overflow-y-auto px-5 pb-10">
       {loading ? (
-        <div className="flex items-center justify-center py-14">
-          <Loader2 size={18} className="animate-spin text-muted-foreground/40" />
+        <div className="flex flex-col items-center justify-center py-14 gap-3">
+          <motion.div
+            animate={{ y: [0, -3, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <SproutMark size={44} />
+          </motion.div>
+          <p className="text-[13px] text-muted-foreground/40 italic">
+            Thinking about Mateo…
+          </p>
         </div>
       ) : (
         <motion.div
@@ -183,8 +192,16 @@ function SummarizePane() {
   return (
     <div className="flex-1 overflow-y-auto px-5 pb-10">
       {loading ? (
-        <div className="flex items-center justify-center py-14">
-          <Loader2 size={18} className="animate-spin text-muted-foreground/40" />
+        <div className="flex flex-col items-center justify-center py-14 gap-3">
+          <motion.div
+            animate={{ y: [0, -3, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <SproutMark size={44} />
+          </motion.div>
+          <p className="text-[13px] text-muted-foreground/40 italic">
+            Summarising today…
+          </p>
         </div>
       ) : (
         <motion.div
@@ -298,17 +315,16 @@ export default function SproutSheet({ open, onClose, initialMode }: Props) {
 
               {/* Header */}
               <div className="flex items-center justify-between px-5 mb-4 shrink-0">
-                <div className="flex items-center gap-2">
-                  <motion.span
-                    className="text-[18px] leading-none select-none"
-                    animate={{ rotate: [0, 5, -3, 0] }}
-                    transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", repeatDelay: 5 }}
-                  >
-                    🌱
-                  </motion.span>
-                  <span className="text-[11px] font-bold text-sage tracking-[0.13em] uppercase">
-                    Sprout
-                  </span>
+                <div className="flex items-center gap-2.5">
+                  <SproutMark size={30} />
+                  <div className="flex flex-col justify-center">
+                    <span className="text-[11px] font-bold text-sage tracking-[0.13em] uppercase leading-none">
+                      Sprout
+                    </span>
+                    <span className="text-[9px] text-muted-foreground/30 font-medium tracking-wide leading-none mt-0.5">
+                      by Ankur
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={onClose}

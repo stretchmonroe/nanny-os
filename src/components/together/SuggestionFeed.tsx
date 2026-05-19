@@ -52,6 +52,11 @@ export default function SuggestionFeed({ createOpen, onCreateClose }: Props) {
     setSelected(prev => prev?.id === id ? { ...prev, status } : prev)
   }
 
+  function handleWorkflowUpdate(id: string, patch: Partial<Suggestion>) {
+    setSuggestions(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s))
+    setSelected(prev => prev?.id === id ? { ...prev, ...patch } : prev)
+  }
+
   const filtered = suggestions.filter(s => {
     if (filter === "all")     return true
     if (filter === "pending") return s.status === "pending"
@@ -118,6 +123,7 @@ export default function SuggestionFeed({ createOpen, onCreateClose }: Props) {
         open={!!selected}
         onClose={() => setSelected(null)}
         onStatusChange={handleStatusChange}
+        onWorkflowUpdate={handleWorkflowUpdate}
       />
 
       {/* Create sheet */}

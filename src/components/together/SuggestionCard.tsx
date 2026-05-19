@@ -12,7 +12,7 @@ const CATEGORY_CONFIG = {
 
 const STATUS_CONFIG = {
   pending:  { label: "Waiting for Sofia", bg: "rgba(217,119,6,0.08)",  color: "#B45309" },
-  approved: { label: "✓ Sofia approved",  bg: "rgba(16,185,129,0.10)", color: "#047857" },
+  approved: { label: "✓ Sofia approved",  bg: "var(--sage-light)",      color: "var(--sage)"   },
   rejected: { label: "Not this time",     bg: "var(--surface-page)",   color: "var(--muted-foreground)" },
 }
 
@@ -86,6 +86,30 @@ export default function SuggestionCard({ suggestion, replyCount = 0, onOpen, ind
                 </span>
               )}
             </div>
+
+            {/* Workflow stage trail */}
+            {suggestion.status === "approved" && (suggestion.scheduledDay || suggestion.outcomeRating) && (
+              <div
+                className="mt-3 pt-3 flex items-center gap-1.5"
+                style={{ borderTop: "1px solid var(--border-soft)" }}
+              >
+                {suggestion.outcomeRating ? (
+                  <span
+                    className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                    style={{ background: "var(--sage-light)", color: "var(--sage)" }}
+                  >
+                    {suggestion.outcomeRating === "great" ? "✨" : "📝"} Journalled
+                  </span>
+                ) : suggestion.scheduledDay ? (
+                  <span
+                    className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                    style={{ background: "rgba(42,105,101,0.08)", color: "#2A6965" }}
+                  >
+                    📅 {suggestion.scheduledDay}
+                  </span>
+                ) : null}
+              </div>
+            )}
           </div>
         </div>
       </motion.button>

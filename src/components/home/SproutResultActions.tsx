@@ -13,15 +13,18 @@ const CONFIGS = [
 ] as const;
 
 interface Props {
-  resetKey: string;
+  resetKey:     string;
+  onShare?():   void;
+  shareShared?: boolean;
 }
 
-export default function SproutResultActions({ resetKey }: Props) {
+export default function SproutResultActions({ resetKey, onShare, shareShared }: Props) {
   const [done, setDone] = useState<Set<string>>(new Set());
 
   useEffect(() => { setDone(new Set()); }, [resetKey]);
 
   function toggle(id: string) {
+    if (id === "share" && onShare) { onShare(); return; }
     setDone((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -35,7 +38,7 @@ export default function SproutResultActions({ resetKey }: Props) {
       style={{ borderColor: "var(--border-soft)" }}
     >
       {CONFIGS.map(({ id, icon: Icon, label, doneLabel, doneStyle }) => {
-        const active = done.has(id);
+        const active = id === "share" && shareShared !== undefined ? shareShared : done.has(id);
         return (
           <motion.button
             key={id}

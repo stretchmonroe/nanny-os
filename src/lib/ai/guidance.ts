@@ -8,7 +8,7 @@ export type GuidanceSource =
 export interface GuidanceFramework {
   label: string
   description: string
-  color: "emerald" | "sky" | "teal" | "stone"
+  color: "sage" | "sky" | "teal" | "stone"
   ageRange: string
   domains: string[]
   // Shown in expanded context — honest framing, not a legal disclaimer
@@ -20,7 +20,7 @@ export const guidanceFrameworks: Record<GuidanceSource, GuidanceFramework> = {
     label: "CDC · 15–18 mo.",
     description:
       "CDC developmental milestones describe motor, language, social, and cognitive patterns observed in most children aged 15–18 months.",
-    color: "emerald",
+    color: "sage",
     ageRange: "15–18 months",
     domains: ["motor skills", "language", "social development", "cognitive patterns"],
     disclaimer:
@@ -30,7 +30,7 @@ export const guidanceFrameworks: Record<GuidanceSource, GuidanceFramework> = {
     label: "CDC · 18–24 mo.",
     description:
       "CDC milestones for the 18–24 month window: expanding vocabulary, early problem-solving, growing independence, and pretend play.",
-    color: "emerald",
+    color: "sage",
     ageRange: "18–24 months",
     domains: ["vocabulary", "problem-solving", "independence", "pretend play"],
     disclaimer:

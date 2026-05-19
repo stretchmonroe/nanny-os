@@ -6,6 +6,7 @@ import { ChevronDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import AuthorBadge from "@/components/ui/AuthorBadge"
 import ReplyThread from "@/components/memory/ReplyThread"
+import AddToPlanSheet from "@/components/together/AddToPlanSheet"
 import { fetchReplies, updateSuggestionStatus } from "@/lib/supabase/suggestions"
 import type { Suggestion, SuggestionReply, SuggestionStatus } from "@/lib/data/demo"
 
@@ -33,16 +34,24 @@ interface Props {
   open: boolean
   onClose(): void
   onStatusChange(id: string, status: SuggestionStatus): void
+  onWorkflowUpdate?(id: string, patch: Partial<Suggestion>): void
 }
 
-export default function SuggestionDetailSheet({ suggestion, open, onClose, onStatusChange }: Props) {
-  const [expanded, setExpanded]   = useState(false)
-  const [replies,  setReplies]    = useState<SuggestionReply[]>([])
+export default function SuggestionDetailSheet({ suggestion, open, onClose, onStatusChange, onWorkflowUpdate }: Props) {
+  const [expanded,  setExpanded]  = useState(false)
+  const [replies,   setReplies]   = useState<SuggestionReply[]>([])
+  const [planOpen,  setPlanOpen]  = useState(false)
+  const [noting,    setNoting]    = useState(false)
+  const [noteText,  setNoteText]  = useState("")
+  const [skipped,   setSkipped]   = useState(false)
   const replyRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open && suggestion) {
       setExpanded(false)
+      setNoting(false)
+      setNoteText("")
+      setSkipped(false)
       fetchReplies(suggestion.id).then(setReplies)
     }
   }, [open, suggestion?.id])
@@ -63,10 +72,21 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
     replyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
   }
 
+  function handleScheduled(day: string) {
+    if (!suggestion) return
+    onWorkflowUpdate?.(suggestion.id, { scheduledDay: day })
+  }
+
+  function handleOutcome(rating: "great" | "noted", note?: string) {
+    if (!suggestion) return
+    onWorkflowUpdate?.(suggestion.id, { outcomeRating: rating, outcomeNote: note })
+  }
+
   if (!suggestion) return null
   const cat = CATEGORY_CONFIG[suggestion.type]
 
   return (
+    <>
     <AnimatePresence>
       {open && (
         <>
@@ -188,7 +208,7 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
                         whileTap={{ scale: 0.97 }}
                         onClick={handleApprove}
                         className="w-full py-3.5 rounded-2xl text-[14px] font-semibold text-left px-4 transition-all duration-150"
-                        style={{ background: "rgba(16,185,129,0.09)", color: "#047857" }}
+                        style={{ background: "var(--sage-light)", color: "var(--sage)" }}
                       >
                         Sounds great 👍
                       </motion.button>
@@ -242,6 +262,135 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
                   </div>
                 )}
 
+                {/* Workflow trail — scheduling + outcome capture */}
+                {suggestion.status === "approved" && (
+                  <div className="mb-6">
+                    {/* Not yet scheduled */}
+                    {!suggestion.scheduledDay && (
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setPlanOpen(true)}
+                        className="w-full py-3.5 rounded-2xl text-[14px] font-semibold flex items-center justify-center gap-2 transition-all"
+                        style={{ background: "linear-gradient(135deg, #2A6965, #3D8480)", color: "white" }}
+                      >
+                        Try it this week →
+                      </motion.button>
+                    )}
+
+                    {/* Scheduled, outcome not yet captured */}
+                    {suggestion.scheduledDay && !suggestion.outcomeRating && !skipped && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3 px-0.5">
+                          <span className="text-[11px] font-bold text-muted-foreground/40 uppercase tracking-wider">
+                            Scheduled for
+                          </span>
+                          <span className="text-[13px] font-bold" style={{ color: "#2A6965" }}>
+                            {suggestion.scheduledDay}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-bold text-muted-foreground/40 uppercase tracking-wider mb-2.5 px-0.5">
+                          How did it go?
+                        </p>
+                        <div className="space-y-2">
+                          <motion.button
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => handleOutcome("great")}
+                            className="w-full py-3 rounded-2xl text-[14px] font-semibold text-left px-4 transition-all"
+                            style={{ background: "rgba(90,158,128,0.10)", color: "#2A6965" }}
+                          >
+                            ✨ Went well
+                          </motion.button>
+                          <motion.button
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => setNoting(v => !v)}
+                            className="w-full py-3 rounded-2xl text-[14px] font-semibold text-left px-4 transition-all"
+                            style={{ background: "var(--surface-page)", color: "var(--foreground)" }}
+                          >
+                            📝 Worth noting
+                          </motion.button>
+                          <AnimatePresence>
+                            {noting && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
+                                className="overflow-hidden"
+                              >
+                                <div className="pt-1 space-y-2">
+                                  <textarea
+                                    value={noteText}
+                                    onChange={e => setNoteText(e.target.value)}
+                                    placeholder="What happened? What would you try differently?"
+                                    rows={3}
+                                    className="w-full rounded-2xl px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground/40 resize-none outline-none transition-all"
+                                    style={{
+                                      background: "var(--surface-raised)",
+                                      border: "1.5px solid transparent",
+                                    }}
+                                    onFocus={e => { e.currentTarget.style.borderColor = "rgba(42,105,101,0.35)" }}
+                                    onBlur={e => { e.currentTarget.style.borderColor = "transparent" }}
+                                  />
+                                  <motion.button
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={() => handleOutcome("noted", noteText || undefined)}
+                                    className="w-full py-3 rounded-2xl text-[14px] font-semibold text-white transition-all"
+                                    style={{ background: "linear-gradient(135deg, #2A6965, #3D8480)" }}
+                                  >
+                                    Save note →
+                                  </motion.button>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                          <motion.button
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => setSkipped(true)}
+                            className="w-full py-3 rounded-2xl text-[13px] font-medium text-left px-4 text-muted-foreground/50 transition-all"
+                            style={{ background: "transparent" }}
+                          >
+                            Skip for now
+                          </motion.button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Scheduled, skipped outcome */}
+                    {suggestion.scheduledDay && !suggestion.outcomeRating && skipped && (
+                      <div className="flex items-center gap-2 px-0.5">
+                        <span className="text-[11px] font-bold text-muted-foreground/40 uppercase tracking-wider">
+                          Scheduled for
+                        </span>
+                        <span className="text-[13px] font-bold" style={{ color: "#2A6965" }}>
+                          {suggestion.scheduledDay}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Outcome captured */}
+                    {suggestion.outcomeRating && (
+                      <div
+                        className="rounded-2xl px-4 py-3.5"
+                        style={{ background: "var(--sage-light)" }}
+                      >
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[12px] font-bold text-sage">
+                            {suggestion.outcomeRating === "great" ? "✨" : "📝"} Journalled
+                          </span>
+                          {suggestion.scheduledDay && (
+                            <span className="text-[11px] text-sage/60">· {suggestion.scheduledDay}</span>
+                          )}
+                        </div>
+                        {suggestion.outcomeNote && (
+                          <p className="text-[13px] text-foreground/65 italic leading-relaxed mt-0.5">
+                            &ldquo;{suggestion.outcomeNote}&rdquo;
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Reply thread */}
                 <div ref={replyRef}>
                   <ReplyThread
@@ -254,5 +403,15 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
         </>
       )}
     </AnimatePresence>
+
+    {suggestion && (
+      <AddToPlanSheet
+        suggestion={suggestion}
+        open={planOpen}
+        onClose={() => setPlanOpen(false)}
+        onScheduled={handleScheduled}
+      />
+    )}
+    </>
   )
 }

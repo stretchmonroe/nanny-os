@@ -8,7 +8,7 @@ import { guidanceFrameworks } from "@/lib/ai/guidance";
 import type { GuidanceSource } from "@/lib/ai/guidance";
 
 const colorMap = {
-  emerald: {
+  sage: {
     pill: "bg-sage-light text-sage dark:bg-sage-light/20 dark:text-sage-muted border-sage-light",
     panel: "bg-sage-light/60 dark:bg-sage-light/10 border-sage-light",
     icon: "text-sage dark:text-sage-muted",

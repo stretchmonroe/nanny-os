@@ -501,6 +501,11 @@ export interface Suggestion {
   response_note?: string
   child_id: string
   created_at: string
+  // Workflow trail
+  scheduledDay?:   string                    // "Today" | "Tomorrow" | weekday name
+  outcomeRating?:  "great" | "noted"
+  outcomeNote?:    string
+  researchBacked?: boolean                   // came from Sprout research
 }
 
 export const demoSuggestions: Suggestion[] = [

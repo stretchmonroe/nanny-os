@@ -11,6 +11,8 @@ import { isValidGuidanceSource } from "@/lib/ai/guidance";
 import type { GuidanceSource } from "@/lib/ai/guidance";
 import SproutResultActions from "./SproutResultActions";
 import MemorySearchPane from "./MemorySearchPane";
+import { createSuggestion } from "@/lib/supabase/suggestions";
+import type { SuggestionType } from "@/lib/data/demo";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -56,14 +58,51 @@ const SUGGESTIONS: Record<Exclude<ResearchCategory, "history">, string[]> = {
 
 // ── Ask pane ──────────────────────────────────────────────────────────────────
 
+const SUGGESTION_TYPES: { value: SuggestionType; emoji: string; label: string }[] = [
+  { value: "activity", emoji: "🎯", label: "Activity" },
+  { value: "food",     emoji: "🥣", label: "Food"     },
+  { value: "schedule", emoji: "🗓", label: "Schedule" },
+];
+
 function AskPane({ category }: { category: Exclude<ResearchCategory, "history"> }) {
-  const [question,  setQuestion]  = useState("");
-  const [submitted, setSubmitted] = useState("");
-  const [loading,   setLoading]   = useState(false);
-  const [result,    setResult]    = useState<ResearchResult | null>(null);
+  const [question,     setQuestion]     = useState("");
+  const [submitted,    setSubmitted]    = useState("");
+  const [loading,      setLoading]      = useState(false);
+  const [result,       setResult]       = useState<ResearchResult | null>(null);
+  const [shareOpen,    setShareOpen]    = useState(false);
+  const [shareShared,  setShareShared]  = useState(false);
+  const [shareType,    setShareType]    = useState<SuggestionType>("activity");
+  const [shareTitle,   setShareTitle]   = useState("");
+  const [shareNote,    setShareNote]    = useState("");
+  const [shareSending, setShareSending] = useState(false);
 
   const suggestions = SUGGESTIONS[category];
   const canAsk = question.trim().length > 0;
+
+  function openShare() {
+    if (!result) return;
+    setShareTitle(result.headline);
+    setShareNote("");
+    setShareType("activity");
+    setShareOpen(true);
+  }
+
+  async function submitShare() {
+    if (!result || shareSending) return;
+    setShareSending(true);
+    await createSuggestion({
+      title:          shareTitle.trim() || result.headline,
+      description:    result.answer,
+      reason:         result.ageContext || result.headline,
+      type:           shareType,
+      created_by:     "nanny",
+      child_id:       "default",
+      researchBacked: true,
+    })
+    setShareSending(false);
+    setShareOpen(false);
+    setShareShared(true);
+  }
 
   async function ask(q?: string) {
     const text = (q ?? question).trim();
@@ -72,6 +111,8 @@ function AskPane({ category }: { category: Exclude<ResearchCategory, "history"> 
     setSubmitted(text);
     setLoading(true);
     setResult(null);
+    setShareOpen(false);
+    setShareShared(false);
 
     const res = await callAI("research", {
       question:  text,
@@ -216,7 +257,7 @@ function AskPane({ category }: { category: Exclude<ResearchCategory, "history"> 
                 <GuidanceTag source={result.guidanceSource} size="xs" />
               </div>
 
-              {result.relatedTopics.length > 0 && (
+              {result.relatedTopics.length > 0 && !shareOpen && (
                 <>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-2.5">
                     Follow up
@@ -240,6 +281,102 @@ function AskPane({ category }: { category: Exclude<ResearchCategory, "history"> 
                   </div>
                 </>
               )}
+
+              {/* Inline share form */}
+              <AnimatePresence>
+                {shareOpen && (
+                  <motion.div
+                    key="share-form"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.26, ease: [0.25, 1, 0.5, 1] }}
+                    className="overflow-hidden mt-4"
+                  >
+                    <div
+                      className="rounded-2xl p-4"
+                      style={{ background: "var(--surface-raised)", border: "1.5px solid var(--border-soft)" }}
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 mb-3">
+                        Share with Sofia
+                      </p>
+
+                      {/* Type picker */}
+                      <div className="flex gap-2 mb-3">
+                        {SUGGESTION_TYPES.map(({ value, emoji, label }) => (
+                          <motion.button
+                            key={value}
+                            whileTap={{ scale: 0.91 }}
+                            onClick={() => setShareType(value)}
+                            className="flex-1 flex flex-col items-center py-2.5 rounded-xl text-[11px] font-semibold transition-all"
+                            style={{
+                              background: shareType === value ? "rgba(42,105,101,0.08)" : "var(--surface-card)",
+                              border:     `1.5px solid ${shareType === value ? "#2A6965" : "transparent"}`,
+                              color:      shareType === value ? "#2A6965" : "var(--muted-foreground)",
+                            }}
+                          >
+                            <span className="text-[15px] mb-0.5">{emoji}</span>
+                            {label}
+                          </motion.button>
+                        ))}
+                      </div>
+
+                      {/* Title */}
+                      <input
+                        value={shareTitle}
+                        onChange={e => setShareTitle(e.target.value)}
+                        placeholder="Title"
+                        className="w-full rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-foreground bg-transparent outline-none mb-2"
+                        style={{
+                          background: "var(--surface-card)",
+                          border: "1.5px solid var(--border-soft)",
+                        }}
+                        onFocus={e => { e.currentTarget.style.borderColor = "rgba(42,105,101,0.35)" }}
+                        onBlur={e => { e.currentTarget.style.borderColor = "var(--border-soft)" }}
+                      />
+
+                      {/* Context note */}
+                      <textarea
+                        value={shareNote}
+                        onChange={e => setShareNote(e.target.value)}
+                        placeholder="Add context for Sofia… (optional)"
+                        rows={2}
+                        className="w-full rounded-xl px-3.5 py-2.5 text-[13px] text-foreground/80 bg-transparent outline-none resize-none mb-3 placeholder:text-muted-foreground/35 placeholder:italic"
+                        style={{
+                          background: "var(--surface-card)",
+                          border: "1.5px solid var(--border-soft)",
+                        }}
+                        onFocus={e => { e.currentTarget.style.borderColor = "rgba(42,105,101,0.35)" }}
+                        onBlur={e => { e.currentTarget.style.borderColor = "var(--border-soft)" }}
+                      />
+
+                      <div className="flex gap-2">
+                        <motion.button
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => setShareOpen(false)}
+                          className="px-4 py-2.5 rounded-xl text-[13px] font-semibold text-muted-foreground transition-all"
+                          style={{ background: "var(--surface-card)" }}
+                        >
+                          Cancel
+                        </motion.button>
+                        <motion.button
+                          whileTap={{ scale: 0.97 }}
+                          onClick={submitShare}
+                          disabled={shareSending}
+                          className="flex-1 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all"
+                          style={{
+                            background: shareSending
+                              ? "var(--sage-muted)"
+                              : "linear-gradient(135deg, #2A6965, #3D8480)",
+                          }}
+                        >
+                          {shareSending ? "Sharing…" : "Share with Sofia →"}
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
 
@@ -255,7 +392,11 @@ function AskPane({ category }: { category: Exclude<ResearchCategory, "history"> 
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
           >
-            <SproutResultActions resetKey={submitted} />
+            <SproutResultActions
+              resetKey={submitted}
+              onShare={openShare}
+              shareShared={shareShared}
+            />
           </motion.div>
         )}
       </AnimatePresence>

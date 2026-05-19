@@ -17,7 +17,7 @@ import OnThisDay from "@/components/memory/OnThisDay";
 import DevelopmentStory from "@/components/memory/DevelopmentStory";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import VoiceMemorySheet from "@/components/memory/VoiceMemorySheet";
-import { fetchTodayMoments, insertMoment } from "@/lib/supabase/moments";
+import { fetchTodayMoments, insertMoment, updateMoment, deleteMoment } from "@/lib/supabase/moments";
 import type { VoiceResult } from "@/lib/voice/transcriptParser";
 import type { JournalMoment } from "@/lib/data/demo";
 import { ArrowUp } from "lucide-react";
@@ -134,14 +134,33 @@ export default function MemoryPage() {
     setLocalMoments(prev => [moment, ...prev]);
   }
 
-  function handleAudioSave(moment: Omit<JournalMoment, "id">) {
-    addMoment({ ...moment, id: `local_${Date.now()}` });
+  async function handleAudioSave(moment: Omit<JournalMoment, "id">) {
+    const saved = await insertMoment(
+      "note",
+      moment.content || "Voice memory",
+      moment.category ?? "play",
+      moment.createdBy ?? "nanny",
+    );
+    // Preserve audio URL for this session even though it can't be stored
+    addMoment({ ...saved, type: "audio", audioUrl: moment.audioUrl, duration: moment.duration });
   }
 
   async function handleVoiceSave(result: VoiceResult) {
     if (result.type !== "memory") return;
     const moment = await insertMoment("note", result.content, result.category ?? "play", "nanny");
     addMoment(moment);
+  }
+
+  function handleEdit(id: string, content: string) {
+    setDbMoments(prev => prev.map(m => m.id === id ? { ...m, content } : m));
+    setLocalMoments(prev => prev.map(m => m.id === id ? { ...m, content } : m));
+    updateMoment(id, content);
+  }
+
+  function handleDelete(id: string) {
+    setDbMoments(prev => prev.filter(m => m.id !== id));
+    setLocalMoments(prev => prev.filter(m => m.id !== id));
+    deleteMoment(id);
   }
 
   function handleSelectDay(date: string) {
@@ -235,7 +254,7 @@ export default function MemoryPage() {
                 <line x1="8" y1="22" x2="16" y2="22" stroke="currentColor" className="text-foreground/60" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </motion.button>
-            <PhotoUploader />
+            <PhotoUploader onSaved={addMoment} />
           </div>
         </div>
 
@@ -289,7 +308,12 @@ export default function MemoryPage() {
               <div className="mt-3 mb-1">
                 <DevelopmentStory />
               </div>
-              <TodayJournal extras={localMoments} moments={dbMoments.length > 0 ? dbMoments : undefined} />
+              <TodayJournal
+                extras={localMoments}
+                moments={dbMoments.length > 0 ? dbMoments : undefined}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             </div>
           )}
           {view.type === "tab" && view.tab === "week"      && <div className="pt-4"><WeekView /></div>}

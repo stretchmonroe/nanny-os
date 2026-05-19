@@ -3,25 +3,56 @@
 import { useMotionValue, useTransform, motion, AnimatePresence } from "framer-motion"
 import { Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 interface Props {
-  item: { id: string; name: string; completed: boolean }
+  item:        { id: string; name: string; completed: boolean }
   onToggle(id: string): void
   onDelete(id: string): void
+  onRename?(id: string, name: string): void
 }
 
-export default function SwipeableRow({ item, onToggle, onDelete }: Props) {
-  const [removed, setRemoved] = useState(false)
+export default function SwipeableRow({ item, onToggle, onDelete, onRename }: Props) {
+  const [removed,  setRemoved]  = useState(false)
+  const [editing,  setEditing]  = useState(false)
+  const [draft,    setDraft]    = useState(item.name)
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const x = useMotionValue(0)
   const deleteOpacity = useTransform(x, [-100, -60], [1, 0])
   const deleteScale   = useTransform(x, [-100, -60], [1, 0.7])
+
+  // Keep draft in sync when name changes externally
+  useEffect(() => {
+    if (!editing) setDraft(item.name)
+  }, [item.name, editing])
 
   function handleDragEnd(_: unknown, info: { offset: { x: number } }) {
     if (info.offset.x < -72) {
       setRemoved(true)
       setTimeout(() => onDelete(item.id), 280)
     }
+  }
+
+  function startEdit(e: React.MouseEvent) {
+    if (item.completed) return
+    e.stopPropagation()
+    setDraft(item.name)
+    setEditing(true)
+    setTimeout(() => {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    }, 20)
+  }
+
+  function commitEdit() {
+    const trimmed = draft.trim()
+    if (trimmed && trimmed !== item.name) {
+      onRename?.(item.id, trimmed)
+    } else {
+      setDraft(item.name)
+    }
+    setEditing(false)
   }
 
   return (
@@ -43,37 +74,62 @@ export default function SwipeableRow({ item, onToggle, onDelete }: Props) {
           </motion.div>
 
           {/* Draggable row */}
-          <motion.button
-            drag="x"
+          <motion.div
+            drag={editing ? false : "x"}
             dragConstraints={{ right: 0, left: -100 }}
             dragElastic={0.05}
             style={{ x }}
             onDragEnd={handleDragEnd}
-            onClick={() => onToggle(item.id)}
-            className="relative w-full flex items-center gap-3.5 bg-surface-card rounded-2xl px-4 py-3.5 border-soft shadow-card text-left select-none cursor-pointer"
-            whileTap={{ scale: 0.985 }}
+            className="relative w-full flex items-center gap-3.5 bg-surface-card rounded-2xl px-4 py-3.5 border-soft shadow-card select-none"
           >
-            <div
-              className={cn(
-                "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200",
-                item.completed ? "bg-sage border-sage" : "border-border"
-              )}
+            {/* Checkbox — tap to toggle */}
+            <button
+              onClick={() => onToggle(item.id)}
+              className="shrink-0 active:scale-90 transition-transform"
             >
-              {item.completed && (
-                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+              <div
+                className={cn(
+                  "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200",
+                  item.completed ? "bg-sage border-sage" : "border-border"
+                )}
+              >
+                {item.completed && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+            </button>
+
+            {/* Label — tap to edit when not completed */}
+            <div className="flex-1 min-w-0">
+              {editing ? (
+                <input
+                  ref={inputRef}
+                  value={draft}
+                  onChange={e => setDraft(e.target.value)}
+                  onBlur={commitEdit}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") { e.currentTarget.blur(); }
+                    if (e.key === "Escape") { setDraft(item.name); setEditing(false); }
+                  }}
+                  className="w-full text-[14px] font-medium text-foreground bg-transparent outline-none"
+                />
+              ) : (
+                <span
+                  onClick={!item.completed ? startEdit : undefined}
+                  className={cn(
+                    "text-[14px] font-medium block transition-all duration-200",
+                    item.completed
+                      ? "line-through text-muted-foreground/40"
+                      : "text-foreground cursor-text"
+                  )}
+                >
+                  {item.name}
+                </span>
               )}
             </div>
-            <span
-              className={cn(
-                "text-[14px] font-medium flex-1 transition-all duration-200",
-                item.completed ? "line-through text-muted-foreground/40" : "text-foreground"
-              )}
-            >
-              {item.name}
-            </span>
-          </motion.button>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

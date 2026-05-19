@@ -67,6 +67,11 @@ export default function ListsPage() {
     await supabase.from("grocery_items").delete().eq("id", id);
   }
 
+  async function renameItem(id: string, name: string) {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, name } : i));
+    await supabase.from("grocery_items").update({ name }).eq("id", id);
+  }
+
   const pending   = items.filter(i => !i.completed);
   const done      = items.filter(i => i.completed);
   const remaining = pending.length;
@@ -94,7 +99,7 @@ export default function ListsPage() {
         {!loading && (
           <>
             {pending.map(item => (
-              <SwipeableRow key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} />
+              <SwipeableRow key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} onRename={renameItem} />
             ))}
 
             {done.length > 0 && (
@@ -104,7 +109,7 @@ export default function ListsPage() {
                   Got it
                 </p>
                 {done.map(item => (
-                  <SwipeableRow key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} />
+                  <SwipeableRow key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} onRename={renameItem} />
                 ))}
               </>
             )}

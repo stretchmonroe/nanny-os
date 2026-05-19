@@ -80,6 +80,18 @@ export async function fetchTodayMoments(): Promise<JournalMoment[]> {
   }
 }
 
+export async function updateMoment(id: string, content: string): Promise<void> {
+  try {
+    await supabase.from("memory_events").update({ content }).eq("id", id)
+  } catch {}
+}
+
+export async function deleteMoment(id: string): Promise<void> {
+  try {
+    await supabase.from("memory_events").delete().eq("id", id)
+  } catch {}
+}
+
 export async function insertMoment(
   type: "note" | "photo" | "milestone",
   content: string,

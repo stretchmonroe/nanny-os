@@ -56,39 +56,49 @@ If the schema needs a full reset first:
 ```
 src/
   app/
-    home/         # Home screen — recommendation, activity plan, moments, timeline
-    schedule/     # Day schedule with date picker
-    memory/       # Journal — Today / This Week / Cherished + past day/week views
-    lists/        # Grocery list with voice input
-    together/     # Parent–nanny collaboration feed
-    api/ai/       # Unified Claude handler (12 prompt types)
-    api/upload/   # Supabase Storage photo upload
+    home/           # Home screen — recommendation, activity plan, moments, timeline
+    schedule/       # Day schedule with date picker, create/edit/delete activities
+    memory/         # Journal — Today / This Week / Cherished + past day/week views
+    lists/          # Grocery list with voice input and inline rename
+    together/       # Parent–nanny collaboration feed
+    care-circle/    # Care circle — members, pending invites, remove/resend/cancel
+    onboarding/     # Household onboarding — signup → household → child → invite
+    api/
+      ai/           # Unified Claude handler (12 prompt types)
+      upload/       # Supabase Storage photo upload
+      care-circle/  # GET members+invites; POST remove-member, cancel-invite
+      invites/      # POST lookup, accept, send
   components/
-    brand/        # AnkurWordmark — reusable wordmark component
-    layout/       # BottomNav (glass pill), GlobalFAB (expandable action tray)
-    home/         # ChildProfileHeader, RecommendationCard, ActivityPlan, TimelineFeed
-    memory/       # TodayJournal, WeekView, FavoritesView, JournalSummary, DatePicker,
-                  # AudioMoment, VoiceMemorySheet, WeeklyStory, MonthlyStory,
-                  # MemoryHighlight, DevelopmentStory, OnThisDay, PhotoUploader
-    onboarding/   # WelcomeSplash (Ankur brand), OnboardingFlow, ProfileComplete
-    profile/      # ProfileSheet (adaptive child learning profile + brand footer)
-    shared/       # QuickCaptureSheet, ResearchSheet
-    voice/        # VoiceRecorder, VoiceButton, VoiceInputModal
-    ui/           # GuidanceTag, AuthorBadge
+    brand/          # AnkurWordmark
+    layout/         # BottomNav (glass pill), GlobalFAB (expandable action tray), GlobalNav
+    home/           # ChildProfileHeader, RecommendationCard, ActivityPlan, TimelineFeed
+    memory/         # TodayJournal (edit/delete), WeekView, FavoritesView, JournalSummary,
+                    # DatePicker, AudioMoment, VoiceMemorySheet, WeeklyStory, MonthlyStory,
+                    # MemoryHighlight, DevelopmentStory, OnThisDay, PhotoUploader
+    schedule/       # ScheduleBlock (toggle/edit/delete + overflow menu)
+    lists/          # SwipeableRow (swipe-delete + inline rename)
+    onboarding/     # HouseholdFlow (parent + caregiver paths)
+    profile/        # ProfileSheet
+    shared/         # QuickCaptureSheet, ResearchSheet
+    voice/          # VoiceRecorder, VoiceButton, VoiceInputModal
+    ui/             # GuidanceTag, AuthorBadge
   hooks/
-    useVoiceInput.ts   # SpeechRecognition wrapper
+    useVoiceInput.ts
   lib/
-    ai/           # callAI(), parseAIJson(), 12 prompt files, guidance registry
-    data/demo.ts  # Full demo dataset — app works without Supabase
-    voice/        # speechRecognition.ts, transcriptParser.ts
-    adaptive-profile.ts  # localStorage-cached AI child profile
-    supabase/     # client.ts, server.ts
+    ai/             # callAI(), parseAIJson(), 12 prompt files, guidance registry
+    data/demo.ts    # Full demo dataset — app works without Supabase
+    voice/          # speechRecognition.ts, transcriptParser.ts
+    adaptive-profile.ts
+    supabase/       # client.ts, server.ts, moments.ts, reactions.ts, replies.ts,
+                    # suggestions.ts, household.ts, activityLogs.ts
 public/
-  ankur-wordmark.png   # Primary brand wordmark
+  ankur-wordmark.png
 supabase/
-  setup.sql       # Full DDL — drops + recreates all tables + RLS
-  seed.ts         # 7-layer TypeScript seed runner
-  rls.sql         # Row Level Security policies (reference)
+  setup.sql         # Full DDL — drops + recreates all tables + RLS
+  invites.sql       # household_invites table + create_household_for_user/child/invite RPCs
+  suggestions.sql   # suggestions + suggestion_replies tables
+  seed.ts           # 7-layer TypeScript seed runner
+  rls.sql           # Row Level Security policies (reference)
 ```
 
 ## Key Patterns
@@ -108,6 +118,12 @@ supabase/
 **Ankur brand** — `AnkurWordmark` component drops in anywhere. Primary surfaces: WelcomeSplash (splash/auth), ProfileComplete (onboarding close), ProfileSheet footer (settings-adjacent), home page footer. Brand tokens (`--brand`, `--brand-amber`, `.btn-brand`) available globally.
 
 **RLS** — all tables have row-level security. Nannies can read everything, create memories/grocery items, update schedule. Parents have full write access. Cross-household isolation enforced at DB level.
+
+**Full CRUD** — all user-created content (journal entries, schedule activities, grocery items, photos, voice memories) supports create, edit, and delete. Optimistic updates throughout — UI changes immediately, Supabase write in background. Edit gestures: tap note text to edit inline, tap `⋯` for overflow menu (edit/delete) on journal cards and schedule blocks, tap grocery item text for inline rename.
+
+**Household & invite system** — `HouseholdFlow` onboarding creates households + children via SECURITY DEFINER RPCs (bypasses RLS for new users). Caregivers join via email invite: parent sends invite → caregiver enters email during onboarding → `lookupInvite` (service_role bypass) finds the invite → caregiver signs up → `acceptInvite` adds them to `household_members`. All invite operations use server-side API routes with the service_role key; nothing invite-related goes through the anon client.
+
+**Care circle API** — `/api/care-circle` enriches household members with display names via `admin.auth.admin.getUserById` (N+1, acceptable at beta scale). Remove and cancel-invite actions are parent-only, validated server-side.
 
 ## Deployment
 

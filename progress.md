@@ -200,13 +200,48 @@
 
 ---
 
+### Real Supabase Persistence (`src/lib/supabase/`, `src/app/`)
+- [x] `moments.ts` — `fetchTodayMoments()` fetches today's `memory_events` + attaches reactions/replies; `insertMoment()` with optimistic fallback; `updateMoment()` and `deleteMoment()` for full CRUD
+- [x] `reactions.ts` — `toggleReaction()`: checks for existing row with `maybeSingle()`, deletes or inserts into `memory_reactions`
+- [x] `replies.ts` — `addReply()`: inserts to `threaded_replies`, returns real DB id or optimistic fallback
+- [x] `suggestions.ts` — `updateSuggestionWorkflow()` persists scheduled day + outcome rating/note to `suggestions` table
+- [x] Memory page — `dbMoments` fetched on mount; `QuickWrite` calls `insertMoment()`; voice memos call `insertMoment()`; edit calls `updateMoment()`, delete calls `deleteMoment()`; all optimistic with immediate UI update
+- [x] Schedule page — Supabase fetch on mount; toggle done persists; create item inserts to `schedule_items`; edit patches title/time/type/notes; delete removes row
+- [x] Lists page — Supabase fetch on mount; add/toggle/delete persist; optimistic ID swap on insert (temp_ → real UUID); inline rename persists via `update`
+- [x] `supabase/suggestions.sql` — `suggestions` + `suggestion_replies` tables
+
+### Household Onboarding (`src/components/onboarding/HouseholdFlow.tsx`, `src/lib/supabase/household.ts`)
+- [x] `household.ts` — `signUpUser`, `signInUser`, `createHousehold`, `createChild`, `createInvite`, `lookupInvite`, `acceptInvite`, `friendlyAuthError`
+- [x] `HouseholdFlow.tsx` — full multi-step onboarding: role picker → name → account (signup/signin) → household name → child name → child age → invite caregiver (optional) → complete; parallel caregiver path: role → join (lookup invite) → name → account → complete
+- [x] `create_household_for_user` RPC — SECURITY DEFINER; inserts household + member atomically (bypasses missing INSERT policy for new users)
+- [x] `create_child_for_household` RPC — validates membership, creates child
+- [x] `create_household_invite` RPC — validates parent role, expires old pending invites, creates new 7-day invite with `household_name` denormalized
+- [x] `supabase/invites.sql` — `household_invites` table + all three RPCs
+
+### Caregiver Invitations — Care Circle (`src/app/care-circle/`)
+- [x] `/api/care-circle` GET — validates JWT, fetches household members enriched with `admin.auth.admin.getUserById`, fetches pending invites, returns `{ members, invites, household_id, household_name, child_name, is_parent }`
+- [x] `/api/care-circle/remove-member` POST — validates caller is parent in same household; deletes nanny membership
+- [x] `/api/care-circle/cancel-invite` POST — validates parent ownership; expires invite
+- [x] `/api/invites/lookup` POST — service_role bypass; finds pending non-expired invite by email
+- [x] `/api/invites/accept` POST — upserts `household_members` with role 'nanny'; marks invite accepted
+- [x] `/api/invites/send` POST — fetches household name, expires old pending, inserts new 7-day invite
+- [x] `src/app/care-circle/page.tsx` — members list (parents + caregivers), pending invites, `InviteSheet` bottom sheet (email + optional note), optimistic remove/cancel with rollback, parent-only edit actions, empty state
+- [x] `GlobalNav.tsx` — "Care circle" and "Invite caregiver" items now route to `/care-circle`
+
+### Full User-Created Content CRUD
+- [x] **Journal entries** — `NoteCard` inline edit on tap (textarea replaces text, Done chip + autosave on blur); `⋯` overflow menu on all card types (NoteCard, HeroPhoto, PolaroidPhoto, MilestonePanel, AudioMoment) with Edit / Delete; `AnimatePresence` exit animation on delete
+- [x] **Photos** — `PhotoUploader` fires `onSaved` callback after successful upload so photo appears immediately in Today feed without reload; delete via `⋯` menu on polaroid + hero cards
+- [x] **Voice memories** — `handleAudioSave` now calls `insertMoment("note", ...)` so voice memos persist; audio blob URL preserved for session playback; transcript stored as content
+- [x] **Schedule items** — floating `+` FAB opens `EditSheet` (title, time text input, type pill picker, optional notes); `⋯` menu per block → Edit (reopens sheet pre-filled) or Remove; past-day view is read-only with no edit actions
+- [x] **Grocery items** — `SwipeableRow` split tap zones: checkbox tap = toggle, text tap = inline edit (input field replaces label, blur/Enter commits, Escape cancels); `onRename` persists via `supabase.update`; swipe-left delete unchanged
+
+---
+
 ## Known / Deferred
 
-- [ ] Real authentication (Supabase Auth) — currently `child_id: "default"` everywhere; `household_members` inserts needed after auth users created
-- [ ] Photo upload to Supabase Storage (`PhotoUploader.tsx` is wired but untested without keys)
-- [ ] `.env.local` not in repo — app runs on demo data without it
-- [ ] `MemoryCard.tsx` placeholder component not yet used
+- [ ] Audio file upload to Supabase Storage — voice blobs are session-only; transcripts persist but playback requires re-record
 - [ ] Push notifications for nanny → parent updates
 - [ ] Multi-child support
-- [ ] Settings page — brand accessible via ProfileSheet footer; dedicated `/settings` route not yet built
-- [ ] Audio playback from real recorded blobs — `VoiceMemorySheet` saves metadata; `audioUrl` plumbing to Supabase Storage pending
+- [ ] Settings page — accessible via ProfileSheet footer; dedicated `/settings` route not built
+- [ ] `MemoryCard.tsx` placeholder component not yet used
+- [ ] RLS policies for new tables (`household_invites`, `suggestions`) — currently service_role routes bypass RLS for invite operations

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { weeklyMoments } from "@/lib/data/demo";
@@ -9,6 +9,7 @@ import AuthorBadge from "@/components/ui/AuthorBadge";
 import ReactionBar from "@/components/memory/ReactionBar";
 import ReplyThread from "@/components/memory/ReplyThread";
 import AudioMoment from "@/components/memory/AudioMoment";
+import { MoreHorizontal, Pencil, Trash2, Check } from "lucide-react";
 
 const demoDay = weeklyMoments[0];
 
@@ -59,6 +60,85 @@ function groupMoments(moments: JournalMoment[], heroId: string | undefined): Mom
     }
   }
   return result;
+}
+
+// ── MomentMenu — shared overflow menu for all card types ─────────────────────
+
+interface MomentMenuProps {
+  id:         string;
+  canEdit?:   boolean;
+  onEdit?():  void;
+  onDelete?(): void;
+  light?:     boolean;
+}
+
+function MomentMenu({ id, canEdit, onEdit, onDelete, light }: MomentMenuProps) {
+  const [open, setOpen] = useState(false);
+
+  if (!onEdit && !onDelete) return null;
+
+  return (
+    <div className="relative" onClick={e => e.stopPropagation()}>
+      <motion.button
+        whileTap={{ scale: 0.85 }}
+        onClick={() => setOpen(v => !v)}
+        className="w-7 h-7 rounded-full flex items-center justify-center"
+        style={{
+          background: light ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.06)",
+          backdropFilter: light ? "blur(4px)" : "none",
+        }}
+        aria-label="More options"
+      >
+        <MoreHorizontal
+          size={13}
+          strokeWidth={1.8}
+          style={{ color: light ? "rgba(255,255,255,0.75)" : "var(--text-secondary)" }}
+        />
+      </motion.button>
+
+      <AnimatePresence>
+        {open && (
+          <>
+            <div className="fixed inset-0 z-[30]" onClick={() => setOpen(false)} />
+            <motion.div
+              key={`menu-${id}`}
+              initial={{ opacity: 0, scale: 0.88, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.88, y: -4 }}
+              transition={{ duration: 0.13 }}
+              className="absolute right-0 top-8 z-[40] rounded-2xl overflow-hidden"
+              style={{
+                background:  "var(--surface-card)",
+                border:      "1px solid var(--border-soft)",
+                boxShadow:   "var(--shadow-elevated)",
+                minWidth:    "136px",
+              }}
+            >
+              {canEdit && onEdit && (
+                <button
+                  onClick={() => { setOpen(false); onEdit(); }}
+                  className="flex items-center gap-2.5 w-full px-4 py-3 text-[13px] font-medium text-foreground/75 active:bg-muted/60"
+                  style={{ borderBottom: onDelete ? "1px solid var(--border-soft)" : "none" }}
+                >
+                  <Pencil size={12} strokeWidth={1.8} />
+                  Edit
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={() => { setOpen(false); onDelete(); }}
+                  className="flex items-center gap-2.5 w-full px-4 py-3 text-[13px] font-medium text-red-500/80 active:bg-red-50/40"
+                >
+                  <Trash2 size={12} strokeWidth={1.8} />
+                  Delete
+                </button>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 // ── TapeStrip ─────────────────────────────────────────────────────────────────
@@ -143,7 +223,12 @@ function PhotoHeart({ size = "md" }: { size?: "sm" | "md" }) {
 
 // ── HeroPhoto — cinematic day opener ─────────────────────────────────────────
 
-function HeroPhoto({ moment }: { moment: JournalMoment }) {
+interface CardProps {
+  moment:    JournalMoment;
+  onDelete?: (id: string) => void;
+}
+
+function HeroPhoto({ moment, onDelete }: CardProps) {
   const ctx = CAT_CTX[moment.category] ?? "";
   return (
     <>
@@ -158,6 +243,9 @@ function HeroPhoto({ moment }: { moment: JournalMoment }) {
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+        <div className="absolute top-4 left-4">
+          <MomentMenu id={moment.id} light onDelete={onDelete ? () => onDelete(moment.id) : undefined} />
+        </div>
         <div className="absolute top-4 right-4"><PhotoHeart /></div>
         <div className="absolute bottom-0 left-0 right-0 px-7 pb-10">
           <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2.5">
@@ -181,7 +269,7 @@ function HeroPhoto({ moment }: { moment: JournalMoment }) {
 
 // ── PolaroidPhoto — single scrapbook photo ────────────────────────────────────
 
-function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
+function PolaroidPhoto({ moment, onDelete }: CardProps) {
   const rot    = idRotation(moment.id);
   const n      = stableN(moment.id);
   const isLeft = n % 2 === 0;
@@ -225,19 +313,28 @@ function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
             )}
             <div className="absolute top-2 right-2"><PhotoHeart size="sm" /></div>
           </div>
-          <div className="mt-3 px-0.5">
-            <p className="text-[12px] text-stone-700 font-medium leading-snug">
+          <div className="mt-3 px-0.5 flex items-start gap-2">
+            <p className="text-[12px] text-stone-700 font-medium leading-snug flex-1">
               {moment.content}
             </p>
-            {moment.createdBy && (
-              <div className="mt-2 opacity-55">
-                <AuthorBadge author={moment.createdBy} time={moment.time} showRole={false} />
-                {ctx && (
-                  <p className="text-[9px] text-stone-400 italic mt-0.5 pl-8">{ctx}</p>
-                )}
-              </div>
+            {onDelete && (
+              <button
+                onClick={() => onDelete(moment.id)}
+                className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 active:scale-90"
+                style={{ background: "rgba(0,0,0,0.06)" }}
+              >
+                <Trash2 size={9} strokeWidth={2} className="text-stone-400" />
+              </button>
             )}
           </div>
+          {moment.createdBy && (
+            <div className="mt-2 opacity-55">
+              <AuthorBadge author={moment.createdBy} time={moment.time} showRole={false} />
+              {ctx && (
+                <p className="text-[9px] text-stone-400 italic mt-0.5 pl-8">{ctx}</p>
+              )}
+            </div>
+          )}
           <div className="mt-3 pt-2.5 border-t border-stone-100/70">
             <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
           </div>
@@ -252,7 +349,13 @@ function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
 
 // ── PhotoClusterPair — two photos scattered on the page ───────────────────────
 
-function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
+function PhotoClusterPair({
+  pair,
+  onDelete,
+}: {
+  pair: [JournalMoment, JournalMoment];
+  onDelete?: (id: string) => void;
+}) {
   const [left, right] = pair;
   const leftRot  = idRotation(left.id, 0.9);
   const rightRot = idRotation(right.id, 0.9);
@@ -279,9 +382,20 @@ function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
               <Image src={left.imageUrl} alt={left.content} fill className="object-cover" sizes="45vw" />
             )}
           </div>
-          <p className="text-[9px] text-stone-700 font-medium mt-2 leading-snug line-clamp-2">
-            {left.content}
-          </p>
+          <div className="flex items-start gap-1 mt-2">
+            <p className="text-[9px] text-stone-700 font-medium leading-snug line-clamp-2 flex-1">
+              {left.content}
+            </p>
+            {onDelete && (
+              <button
+                onClick={() => onDelete(left.id)}
+                className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 active:scale-90"
+                style={{ background: "rgba(0,0,0,0.06)" }}
+              >
+                <Trash2 size={7} strokeWidth={2} className="text-stone-400" />
+              </button>
+            )}
+          </div>
           {left.createdBy && (
             <div className="mt-1 opacity-40">
               <AuthorBadge author={left.createdBy} showRole={false} />
@@ -308,9 +422,20 @@ function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
               <Image src={right.imageUrl} alt={right.content} fill className="object-cover" sizes="45vw" />
             )}
           </div>
-          <p className="text-[9px] text-stone-700 font-medium mt-2 leading-snug line-clamp-2">
-            {right.content}
-          </p>
+          <div className="flex items-start gap-1 mt-2">
+            <p className="text-[9px] text-stone-700 font-medium leading-snug line-clamp-2 flex-1">
+              {right.content}
+            </p>
+            {onDelete && (
+              <button
+                onClick={() => onDelete(right.id)}
+                className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 active:scale-90"
+                style={{ background: "rgba(0,0,0,0.06)" }}
+              >
+                <Trash2 size={7} strokeWidth={2} className="text-stone-400" />
+              </button>
+            )}
+          </div>
           {right.createdBy && (
             <div className="mt-1 opacity-40">
               <AuthorBadge author={right.createdBy} showRole={false} />
@@ -326,18 +451,44 @@ function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
   );
 }
 
-// ── NoteCard — handwritten diary ──────────────────────────────────────────────
+// ── NoteCard — handwritten diary with inline edit ─────────────────────────────
 
-function NoteCard({ moment }: { moment: JournalMoment }) {
+interface NoteCardProps {
+  moment:    JournalMoment;
+  onEdit?:   (id: string, content: string) => void;
+  onDelete?: (id: string) => void;
+}
+
+function NoteCard({ moment, onEdit, onDelete }: NoteCardProps) {
   const rot = idRotation(moment.id, 0.45);
   const ctx = CAT_CTX[moment.category] ?? "";
+  const [editing,  setEditing]  = useState(false);
+  const [draft,    setDraft]    = useState(moment.content);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function startEdit() {
+    setDraft(moment.content);
+    setEditing(true);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      const len = textareaRef.current?.value.length ?? 0;
+      textareaRef.current?.setSelectionRange(len, len);
+    }, 40);
+  }
+
+  function saveEdit() {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== moment.content) {
+      onEdit?.(moment.id, trimmed);
+    }
+    setEditing(false);
+  }
 
   return (
     <div className="px-5 py-5">
       <motion.div
-        whileHover={{ y: -3 }}
-        whileTap={{ scale: 0.985 }}
-        style={{ rotate: rot }}
+        whileHover={!editing ? { y: -3 } : undefined}
+        style={{ rotate: editing ? 0 : rot, transition: "transform 0.2s" }}
       >
         <div
           className="rounded-[1.75rem] px-7 pt-7 pb-7"
@@ -347,12 +498,51 @@ function NoteCard({ moment }: { moment: JournalMoment }) {
             boxShadow: "0 4px 28px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.03)",
           }}
         >
-          <p className="text-[54px] leading-[0.68] text-amber-300 dark:text-amber-700 font-serif mb-3 select-none">
-            &ldquo;
-          </p>
-          <p className="text-[18px] font-medium text-foreground leading-[1.7] mb-5">
-            {moment.content}
-          </p>
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <p className="text-[54px] leading-[0.68] text-amber-300 dark:text-amber-700 font-serif select-none">
+              &ldquo;
+            </p>
+            <MomentMenu
+              id={moment.id}
+              canEdit={!!onEdit}
+              onEdit={onEdit ? startEdit : undefined}
+              onDelete={onDelete ? () => onDelete(moment.id) : undefined}
+            />
+          </div>
+
+          {editing ? (
+            <div className="mb-5">
+              <textarea
+                ref={textareaRef}
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                onBlur={saveEdit}
+                onKeyDown={e => {
+                  if (e.key === "Escape") { setDraft(moment.content); setEditing(false); }
+                }}
+                rows={3}
+                className="w-full resize-none text-[18px] font-medium text-foreground leading-[1.7] bg-transparent outline-none"
+                style={{ minHeight: 80 }}
+              />
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                onMouseDown={e => { e.preventDefault(); saveEdit(); }}
+                className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold"
+                style={{ background: "var(--accent-primary)", color: "#fff" }}
+              >
+                <Check size={11} strokeWidth={2.5} />
+                Done
+              </motion.button>
+            </div>
+          ) : (
+            <p
+              className="text-[18px] font-medium text-foreground leading-[1.7] mb-5 cursor-text"
+              onClick={onEdit ? startEdit : undefined}
+            >
+              {moment.content}
+            </p>
+          )}
+
           {moment.createdBy ? (
             <div className="mb-5">
               <AuthorBadge author={moment.createdBy} time={moment.time} />
@@ -375,7 +565,7 @@ function NoteCard({ moment }: { moment: JournalMoment }) {
 
 // ── MilestonePanel — editorial centrepiece ────────────────────────────────────
 
-function MilestonePanel({ moment }: { moment: JournalMoment }) {
+function MilestonePanel({ moment, onDelete }: CardProps) {
   return (
     <div className="px-6 py-14 text-center relative overflow-hidden">
       <div
@@ -384,6 +574,12 @@ function MilestonePanel({ moment }: { moment: JournalMoment }) {
           background: "radial-gradient(ellipse 70% 50% at 50% 30%, rgba(251,191,36,0.07) 0%, transparent 70%)",
         }}
       />
+      {/* Delete option */}
+      {onDelete && (
+        <div className="absolute top-4 right-4">
+          <MomentMenu id={moment.id} onDelete={() => onDelete(moment.id)} />
+        </div>
+      )}
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -434,11 +630,13 @@ function MilestonePanel({ moment }: { moment: JournalMoment }) {
 // ── TodayJournal ──────────────────────────────────────────────────────────────
 
 interface TodayJournalProps {
-  extras?:  JournalMoment[];
-  moments?: JournalMoment[];
+  extras?:   JournalMoment[];
+  moments?:  JournalMoment[];
+  onEdit?:   (id: string, content: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-export default function TodayJournal({ extras = [], moments }: TodayJournalProps) {
+export default function TodayJournal({ extras = [], moments, onEdit, onDelete }: TodayJournalProps) {
   const base = moments ?? demoDay.moments;
   const allMoments = [...extras, ...base];
   const firstPhotoId = allMoments.find((m) => m.type === "photo")?.id;
@@ -446,45 +644,60 @@ export default function TodayJournal({ extras = [], moments }: TodayJournalProps
 
   return (
     <div className="pb-8">
-      {grouped.map((render, i) => {
-        const isFirstItem = i === 0;
-        const delay = isFirstItem ? 0 : 0.05 + i * 0.08;
+      <AnimatePresence initial={false}>
+        {grouped.map((render, i) => {
+          const isFirstItem = i === 0;
+          const delay = isFirstItem ? 0 : 0.05 + i * 0.08;
 
-        if (render.kind === "cluster") {
+          if (render.kind === "cluster") {
+            return (
+              <motion.div
+                key={`cluster-${render.pair[0].id}`}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                transition={{ delay, duration: 0.65, ease: [0.25, 1, 0.5, 1] }}
+              >
+                <PhotoClusterPair pair={render.pair} onDelete={onDelete} />
+              </motion.div>
+            );
+          }
+
+          const { moment } = render;
+          const isHero = moment.type === "photo" && moment.id === firstPhotoId;
+
           return (
             <motion.div
-              key={`cluster-${render.pair[0].id}`}
-              initial={{ opacity: 0, y: 24 }}
+              key={moment.id}
+              initial={{ opacity: 0, y: isHero ? 0 : 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay, duration: 0.65, ease: [0.25, 1, 0.5, 1] }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{
+                delay,
+                duration: isHero ? 0.4 : 0.65,
+                ease: [0.25, 1, 0.5, 1],
+              }}
             >
-              <PhotoClusterPair pair={render.pair} />
+              {isHero                              && <HeroPhoto moment={moment} onDelete={onDelete} />}
+              {moment.type === "photo" && !isHero  && <PolaroidPhoto moment={moment} onDelete={onDelete} />}
+              {moment.type === "milestone"          && <MilestonePanel moment={moment} onDelete={onDelete} />}
+              {moment.type === "note"               && (
+                <NoteCard moment={moment} onEdit={onEdit} onDelete={onDelete} />
+              )}
+              {moment.type === "audio"              && (
+                <div className="relative">
+                  {onDelete && (
+                    <div className="absolute top-6 right-8 z-10">
+                      <MomentMenu id={moment.id} onDelete={() => onDelete(moment.id)} />
+                    </div>
+                  )}
+                  <AudioMoment moment={moment} />
+                </div>
+              )}
             </motion.div>
           );
-        }
-
-        const { moment } = render;
-        const isHero = moment.type === "photo" && moment.id === firstPhotoId;
-
-        return (
-          <motion.div
-            key={moment.id}
-            initial={{ opacity: 0, y: isHero ? 0 : 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              delay,
-              duration: isHero ? 0.4 : 0.65,
-              ease: [0.25, 1, 0.5, 1],
-            }}
-          >
-            {isHero                              && <HeroPhoto moment={moment} />}
-            {moment.type === "photo" && !isHero  && <PolaroidPhoto moment={moment} />}
-            {moment.type === "milestone"          && <MilestonePanel moment={moment} />}
-            {moment.type === "note"               && <NoteCard moment={moment} />}
-            {moment.type === "audio"              && <AudioMoment moment={moment} />}
-          </motion.div>
-        );
-      })}
+        })}
+      </AnimatePresence>
     </div>
   );
 }

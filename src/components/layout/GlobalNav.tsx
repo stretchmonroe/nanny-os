@@ -9,13 +9,14 @@ import {
   FileDown, Mic, Bell,
   Sparkles, CreditCard, MessageSquare, HelpCircle, Shield,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import AnkurWordmark from "@/components/brand/AnkurWordmark"
 import { child } from "@/lib/data/demo"
 import type { LucideIcon } from "lucide-react"
 
 // ── Nav data ───────────────────────────────────────────────────────────────────
 
-interface NavItem { icon: LucideIcon; label: string }
+interface NavItem { icon: LucideIcon; label: string; href?: string; event?: string }
 
 const SECTIONS: { label: string; items: NavItem[] }[] = [
   {
@@ -23,14 +24,14 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     items: [
       { icon: User,  label: "Profile"        },
       { icon: Home,  label: "Household"      },
-      { icon: Users, label: "Care circle"    },
+      { icon: Users, label: "Care circle",   href: "/care-circle" },
       { icon: Heart, label: "Child profiles" },
     ],
   },
   {
     label: "Care",
     items: [
-      { icon: UserPlus, label: "Invite caregiver"     },
+      { icon: UserPlus, label: "Invite caregiver",  href: "/care-circle" },
       { icon: Leaf,     label: "Development settings" },
       { icon: Star,     label: "Activity preferences" },
       { icon: BookOpen, label: "Research history"     },
@@ -60,6 +61,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
 
 export default function GlobalNav() {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const handler = () => setOpen(true)
@@ -132,11 +134,14 @@ export default function GlobalNav() {
                   <p className="px-5 pt-[18px] pb-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-muted-foreground/28">
                     {section.label}
                   </p>
-                  {section.items.map(({ icon: Icon, label }) => (
+                  {section.items.map(({ icon: Icon, label, href }) => (
                     <motion.button
                       key={label}
                       whileTap={{ scale: 0.97, x: 2 }}
-                      onClick={() => setOpen(false)}
+                      onClick={() => {
+                        setOpen(false)
+                        if (href) router.push(href)
+                      }}
                       className="w-full flex items-center gap-3.5 px-5 py-[10px] text-left"
                     >
                       <Icon

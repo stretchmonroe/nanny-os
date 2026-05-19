@@ -4,8 +4,13 @@ import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import { Camera, Loader2, X } from "lucide-react";
+import type { JournalMoment } from "@/lib/data/demo";
 
-export default function PhotoUploader() {
+interface Props {
+  onSaved?: (moment: JournalMoment) => void;
+}
+
+export default function PhotoUploader({ onSaved }: Props) {
   const [preview,    setPreview]    = useState<string | null>(null);
   const [file,       setFile]       = useState<File | null>(null);
   const [caption,    setCaption]    = useState("");
@@ -36,13 +41,27 @@ export default function PhotoUploader() {
       const { error } = await supabase.storage.from("photos").upload(fileName, file);
       if (error) throw error;
       const { data } = supabase.storage.from("photos").getPublicUrl(fileName);
-      await supabase.from("memory_events").insert({
+      const content = caption.trim() || "Photo";
+      const { data: insertData } = await supabase.from("memory_events").insert({
         type:       "photo",
-        content:    caption.trim() || "Photo",
+        content,
         image_url:  data.publicUrl,
         child_id:   "default",
         created_by: "nanny",
-      });
+        created_at: new Date().toISOString(),
+      }).select().single();
+      if (onSaved && insertData) {
+        const row = insertData as Record<string, unknown>;
+        onSaved({
+          id:        String(row.id),
+          type:      "photo",
+          content,
+          category:  "play",
+          imageUrl:  data.publicUrl,
+          createdBy: "nanny",
+          time:      new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+        });
+      }
       dismiss();
     } finally {
       setUploading(false);

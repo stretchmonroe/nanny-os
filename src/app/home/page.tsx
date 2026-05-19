@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ChildProfileHeader from "@/components/home/ChildProfileHeader";
-import SproutCard from "@/components/home/SproutCard";
+import SproutNotice from "@/components/home/SproutNotice";
 import ActivityPlan from "@/components/home/ActivityPlan";
 import TimelineFeed from "@/components/home/TimelineFeed";
 import MomentsCarousel from "@/components/home/MomentsCarousel";
@@ -23,10 +23,10 @@ export default function HomePage() {
       />
 
       {/* Intentional spacing rhythm — not uniform */}
-      <div className="pt-2 pb-12">
-        <SproutCard />
+      <div className="pt-3 pb-12">
+        <SproutNotice />
 
-        <div className="mt-6">
+        <div className="mt-5">
           <ActivityPlan focus={focus} />
         </div>
 

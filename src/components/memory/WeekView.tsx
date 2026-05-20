@@ -1,10 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { weeklyMoments } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
+import { fetchWeekMoments } from "@/lib/supabase/moments";
+import type { WeekDayGroup } from "@/lib/supabase/moments";
+import type { JournalMoment } from "@/lib/data/demo";
 import WeeklyRecap from "./WeeklyRecap";
 import WeeklyStory from "./WeeklyStory";
 import MemoryHighlight from "./MemoryHighlight";
@@ -12,7 +14,6 @@ import AuthorBadge from "@/components/ui/AuthorBadge";
 import ReactionBar from "@/components/memory/ReactionBar";
 import ReplyThread from "@/components/memory/ReplyThread";
 import AudioMoment from "@/components/memory/AudioMoment";
-import type { JournalMoment } from "@/lib/data/demo";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -82,7 +83,7 @@ function TapeStrip({ id }: { id: string }) {
   );
 }
 
-// ── PageDivider — scrapbook page turn ─────────────────────────────────────────
+// ── PageDivider ───────────────────────────────────────────────────────────────
 
 function PageDivider() {
   return (
@@ -100,7 +101,7 @@ function PageDivider() {
   );
 }
 
-// ── DayHeroPhoto — opening frame of each day ──────────────────────────────────
+// ── DayHeroPhoto ──────────────────────────────────────────────────────────────
 
 function DayHeroPhoto({ moment }: { moment: JournalMoment }) {
   const ctx = CAT_CTX[moment.category] ?? "";
@@ -134,14 +135,14 @@ function DayHeroPhoto({ moment }: { moment: JournalMoment }) {
         </div>
       </motion.div>
       <div className="px-6 pt-4 pb-2 space-y-4">
-        <ReactionBar initialReactions={moment.reactions} />
-        <ReplyThread initialReplies={moment.replies} />
+        <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
+        <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
       </div>
     </>
   );
 }
 
-// ── PolaroidPhoto — scrapbook secondaries ─────────────────────────────────────
+// ── PolaroidPhoto ─────────────────────────────────────────────────────────────
 
 function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
   const rot    = idRotation(moment.id);
@@ -198,18 +199,18 @@ function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
             )}
           </div>
           <div className="mt-3 pt-2.5 border-t border-stone-100/70">
-            <ReactionBar initialReactions={moment.reactions} />
+            <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
           </div>
         </motion.div>
       </div>
       <div className="mt-3">
-        <ReplyThread initialReplies={moment.replies} />
+        <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
       </div>
     </div>
   );
 }
 
-// ── PhotoClusterPair — two photos scattered on the page ───────────────────────
+// ── PhotoClusterPair ──────────────────────────────────────────────────────────
 
 function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
   const [left, right] = pair;
@@ -220,7 +221,6 @@ function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
   return (
     <>
     <div className="flex items-start gap-2.5 px-3 py-4">
-      {/* Left polaroid */}
       <div className="flex-1 relative mt-5">
         <TapeStrip id={left.id} />
         <motion.div
@@ -247,7 +247,6 @@ function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
         </motion.div>
       </div>
 
-      {/* Right polaroid — staggered lower */}
       <div className="flex-1 relative" style={{ marginTop: rightMt }}>
         <TapeStrip id={right.id} />
         <motion.div
@@ -281,7 +280,7 @@ function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
   );
 }
 
-// ── MilestoneMoment — ceremonial centrepiece ──────────────────────────────────
+// ── MilestoneMoment ───────────────────────────────────────────────────────────
 
 function MilestoneMoment({ moment }: { moment: JournalMoment }) {
   return (
@@ -308,14 +307,14 @@ function MilestoneMoment({ moment }: { moment: JournalMoment }) {
         </p>
       )}
       <div className="flex flex-col items-center gap-4 max-w-[300px] mx-auto">
-        <ReactionBar initialReactions={moment.reactions} className="justify-center" />
-        <ReplyThread initialReplies={moment.replies} className="w-full text-left" />
+        <ReactionBar initialReactions={moment.reactions} momentId={moment.id} className="justify-center" />
+        <ReplyThread initialReplies={moment.replies} momentId={moment.id} className="w-full text-left" />
       </div>
     </div>
   );
 }
 
-// ── NoteMoment — paper diary ──────────────────────────────────────────────────
+// ── NoteMoment ────────────────────────────────────────────────────────────────
 
 function NoteMoment({ moment }: { moment: JournalMoment }) {
   const rot = idRotation(moment.id, 0.4);
@@ -352,8 +351,8 @@ function NoteMoment({ moment }: { moment: JournalMoment }) {
             <p className="text-[11px] text-muted-foreground font-semibold mb-4">{moment.time}</p>
           )}
           <div className="space-y-3">
-            <ReactionBar initialReactions={moment.reactions} />
-            <ReplyThread initialReplies={moment.replies} />
+            <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
+            <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
           </div>
         </div>
       </motion.div>
@@ -364,20 +363,64 @@ function NoteMoment({ moment }: { moment: JournalMoment }) {
 // ── WeekView ──────────────────────────────────────────────────────────────────
 
 export default function WeekView() {
+  const [days,    setDays]    = useState<WeekDayGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchWeekMoments().then((result) => {
+      setDays(result);
+      setLoading(false);
+    });
+  }, []);
+
+  const allMoments = days.flatMap((d) => d.moments);
+
+  if (loading) {
+    return (
+      <div className="pb-8 pt-4 space-y-4">
+        <div className="px-4 mb-8 space-y-4">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-20 rounded-2xl bg-muted/50 animate-pulse"
+              style={{ opacity: 1 - i * 0.25 }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const narrativeSection = (
+    <div className="pb-8">
+      <div className="mb-6"><WeeklyStory /></div>
+      <div className="px-4 mb-10"><WeeklyRecap /></div>
+    </div>
+  );
+
+  if (days.length === 0) {
+    return (
+      <div>
+        {narrativeSection}
+        <div className="flex flex-col items-center justify-center px-8 py-16 text-center">
+          <p className="text-[36px] mb-3 select-none leading-none">📖</p>
+          <p className="text-[15px] font-semibold text-foreground/55 mb-1.5">No moments logged this week</p>
+          <p className="text-[13px] text-muted-foreground/40 leading-snug max-w-[220px]">
+            Start adding notes, photos, and milestones from the Today tab
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="pb-8">
-      {/* Narrative story */}
-      <div className="mb-6">
-        <WeeklyStory />
-      </div>
-
-      {/* Factual observations */}
-      <div className="px-4 mb-10">
-        <WeeklyRecap />
-      </div>
+      <div className="mb-6"><WeeklyStory /></div>
+      <div className="px-4 mb-10"><WeeklyRecap /></div>
 
       <div className="space-y-10">
-        {weeklyMoments.map((dayData, dayIndex) => {
+        {days.map((dayData, dayIndex) => {
           const firstPhotoId   = dayData.moments.find((m) => m.type === "photo")?.id;
           const milestoneCount = dayData.moments.filter((m) => m.type === "milestone").length;
           const momentCount    = dayData.moments.length;
@@ -393,10 +436,8 @@ export default function WeekView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: dayIndex * 0.06, duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
             >
-              {/* Page divider between days */}
               {dayIndex > 0 && <PageDivider />}
 
-              {/* Editorial day header */}
               <div className="flex items-end justify-between mb-4 px-5 mt-2">
                 <div>
                   <p className={cn(
@@ -420,7 +461,6 @@ export default function WeekView() {
                 )}
               </div>
 
-              {/* Moments */}
               <div>
                 {grouped.map((render, ri) => {
                   if (render.kind === "cluster") {
@@ -451,10 +491,9 @@ export default function WeekView() {
               </div>
             </motion.div>
 
-            {/* Memory highlight — between day 0 (Thursday) and the rest */}
-            {dayIndex === 0 && (
+            {dayIndex === 0 && allMoments.length > 0 && (
               <div className="pt-2 pb-4">
-                <MemoryHighlight />
+                <MemoryHighlight moments={allMoments} />
               </div>
             )}
             </React.Fragment>

@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { recentMemories, dailySummaries } from "@/lib/data/demo";
-import type { DailySummary, MemoryEvent } from "@/lib/data/demo";
+import { fetchDayMoments } from "@/lib/supabase/moments";
+import type { JournalMoment } from "@/lib/data/demo";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 import ReactionBar from "@/components/memory/ReactionBar";
 import ReplyThread from "@/components/memory/ReplyThread";
@@ -36,10 +37,10 @@ const CAT_CTX: Record<string, string> = {
 // ── Grouping ──────────────────────────────────────────────────────────────────
 
 type MomentRender =
-  | { kind: "single"; moment: MemoryEvent }
-  | { kind: "cluster"; pair: [MemoryEvent, MemoryEvent] };
+  | { kind: "single"; moment: JournalMoment }
+  | { kind: "cluster"; pair: [JournalMoment, JournalMoment] };
 
-function groupMoments(moments: MemoryEvent[], heroId: string | undefined): MomentRender[] {
+function groupMoments(moments: JournalMoment[], heroId: string | undefined): MomentRender[] {
   const result: MomentRender[] = [];
   let i = 0;
   while (i < moments.length) {
@@ -77,39 +78,9 @@ function TapeStrip({ id }: { id: string }) {
   );
 }
 
-// ── SummaryBanner — dark editorial card ───────────────────────────────────────
-
-function SummaryBanner({ summary }: { summary: DailySummary }) {
-  return (
-    <div className="mx-4 mb-6 rounded-[1.5rem] bg-stone-900 dark:bg-stone-950 overflow-hidden">
-      <div className="px-6 pt-7 pb-7">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-white/30 mb-3">
-          {summary.dateLabel}
-        </p>
-        <h2 className="text-[22px] font-extrabold text-white leading-tight mb-3">
-          {summary.headline}
-        </h2>
-        <p className="text-[14px] text-white/55 leading-[1.65]">{summary.summary}</p>
-        {summary.highlights.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-5">
-            {summary.highlights.map((h) => (
-              <span
-                key={h}
-                className="text-[12px] text-white/60 bg-white/8 px-3 py-1.5 rounded-full border border-white/10"
-              >
-                {h}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ── HeroPhoto — cinematic full-bleed opener ───────────────────────────────────
 
-function HeroPhoto({ moment }: { moment: MemoryEvent }) {
+function HeroPhoto({ moment }: { moment: JournalMoment }) {
   const ctx = CAT_CTX[moment.category] ?? "";
   return (
     <>
@@ -131,20 +102,22 @@ function HeroPhoto({ moment }: { moment: MemoryEvent }) {
           <p className="text-[20px] font-bold text-white leading-snug tracking-tight mb-3">
             {moment.content}
           </p>
-          <AuthorBadge author={moment.createdBy} time={moment.time} light />
+          {moment.createdBy && (
+            <AuthorBadge author={moment.createdBy} time={moment.time} light />
+          )}
         </div>
       </div>
       <div className="px-7 pt-5 pb-2 mb-4 space-y-4">
-        <ReactionBar />
-        <ReplyThread />
+        <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
+        <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
       </div>
     </>
   );
 }
 
-// ── PolaroidPhoto — scrapbook secondary ──────────────────────────────────────
+// ── PolaroidPhoto ─────────────────────────────────────────────────────────────
 
-function PolaroidPhoto({ moment }: { moment: MemoryEvent }) {
+function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
   const rot    = idRotation(moment.id);
   const n      = stableN(moment.id);
   const isLeft = n % 2 === 0;
@@ -153,22 +126,22 @@ function PolaroidPhoto({ moment }: { moment: MemoryEvent }) {
 
   return (
     <div
-      className="py-4"
+      className="py-3"
       style={{
-        paddingLeft:  isLeft ? "18px" : "46px",
-        paddingRight: isLeft ? "46px" : "18px",
+        paddingLeft:  isLeft ? "16px" : "46px",
+        paddingRight: isLeft ? "46px" : "16px",
       }}
     >
       <div className="relative mt-4">
         <TapeStrip id={moment.id} />
         <motion.div
-          whileHover={{ y: -6 }}
+          whileHover={{ y: -5 }}
           whileTap={{ scale: 0.97 }}
           className="rounded-[3px] pt-3 px-3 pb-4"
           style={{
             background: "#fff",
             rotate: rot,
-            boxShadow: "0 6px 28px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.05)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.11), 0 1px 3px rgba(0,0,0,0.05)",
           }}
         >
           <div
@@ -181,34 +154,36 @@ function PolaroidPhoto({ moment }: { moment: MemoryEvent }) {
                 alt={moment.content}
                 fill
                 className="object-cover"
-                sizes="(max-width: 400px) 85vw, 380px"
+                sizes="(max-width: 448px) 80vw, 360px"
               />
             )}
           </div>
           <div className="mt-2.5 px-0.5">
-            <p className="text-[11px] text-stone-700 font-medium leading-snug">{moment.content}</p>
-            <div className="mt-1.5 opacity-50">
-              <AuthorBadge author={moment.createdBy} time={moment.time} showRole={false} />
-              {ctx && (
-                <p className="text-[9px] text-stone-400 italic mt-0.5 pl-8">{ctx}</p>
-              )}
-            </div>
+            <p className="text-[11px] font-medium leading-snug text-stone-700">{moment.content}</p>
+            {moment.createdBy && (
+              <div className="mt-1.5 opacity-50">
+                <AuthorBadge author={moment.createdBy} time={moment.time} showRole={false} />
+                {ctx && (
+                  <p className="text-[9px] text-stone-400 italic mt-0.5 pl-8">{ctx}</p>
+                )}
+              </div>
+            )}
           </div>
           <div className="mt-3 pt-2.5 border-t border-stone-100/70">
-            <ReactionBar />
+            <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
           </div>
         </motion.div>
       </div>
       <div className="mt-3">
-        <ReplyThread />
+        <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
       </div>
     </div>
   );
 }
 
-// ── PhotoClusterPair — two photos scattered on the page ───────────────────────
+// ── PhotoClusterPair ──────────────────────────────────────────────────────────
 
-function PhotoClusterPair({ pair }: { pair: [MemoryEvent, MemoryEvent] }) {
+function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
   const [left, right] = pair;
   const leftRot  = idRotation(left.id, 0.9);
   const rightRot = idRotation(right.id, 0.9);
@@ -235,9 +210,11 @@ function PhotoClusterPair({ pair }: { pair: [MemoryEvent, MemoryEvent] }) {
             )}
           </div>
           <p className="text-[9px] text-stone-700 font-medium mt-2 leading-snug line-clamp-2">{left.content}</p>
-          <div className="mt-1 opacity-40">
-            <AuthorBadge author={left.createdBy} showRole={false} />
-          </div>
+          {left.createdBy && (
+            <div className="mt-1 opacity-40">
+              <AuthorBadge author={left.createdBy} showRole={false} />
+            </div>
+          )}
         </motion.div>
       </div>
 
@@ -259,9 +236,11 @@ function PhotoClusterPair({ pair }: { pair: [MemoryEvent, MemoryEvent] }) {
             )}
           </div>
           <p className="text-[9px] text-stone-700 font-medium mt-2 leading-snug line-clamp-2">{right.content}</p>
-          <div className="mt-1 opacity-40">
-            <AuthorBadge author={right.createdBy} showRole={false} />
-          </div>
+          {right.createdBy && (
+            <div className="mt-1 opacity-40">
+              <AuthorBadge author={right.createdBy} showRole={false} />
+            </div>
+          )}
         </motion.div>
       </div>
     </div>
@@ -272,9 +251,9 @@ function PhotoClusterPair({ pair }: { pair: [MemoryEvent, MemoryEvent] }) {
   );
 }
 
-// ── MilestoneMoment — ceremonial centrepiece ──────────────────────────────────
+// ── MilestoneMoment ───────────────────────────────────────────────────────────
 
-function MilestoneMoment({ moment }: { moment: MemoryEvent }) {
+function MilestoneMoment({ moment }: { moment: JournalMoment }) {
   return (
     <div className="px-8 py-12 text-center relative overflow-hidden">
       <div
@@ -291,18 +270,20 @@ function MilestoneMoment({ moment }: { moment: MemoryEvent }) {
       <p className="text-[26px] font-extrabold text-foreground leading-snug tracking-tight mb-4 max-w-[260px] mx-auto">
         {moment.content}
       </p>
-      <AuthorBadge author={moment.createdBy} time={moment.time} className="justify-center mb-6" />
+      {moment.createdBy && (
+        <AuthorBadge author={moment.createdBy} time={moment.time} className="justify-center mb-6" />
+      )}
       <div className="flex flex-col items-center gap-4 max-w-[300px] mx-auto">
-        <ReactionBar className="justify-center" />
-        <ReplyThread className="w-full text-left" />
+        <ReactionBar initialReactions={moment.reactions} momentId={moment.id} className="justify-center" />
+        <ReplyThread initialReplies={moment.replies} momentId={moment.id} className="w-full text-left" />
       </div>
     </div>
   );
 }
 
-// ── NoteMoment — paper diary card ─────────────────────────────────────────────
+// ── NoteMoment ────────────────────────────────────────────────────────────────
 
-function NoteMoment({ moment }: { moment: MemoryEvent }) {
+function NoteMoment({ moment }: { moment: JournalMoment }) {
   const rot = idRotation(moment.id, 0.45);
   const ctx = CAT_CTX[moment.category] ?? "";
   return (
@@ -326,15 +307,17 @@ function NoteMoment({ moment }: { moment: MemoryEvent }) {
           <p className="text-[18px] font-medium text-foreground leading-[1.7] mb-5">
             {moment.content}
           </p>
-          <div className="mb-5">
-            <AuthorBadge author={moment.createdBy} time={moment.time} />
-            {ctx && (
-              <p className="text-[10px] text-muted-foreground/40 italic mt-1 ml-8">{ctx}</p>
-            )}
-          </div>
+          {moment.createdBy && (
+            <div className="mb-5">
+              <AuthorBadge author={moment.createdBy} time={moment.time} />
+              {ctx && (
+                <p className="text-[10px] text-muted-foreground/40 italic mt-1 ml-8">{ctx}</p>
+              )}
+            </div>
+          )}
           <div className="space-y-4">
-            <ReactionBar />
-            <ReplyThread />
+            <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
+            <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
           </div>
         </div>
       </motion.div>
@@ -349,33 +332,49 @@ interface Props {
 }
 
 export default function PastDayView({ date }: Props) {
-  const memories = recentMemories.filter((m) => m.date === date);
+  const [moments, setMoments] = useState<JournalMoment[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const MONTH_MAP: Record<string, string> = {
-    January:"01", February:"02", March:"03", April:"04", May:"05", June:"06",
-    July:"07", August:"08", September:"09", October:"10", November:"11", December:"12",
-  };
-  const parts = date.match(/^([A-Za-z]+)\s+(\d+)$/);
-  const isoDate = parts
-    ? `2026-${MONTH_MAP[parts[1]] ?? "00"}-${parts[2].padStart(2, "0")}`
-    : "";
-  const summary = dailySummaries.find((s) => s.date === isoDate);
+  useEffect(() => {
+    setLoading(true);
+    setMoments([]);
+    fetchDayMoments(date).then((result) => {
+      setMoments(result);
+      setLoading(false);
+    });
+  }, [date]);
 
-  const firstPhotoId = memories.find((m) => m.type === "photo")?.id;
-  const grouped = groupMoments(memories, firstPhotoId);
-
-  if (memories.length === 0) {
+  if (loading) {
     return (
-      <div className="px-6 py-24 text-center">
-        <p className="text-[15px] text-muted-foreground">No memories for this day.</p>
+      <div className="pb-8 space-y-4 pt-4">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="mx-4 h-24 rounded-2xl bg-muted/50 animate-pulse"
+            style={{ opacity: 1 - i * 0.25 }}
+          />
+        ))}
       </div>
     );
   }
 
+  if (moments.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center px-8 py-24 text-center">
+        <p className="text-[36px] mb-3 select-none leading-none">📅</p>
+        <p className="text-[15px] font-semibold text-foreground/55 mb-1.5">Nothing here yet</p>
+        <p className="text-[13px] text-muted-foreground/40 leading-snug max-w-[210px]">
+          No moments were logged for {date}
+        </p>
+      </div>
+    );
+  }
+
+  const firstPhotoId = moments.find((m) => m.type === "photo")?.id;
+  const grouped = groupMoments(moments, firstPhotoId);
+
   return (
     <div className="pb-8">
-      {summary && <SummaryBanner summary={summary} />}
-
       {grouped.map((render, i) => (
         <motion.div
           key={render.kind === "cluster" ? `cluster-${render.pair[0].id}` : render.moment.id}

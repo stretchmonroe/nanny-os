@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { recentMemories } from "@/lib/data/demo";
-import type { MemoryEvent } from "@/lib/data/demo";
+import { fetchWeekRangeMoments } from "@/lib/supabase/moments";
+import type { WeekDayGroup } from "@/lib/supabase/moments";
+import type { JournalMoment } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 import ReactionBar from "@/components/memory/ReactionBar";
@@ -34,21 +36,13 @@ const CAT_CTX: Record<string, string> = {
   nap:      "before rest",
 };
 
-const DAY_NAMES: Record<string, string> = {
-  "May 14": "Thursday", "May 13": "Wednesday", "May 12": "Tuesday",
-  "May 11": "Monday",   "May 10": "Sunday",    "May 9":  "Saturday",
-  "May 8":  "Friday",   "May 7":  "Thursday",  "May 6":  "Wednesday",
-  "May 5":  "Tuesday",  "May 4":  "Monday",    "May 3":  "Sunday",
-  "May 2":  "Saturday", "May 1":  "Friday",
-};
-
 // ── Grouping ──────────────────────────────────────────────────────────────────
 
 type MomentRender =
-  | { kind: "single"; moment: MemoryEvent }
-  | { kind: "cluster"; pair: [MemoryEvent, MemoryEvent] };
+  | { kind: "single"; moment: JournalMoment }
+  | { kind: "cluster"; pair: [JournalMoment, JournalMoment] };
 
-function groupMoments(moments: MemoryEvent[], heroId: string | undefined): MomentRender[] {
+function groupMoments(moments: JournalMoment[], heroId: string | undefined): MomentRender[] {
   const result: MomentRender[] = [];
   let i = 0;
   while (i < moments.length) {
@@ -104,9 +98,9 @@ function PageDivider() {
   );
 }
 
-// ── DayHeroPhoto ─────────────────────────────────────────────────────────────
+// ── DayHeroPhoto ──────────────────────────────────────────────────────────────
 
-function DayHeroPhoto({ moment }: { moment: MemoryEvent }) {
+function DayHeroPhoto({ moment }: { moment: JournalMoment }) {
   const ctx = CAT_CTX[moment.category] ?? "";
   return (
     <>
@@ -132,12 +126,14 @@ function DayHeroPhoto({ moment }: { moment: MemoryEvent }) {
           <p className="text-[17px] font-bold text-white leading-snug tracking-tight mb-2.5">
             {moment.content}
           </p>
-          <AuthorBadge author={moment.createdBy} time={moment.time} light showRole={false} />
+          {moment.createdBy && (
+            <AuthorBadge author={moment.createdBy} time={moment.time} light showRole={false} />
+          )}
         </div>
       </motion.div>
       <div className="px-6 pt-4 pb-2 space-y-4">
-        <ReactionBar />
-        <ReplyThread />
+        <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
+        <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
       </div>
     </>
   );
@@ -145,7 +141,7 @@ function DayHeroPhoto({ moment }: { moment: MemoryEvent }) {
 
 // ── PolaroidPhoto ─────────────────────────────────────────────────────────────
 
-function PolaroidPhoto({ moment }: { moment: MemoryEvent }) {
+function PolaroidPhoto({ moment }: { moment: JournalMoment }) {
   const rot    = idRotation(moment.id);
   const n      = stableN(moment.id);
   const isLeft = n % 2 === 0;
@@ -188,20 +184,22 @@ function PolaroidPhoto({ moment }: { moment: MemoryEvent }) {
           </div>
           <div className="mt-2.5 px-0.5">
             <p className="text-[11px] font-medium leading-snug text-stone-700">{moment.content}</p>
-            <div className="mt-1.5 opacity-50">
-              <AuthorBadge author={moment.createdBy} time={moment.time} showRole={false} />
-              {ctx && (
-                <p className="text-[9px] text-stone-400 italic mt-0.5 pl-8">{ctx}</p>
-              )}
-            </div>
+            {moment.createdBy && (
+              <div className="mt-1.5 opacity-50">
+                <AuthorBadge author={moment.createdBy} time={moment.time} showRole={false} />
+                {ctx && (
+                  <p className="text-[9px] text-stone-400 italic mt-0.5 pl-8">{ctx}</p>
+                )}
+              </div>
+            )}
           </div>
           <div className="mt-3 pt-2.5 border-t border-stone-100/70">
-            <ReactionBar />
+            <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
           </div>
         </motion.div>
       </div>
       <div className="mt-3">
-        <ReplyThread />
+        <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
       </div>
     </div>
   );
@@ -209,7 +207,7 @@ function PolaroidPhoto({ moment }: { moment: MemoryEvent }) {
 
 // ── PhotoClusterPair ──────────────────────────────────────────────────────────
 
-function PhotoClusterPair({ pair }: { pair: [MemoryEvent, MemoryEvent] }) {
+function PhotoClusterPair({ pair }: { pair: [JournalMoment, JournalMoment] }) {
   const [left, right] = pair;
   const leftRot  = idRotation(left.id, 0.9);
   const rightRot = idRotation(right.id, 0.9);
@@ -236,9 +234,11 @@ function PhotoClusterPair({ pair }: { pair: [MemoryEvent, MemoryEvent] }) {
             )}
           </div>
           <p className="text-[9px] text-stone-700 font-medium mt-2 leading-snug line-clamp-2">{left.content}</p>
-          <div className="mt-1 opacity-40">
-            <AuthorBadge author={left.createdBy} showRole={false} />
-          </div>
+          {left.createdBy && (
+            <div className="mt-1 opacity-40">
+              <AuthorBadge author={left.createdBy} showRole={false} />
+            </div>
+          )}
         </motion.div>
       </div>
 
@@ -260,9 +260,11 @@ function PhotoClusterPair({ pair }: { pair: [MemoryEvent, MemoryEvent] }) {
             )}
           </div>
           <p className="text-[9px] text-stone-700 font-medium mt-2 leading-snug line-clamp-2">{right.content}</p>
-          <div className="mt-1 opacity-40">
-            <AuthorBadge author={right.createdBy} showRole={false} />
-          </div>
+          {right.createdBy && (
+            <div className="mt-1 opacity-40">
+              <AuthorBadge author={right.createdBy} showRole={false} />
+            </div>
+          )}
         </motion.div>
       </div>
     </div>
@@ -275,7 +277,7 @@ function PhotoClusterPair({ pair }: { pair: [MemoryEvent, MemoryEvent] }) {
 
 // ── MilestoneMoment ───────────────────────────────────────────────────────────
 
-function MilestoneMoment({ moment }: { moment: MemoryEvent }) {
+function MilestoneMoment({ moment }: { moment: JournalMoment }) {
   return (
     <div className="px-7 py-12 text-center relative overflow-hidden">
       <div
@@ -292,10 +294,12 @@ function MilestoneMoment({ moment }: { moment: MemoryEvent }) {
       <p className="text-[24px] font-extrabold text-foreground leading-snug tracking-tight mb-4 max-w-xs mx-auto">
         {moment.content}
       </p>
-      <AuthorBadge author={moment.createdBy} time={moment.time} className="justify-center mb-5" />
+      {moment.createdBy && (
+        <AuthorBadge author={moment.createdBy} time={moment.time} className="justify-center mb-5" />
+      )}
       <div className="flex flex-col items-center gap-4 max-w-[300px] mx-auto">
-        <ReactionBar className="justify-center" />
-        <ReplyThread className="w-full text-left" />
+        <ReactionBar initialReactions={moment.reactions} momentId={moment.id} className="justify-center" />
+        <ReplyThread initialReplies={moment.replies} momentId={moment.id} className="w-full text-left" />
       </div>
     </div>
   );
@@ -303,7 +307,7 @@ function MilestoneMoment({ moment }: { moment: MemoryEvent }) {
 
 // ── NoteMoment ────────────────────────────────────────────────────────────────
 
-function NoteMoment({ moment }: { moment: MemoryEvent }) {
+function NoteMoment({ moment }: { moment: JournalMoment }) {
   const rot = idRotation(moment.id, 0.4);
   const ctx = CAT_CTX[moment.category] ?? "";
   return (
@@ -327,15 +331,17 @@ function NoteMoment({ moment }: { moment: MemoryEvent }) {
           <p className="text-[16px] text-foreground/80 leading-relaxed font-medium mb-4">
             {moment.content}
           </p>
-          <div className="mb-4">
-            <AuthorBadge author={moment.createdBy} time={moment.time} />
-            {ctx && (
-              <p className="text-[10px] text-muted-foreground/40 italic mt-0.5 ml-8">{ctx}</p>
-            )}
-          </div>
+          {moment.createdBy && (
+            <div className="mb-4">
+              <AuthorBadge author={moment.createdBy} time={moment.time} />
+              {ctx && (
+                <p className="text-[10px] text-muted-foreground/40 italic mt-0.5 ml-8">{ctx}</p>
+              )}
+            </div>
+          )}
           <div className="space-y-3">
-            <ReactionBar />
-            <ReplyThread />
+            <ReactionBar initialReactions={moment.reactions} momentId={moment.id} />
+            <ReplyThread initialReplies={moment.replies} momentId={moment.id} />
           </div>
         </div>
       </motion.div>
@@ -352,18 +358,44 @@ interface Props {
 }
 
 export default function PastWeekView({ weekLabel, range, dates }: Props) {
-  const grouped = dates
-    .map((date) => ({
-      date,
-      dayName: DAY_NAMES[date] ?? "",
-      moments: recentMemories.filter((m) => m.date === date),
-    }))
-    .filter((g) => g.moments.length > 0);
+  const [grouped, setGrouped] = useState<WeekDayGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    setGrouped([]);
+    fetchWeekRangeMoments(dates).then((result) => {
+      setGrouped(result);
+      setLoading(false);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekLabel]);
+
+  if (loading) {
+    return (
+      <div className="pb-8 space-y-4 pt-4">
+        <div className="px-5 pb-4">
+          <div className="h-4 w-36 rounded bg-muted/40 animate-pulse" />
+        </div>
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="mx-4 h-20 rounded-2xl bg-muted/50 animate-pulse"
+            style={{ opacity: 1 - i * 0.25 }}
+          />
+        ))}
+      </div>
+    );
+  }
 
   if (grouped.length === 0) {
     return (
-      <div className="px-6 py-24 text-center">
-        <p className="text-[15px] text-muted-foreground">No memories for this week.</p>
+      <div className="flex flex-col items-center justify-center px-8 py-24 text-center">
+        <p className="text-[36px] mb-3 select-none leading-none">📅</p>
+        <p className="text-[15px] font-semibold text-foreground/55 mb-1.5">No memories for this week</p>
+        <p className="text-[13px] text-muted-foreground/40 leading-snug max-w-[210px]">
+          {weekLabel} · {range}
+        </p>
       </div>
     );
   }
@@ -380,8 +412,8 @@ export default function PastWeekView({ weekLabel, range, dates }: Props) {
         {grouped.map((dayData, dayIndex) => {
           const firstPhotoId = dayData.moments.find((m) => m.type === "photo")?.id;
           const renders      = groupMoments(dayData.moments, firstPhotoId);
-          const dayParts     = dayData.date.split(" ");
-          const dayNum       = dayParts[dayParts.length - 1];
+          const dateParts    = dayData.date.replace("Today · ", "").split(" ");
+          const dayNum       = dateParts[dateParts.length - 1];
 
           return (
             <motion.div
@@ -392,22 +424,20 @@ export default function PastWeekView({ weekLabel, range, dates }: Props) {
             >
               {dayIndex > 0 && <PageDivider />}
 
-              {/* Day header */}
               <div className={cn("flex items-end justify-between mb-4 px-5", dayIndex > 0 && "mt-2")}>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-muted-foreground/45">
-                    {dayData.dayName}
+                    {dayData.day}
                   </p>
                   <p className="text-[48px] font-black text-foreground tracking-tight leading-none">
                     {dayNum}
                   </p>
                   <p className="text-[11px] text-muted-foreground/35 font-medium mt-0.5">
-                    {dayData.date} · {dayData.moments.length} moment{dayData.moments.length !== 1 ? "s" : ""}
+                    {dayData.date.replace("Today · ", "")} · {dayData.moments.length} moment{dayData.moments.length !== 1 ? "s" : ""}
                   </p>
                 </div>
               </div>
 
-              {/* Moments */}
               <div>
                 {renders.map((render) => {
                   if (render.kind === "cluster") {

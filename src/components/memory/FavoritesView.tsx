@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Heart } from "lucide-react";
-import { favoriteMemories } from "@/lib/data/demo";
+import { fetchFavoriteMoments } from "@/lib/supabase/moments";
+import type { FavoriteEvent } from "@/lib/supabase/moments";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 import ReactionBar from "@/components/memory/ReactionBar";
 import ReplyThread from "@/components/memory/ReplyThread";
@@ -44,11 +46,9 @@ function TapeStrip({ id }: { id: string }) {
   );
 }
 
-// ── FeaturedHero — cinematic editorial opener ─────────────────────────────────
+// ── FeaturedHero ──────────────────────────────────────────────────────────────
 
-type FavoriteItem = typeof favoriteMemories[number];
-
-function FeaturedHero({ item }: { item: FavoriteItem }) {
+function FeaturedHero({ item }: { item: FavoriteEvent }) {
   return (
     <>
     <motion.div
@@ -76,7 +76,7 @@ function FeaturedHero({ item }: { item: FavoriteItem }) {
 
       <div className="absolute bottom-0 left-0 right-0 px-6 pb-7">
         <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-2">
-          {item.date} · Cherished
+          {item.dateLabel} · Cherished
         </p>
         <p className="text-[20px] font-extrabold text-white leading-snug tracking-tight mb-3">
           {item.content}
@@ -87,16 +87,16 @@ function FeaturedHero({ item }: { item: FavoriteItem }) {
       </div>
     </motion.div>
     <div className="px-7 pt-5 pb-2 space-y-4">
-      <ReactionBar />
-      <ReplyThread />
+      <ReactionBar initialReactions={item.reactions} momentId={item.id} />
+      <ReplyThread initialReplies={item.replies} momentId={item.id} />
     </div>
     </>
   );
 }
 
-// ── PolaroidPhoto — scrapbook board ──────────────────────────────────────────
+// ── PolaroidPhoto ─────────────────────────────────────────────────────────────
 
-function PolaroidPhoto({ item, index }: { item: FavoriteItem; index: number }) {
+function PolaroidPhoto({ item, index }: { item: FavoriteEvent; index: number }) {
   const rot    = idRotation(item.id);
   const isLeft = index % 2 === 0;
   const aspect = photoAspect(item.id);
@@ -147,23 +147,23 @@ function PolaroidPhoto({ item, index }: { item: FavoriteItem; index: number }) {
                 <AuthorBadge author={item.createdBy} showRole={false} />
               </div>
             )}
-            <p className="text-[9px] text-stone-400 mt-1 font-medium">{item.date}</p>
+            <p className="text-[9px] text-stone-400 mt-1 font-medium">{item.dateLabel}</p>
           </div>
           <div className="mt-3 pt-2.5 border-t border-stone-100/70">
-            <ReactionBar />
+            <ReactionBar initialReactions={item.reactions} momentId={item.id} />
           </div>
         </motion.div>
       </div>
       <div className="mt-3">
-        <ReplyThread />
+        <ReplyThread initialReplies={item.replies} momentId={item.id} />
       </div>
     </motion.div>
   );
 }
 
-// ── MilestoneQuote — paper pull-quote card ────────────────────────────────────
+// ── MilestoneQuote ────────────────────────────────────────────────────────────
 
-function MilestoneQuote({ item, index }: { item: FavoriteItem; index: number }) {
+function MilestoneQuote({ item, index }: { item: FavoriteEvent; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -190,48 +190,94 @@ function MilestoneQuote({ item, index }: { item: FavoriteItem; index: number }) 
         </p>
         <div className="flex items-center justify-between gap-3 mb-5">
           <p className="text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest">
-            {item.date}
+            {item.dateLabel}
           </p>
           {item.createdBy && <AuthorBadge author={item.createdBy} />}
         </div>
         <div className="space-y-4">
-          <ReactionBar />
-          <ReplyThread />
+          <ReactionBar initialReactions={item.reactions} momentId={item.id} />
+          <ReplyThread initialReplies={item.replies} momentId={item.id} />
         </div>
       </div>
     </motion.div>
   );
 }
 
+// ── EmptyFavorites ────────────────────────────────────────────────────────────
+
+function EmptyFavorites() {
+  return (
+    <div className="flex flex-col items-center justify-center px-8 py-20 text-center">
+      <div
+        className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+        style={{ background: "var(--surface-raised)", border: "1.5px solid var(--border-soft)" }}
+      >
+        <Heart className="w-6 h-6 text-muted-foreground/30" />
+      </div>
+      <p className="text-[15px] font-semibold text-foreground/55 mb-1.5">No cherished memories yet</p>
+      <p className="text-[13px] text-muted-foreground/40 leading-snug max-w-[220px]">
+        Heart a moment in the journal to save it here forever
+      </p>
+    </div>
+  );
+}
+
 // ── FavoritesView ─────────────────────────────────────────────────────────────
 
 export default function FavoritesView() {
-  const [featured, ...rest] = favoriteMemories;
-  const photos     = rest.filter((m) => m.type === "photo");
-  const milestones = rest.filter((m) => m.type === "milestone");
+  const [favorites, setFavorites] = useState<FavoriteEvent[]>([]);
+  const [loading,   setLoading]   = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchFavoriteMoments().then((result) => {
+      setFavorites(result);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="pb-12 pt-2 space-y-4 px-5">
+        <div className="h-[360px] rounded-2xl bg-muted/40 animate-pulse" />
+        {[0, 1].map((i) => (
+          <div key={i} className="h-24 rounded-2xl bg-muted/30 animate-pulse" style={{ opacity: 1 - i * 0.3 }} />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="pb-12 pt-2">
-
-      {/* Monthly narrative */}
       <MonthlyStory />
 
-      {/* Featured — editorial hero, no polaroid frame */}
-      <FeaturedHero item={featured} />
+      {favorites.length === 0 ? (
+        <EmptyFavorites />
+      ) : (
+        <>
+          <FeaturedHero item={favorites[0]} />
 
-      {/* Scrapbook polaroid board */}
-      {photos.length > 0 && (
-        <div className="pt-6 pb-2">
-          {photos.map((item, i) => (
-            <PolaroidPhoto key={item.id} item={item} index={i} />
-          ))}
-        </div>
+          {favorites.length > 1 && (() => {
+            const rest      = favorites.slice(1);
+            const photos    = rest.filter((m) => m.type === "photo");
+            const milestone = rest.filter((m) => m.type === "milestone");
+            return (
+              <>
+                {photos.length > 0 && (
+                  <div className="pt-6 pb-2">
+                    {photos.map((item, i) => (
+                      <PolaroidPhoto key={item.id} item={item} index={i} />
+                    ))}
+                  </div>
+                )}
+                {milestone.map((item, i) => (
+                  <MilestoneQuote key={item.id} item={item} index={i} />
+                ))}
+              </>
+            );
+          })()}
+        </>
       )}
-
-      {/* Milestone pull-quotes */}
-      {milestones.map((item, i) => (
-        <MilestoneQuote key={item.id} item={item} index={i} />
-      ))}
     </div>
   );
 }

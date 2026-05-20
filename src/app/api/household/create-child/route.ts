@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 
 function getAdmin() {
   return createClient(
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     const { data: child, error } = await admin
       .from("children")
-      .insert({ name: name.trim(), focus: age ?? "", household_id: householdId })
+      .insert({ id: randomUUID(), name: name.trim(), focus: age ?? "", household_id: householdId })
       .select("id")
       .single();
     if (error || !child) {

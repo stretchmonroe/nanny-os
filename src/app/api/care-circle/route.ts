@@ -53,13 +53,38 @@ export async function GET(req: NextRequest) {
     );
 
     // Fetch pending invites
-    const { data: invites } = await getAdmin()
-      .from("household_invites")
-      .select("id, email, inviter_name, note, created_at, expires_at")
+    const { data: rawInvites } = await getAdmin()
+      .from("caregiver_invites")
+      .select("id, email, token, role, invited_by, created_at, expires_at")
       .eq("household_id", householdId)
       .eq("status", "pending")
       .gte("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false });
+
+    // Enrich with inviter display name
+    const invites = await Promise.all(
+      (rawInvites ?? []).map(async (inv) => {
+        let inviterName = "";
+        if (inv.invited_by) {
+          const { data: p } = await getAdmin()
+            .from("profiles")
+            .select("full_name")
+            .eq("id", inv.invited_by)
+            .maybeSingle();
+          inviterName = (p as { full_name: string } | null)?.full_name ?? "";
+        }
+        return {
+          id:           inv.id,
+          email:        inv.email,
+          token:        inv.token,
+          role:         inv.role,
+          inviter_name: inviterName,
+          note:         null,
+          created_at:   inv.created_at,
+          expires_at:   inv.expires_at,
+        };
+      }),
+    );
 
     // Fetch household + child names for invite creation
     const { data: household } = await getAdmin()

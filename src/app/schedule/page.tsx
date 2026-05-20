@@ -47,19 +47,27 @@ interface EditSheetProps {
   }): void;
 }
 
+function parseTime(combined: string): [string, string] {
+  const parts = combined.split(" – ");
+  return [parts[0] ?? "", parts[1] ?? ""];
+}
+
 function EditSheet({ open, item, onClose, onSave }: EditSheetProps) {
   const isNew = !item;
-  const [title,  setTitle]  = useState(item?.title  ?? "");
-  const [time,   setTime]   = useState(item?.time   ?? "");
-  const [type,   setType]   = useState<ActivityType>(item?.type  ?? "play");
-  const [notes,  setNotes]  = useState(item?.notes  ?? "");
-  const [desc,   setDesc]   = useState(item?.description           ?? "");
-  const [window, setWindow] = useState(item?.flexible_window_label ?? "");
+  const [title,     setTitle]     = useState(item?.title  ?? "");
+  const [startTime, setStartTime] = useState(() => parseTime(item?.time ?? "")[0]);
+  const [endTime,   setEndTime]   = useState(() => parseTime(item?.time ?? "")[1]);
+  const [type,      setType]      = useState<ActivityType>(item?.type  ?? "play");
+  const [notes,     setNotes]     = useState(item?.notes  ?? "");
+  const [desc,      setDesc]      = useState(item?.description           ?? "");
+  const [window,    setWindow]    = useState(item?.flexible_window_label ?? "");
 
   useEffect(() => {
     if (open) {
+      const [s, e] = parseTime(item?.time ?? "");
       setTitle(item?.title  ?? "");
-      setTime(item?.time    ?? "");
+      setStartTime(s);
+      setEndTime(e);
       setType(item?.type    ?? "play");
       setNotes(item?.notes  ?? "");
       setDesc(item?.description           ?? "");
@@ -69,10 +77,13 @@ function EditSheet({ open, item, onClose, onSave }: EditSheetProps) {
 
   function handleSave() {
     if (!title.trim()) return;
+    const start = startTime.trim();
+    const end   = endTime.trim();
+    const time  = start && end ? `${start} – ${end}` : start;
     onSave({
       id:                   item?.id,
       title:                title.trim(),
-      time:                 time.trim(),
+      time,
       type,
       notes:                notes.trim(),
       description:          desc.trim(),
@@ -135,18 +146,32 @@ function EditSheet({ open, item, onClose, onSave }: EditSheetProps) {
                 />
               </div>
 
-              {/* When — flexible label */}
-              <div>
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-1.5 block">
-                  When <span className="font-normal normal-case">(optional)</span>
-                </label>
-                <input
-                  value={time}
-                  onChange={e => setTime(e.target.value)}
-                  placeholder="e.g. 10:30 AM, After nap, Morning"
-                  className="w-full rounded-xl px-4 py-3 text-[14px] text-foreground outline-none"
-                  style={{ background: "var(--surface-raised)", border: "1px solid var(--border-soft)" }}
-                />
+              {/* Start / End time */}
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-1.5 block">
+                    Start <span className="font-normal normal-case">(optional)</span>
+                  </label>
+                  <input
+                    value={startTime}
+                    onChange={e => setStartTime(e.target.value)}
+                    placeholder="e.g. 10:30 AM"
+                    className="w-full rounded-xl px-4 py-3 text-[14px] text-foreground outline-none"
+                    style={{ background: "var(--surface-raised)", border: "1px solid var(--border-soft)" }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-1.5 block">
+                    End <span className="font-normal normal-case">(optional)</span>
+                  </label>
+                  <input
+                    value={endTime}
+                    onChange={e => setEndTime(e.target.value)}
+                    placeholder="e.g. 11:00 AM"
+                    className="w-full rounded-xl px-4 py-3 text-[14px] text-foreground outline-none"
+                    style={{ background: "var(--surface-raised)", border: "1px solid var(--border-soft)" }}
+                  />
+                </div>
               </div>
 
               {/* Type */}

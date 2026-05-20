@@ -66,7 +66,7 @@ export default function JournalSummary() {
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
           </motion.div>
           <span className="text-[10px] font-bold text-amber-300/55 uppercase tracking-widest">
-            Sunny&apos;s read on today
+            Sprout&apos;s read on today
           </span>
         </div>
 

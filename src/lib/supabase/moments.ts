@@ -1,5 +1,4 @@
 import { supabase } from "./client"
-import { weeklyMoments } from "@/lib/data/demo"
 import { useAppStore } from "@/store/useAppStore"
 import type { JournalMoment, MomentReaction, MomentReply } from "@/lib/data/demo"
 
@@ -75,10 +74,10 @@ export async function fetchTodayMoments(): Promise<JournalMoment[]> {
       .gte("created_at", start)
       .lt("created_at", end)
       .order("created_at", { ascending: true })
-    if (error || !data || data.length === 0) return weeklyMoments[0].moments
+    if (error || !data || data.length === 0) return []
     return attachInteractions(data.map(r => rowToMoment(r as Record<string, unknown>)))
   } catch {
-    return weeklyMoments[0].moments
+    return []
   }
 }
 

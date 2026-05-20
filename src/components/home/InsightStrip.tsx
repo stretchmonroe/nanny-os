@@ -78,7 +78,7 @@ export default function InsightStrip({ onResearch }: Props) {
         />
       </motion.div>
       <p className="text-[9px] font-medium text-muted-foreground/25 tracking-wide mb-2">
-        Sunny notices
+        Sprout notices
       </p>
       <p className="text-[13px] text-foreground/45 leading-relaxed italic">
         {insight}

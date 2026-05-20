@@ -10,47 +10,42 @@ function getAdmin() {
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.headers.get("authorization")?.replace("Bearer ", "");
-    const { data: { user } } = await getAdmin().auth.getUser(token ?? "");
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authToken = req.headers.get("authorization")?.replace("Bearer ", "");
+    const { data: { user } } = await getAdmin().auth.getUser(authToken ?? "");
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { invite_id } = await req.json();
-    if (!invite_id) {
-      return NextResponse.json({ error: "Missing invite_id" }, { status: 400 });
-    }
+    if (!invite_id) return NextResponse.json({ error: "Missing invite_id" }, { status: 400 });
 
     // Caller must be a parent in the same household
     const { data: membership } = await getAdmin()
       .from("household_members")
       .select("household_id, role")
       .eq("user_id", user.id)
-      .single();
+      .eq("status", "active")
+      .maybeSingle();
 
     if (!membership || membership.role !== "parent") {
       return NextResponse.json({ error: "Only parents can cancel invites" }, { status: 403 });
     }
 
-    // Invite must belong to this household
+    // Verify invite belongs to this household
     const { data: invite } = await getAdmin()
-      .from("household_invites")
+      .from("caregiver_invites")
       .select("household_id, status")
       .eq("id", invite_id)
-      .single();
+      .maybeSingle();
 
     if (!invite || invite.household_id !== membership.household_id) {
       return NextResponse.json({ error: "Invite not found" }, { status: 404 });
     }
-
     if (invite.status !== "pending") {
       return NextResponse.json({ error: "Invite is not pending" }, { status: 400 });
     }
 
     await getAdmin()
-      .from("household_invites")
-      .update({ status: "expired" })
+      .from("caregiver_invites")
+      .update({ status: "cancelled" })
       .eq("id", invite_id);
 
     return NextResponse.json({ ok: true });

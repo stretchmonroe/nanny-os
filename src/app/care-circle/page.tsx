@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, UserPlus, Clock, Mail,
-  MoreHorizontal, Trash2, RefreshCw, X, Send, Heart, Check,
+  MoreHorizontal, Trash2, RefreshCw, X, Heart, Check, Copy, Link,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
@@ -24,6 +24,8 @@ interface Member {
 interface Invite {
   id:           string;
   email:        string;
+  token:        string;
+  role:         string;
   inviter_name: string | null;
   note:         string | null;
   created_at:   string;
@@ -80,8 +82,10 @@ const DEMO: CircleData = {
     {
       id:           "inv1",
       email:        "rosa.rivera@gmail.com",
+      token:        "demo-token",
+      role:         "caregiver",
       inviter_name: "Sofia",
-      note:         "Can't wait for you to be part of this!",
+      note:         null,
       created_at:   "2026-05-16T00:00:00Z",
       expires_at:   "2026-05-23T00:00:00Z",
     },
@@ -257,15 +261,26 @@ function MemberCard({ member, isParent, isPrimary, onRemove }: MemberCardProps) 
 // ── Pending invite card ────────────────────────────────────────────────────────
 
 interface InviteCardProps {
-  invite:   Invite;
-  isParent: boolean;
+  invite:      Invite;
+  isParent:    boolean;
+  inviteBase:  string;
   onCancel(id: string): void;
   onResend(email: string): void;
 }
 
-function InviteCard({ invite, isParent, onCancel, onResend }: InviteCardProps) {
+function InviteCard({ invite, isParent, inviteBase, onCancel, onResend }: InviteCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [copied,   setCopied]   = useState(false);
   const days = daysUntil(invite.expires_at);
+  const link = invite.token ? `${inviteBase}/invite/${invite.token}` : null;
+
+  function copyLink() {
+    if (!link) return;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <motion.div
@@ -313,6 +328,19 @@ function InviteCard({ invite, isParent, onCancel, onResend }: InviteCardProps) {
             {days === 0 ? "Expires today" : `Expires in ${days} day${days !== 1 ? "s" : ""}`}
           </p>
         </div>
+
+        {link && (
+          <button
+            onClick={copyLink}
+            className="mt-2.5 flex items-center gap-1.5 text-[11px] font-semibold transition-colors"
+            style={{ color: copied ? "var(--sage)" : "var(--trust)" }}
+          >
+            {copied
+              ? <><Check size={10} strokeWidth={2.5} />Link copied</>
+              : <><Copy size={10} strokeWidth={1.8} />Copy invite link</>
+            }
+          </button>
+        )}
       </div>
 
       {/* Overflow */}
@@ -385,110 +413,187 @@ interface InviteSheetProps {
   householdId:   string | null;
   yourName:      string;
   childName:     string;
-  onSent():      void;
+  onCreated():   void;
   initialEmail?: string;
 }
 
-function InviteSheet({ open, onClose, householdId, yourName, childName, onSent, initialEmail }: InviteSheetProps) {
-  const [email,   setEmail]   = useState(initialEmail ?? "");
-  const [note,    setNote]    = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState("");
-  const [sent,    setSent]    = useState(false);
+function InviteSheet({ open, onClose, householdId, yourName, childName, onCreated, initialEmail }: InviteSheetProps) {
+  const [email,       setEmail]       = useState(initialEmail ?? "");
+  const [loading,     setLoading]     = useState(false);
+  const [error,       setError]       = useState("");
+  const [inviteLink,  setInviteLink]  = useState("");
+  const [linkCopied,  setLinkCopied]  = useState(false);
+  const [textCopied,  setTextCopied]  = useState(false);
+
+  const phase = inviteLink ? "created" : "compose";
 
   useEffect(() => {
-    if (open) { setEmail(initialEmail ?? ""); setNote(""); setError(""); setSent(false); }
+    if (open) { setEmail(initialEmail ?? ""); setError(""); setInviteLink(""); }
   }, [open, initialEmail]);
 
-  async function send() {
-    if (!email.trim()) return;
-    setError("");
-    setLoading(true);
+  async function create() {
+    if (!email.trim() || !householdId) return;
+    setError(""); setLoading(true);
     try {
-      if (householdId) {
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token ?? "";
-        await fetch("/api/invites/send", {
-          method:  "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            email:        email.trim().toLowerCase(),
-            household_id: householdId,
-            inviter_name: yourName,
-            child_name:   childName,
-            note:         note.trim() || null,
-          }),
-        });
-      }
-      setSent(true);
-      onSent();
-    } catch {
-      setError("Couldn't send invite. Please try again.");
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/invites/caregiver/create", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}` },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), household_id: householdId }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Failed to create invite");
+      setInviteLink(json.link);
+      onCreated();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't create invite. Please try again.");
     } finally {
       setLoading(false);
     }
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(inviteLink).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    });
+  }
+
+  const emailText = [
+    `Hi,`,
+    ``,
+    `${yourName || "Someone"} is inviting you to join ${childName}'s care circle on Ankur — a private space where everyone who cares for ${childName} stays connected.`,
+    ``,
+    `Open your invite here:`,
+    inviteLink,
+    ``,
+    `Looking forward to caring for ${childName} together. 🌱`,
+  ].join("\n");
+
+  function copyEmailText() {
+    navigator.clipboard.writeText(emailText).then(() => {
+      setTextCopied(true);
+      setTimeout(() => setTextCopied(false), 2000);
+    });
   }
 
   return (
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="invite-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[80] bg-black/30 backdrop-blur-[2px]"
-            onClick={sent ? onClose : undefined}
+            onClick={phase === "created" ? onClose : undefined}
           />
-
-          {/* Sheet */}
           <motion.div
             key="invite-sheet"
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
+            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 32, stiffness: 320 }}
-            className="fixed bottom-0 left-0 right-0 z-[90] max-w-md mx-auto rounded-t-[2rem] px-6 pt-5 pb-12 overflow-hidden"
-            style={{ background: "var(--surface-card)" }}
+            className="fixed bottom-0 left-0 right-0 z-[90] max-w-md mx-auto rounded-t-[2rem] px-6 pt-5 pb-12 overflow-y-auto"
+            style={{ background: "var(--surface-card)", maxHeight: "92dvh" }}
           >
-            {/* Handle */}
             <div className="w-9 h-1 rounded-full mx-auto mb-5" style={{ background: "var(--border-medium)" }} />
 
             <AnimatePresence mode="wait">
 
-              {/* ── Success state ── */}
-              {sent ? (
+              {/* ── Invite created ── */}
+              {phase === "created" ? (
                 <motion.div
-                  key="sent"
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.32, ease: "easeOut" }}
-                  className="text-center pb-2"
+                  key="created"
+                  initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.28, ease: "easeOut" }}
                 >
-                  {/* Check circle */}
-                  <div
-                    className="w-[68px] h-[68px] rounded-full mx-auto flex items-center justify-center mb-5"
-                    style={{ background: "var(--sage-light)" }}
-                  >
-                    <Check size={30} strokeWidth={2.2} style={{ color: "var(--sage)" }} />
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <p className="text-[18px] font-extrabold text-foreground tracking-tight">
+                        Invite link ready 🌱
+                      </p>
+                      <p className="text-[12.5px] text-muted-foreground/50 mt-0.5">
+                        Share it however feels right
+                      </p>
+                    </div>
+                    <button
+                      onClick={onClose}
+                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                      style={{ background: "rgba(0,0,0,0.06)" }}
+                    >
+                      <X size={12} strokeWidth={2.2} className="text-foreground/40" />
+                    </button>
                   </div>
 
-                  <p className="text-[22px] font-extrabold text-foreground tracking-tight mb-2">
-                    Invite sent 🌱
-                  </p>
-                  <p className="text-[13.5px] text-muted-foreground/55 leading-relaxed">
-                    <span className="font-semibold text-foreground/60">{email}</span>
-                    <br />will get a warm welcome to join
-                    <br />{childName}&apos;s circle.
-                  </p>
+                  {/* Invite preview — what they'll see */}
+                  <div
+                    className="rounded-2xl px-5 py-4 mb-4 relative overflow-hidden"
+                    style={{
+                      background: "linear-gradient(145deg, #EFE0C0 0%, #FAF4E8 100%)",
+                      border:     "1px solid rgba(180,130,50,0.12)",
+                    }}
+                  >
+                    <span className="absolute -top-1 -right-1 text-[52px] opacity-[0.10] rotate-12 select-none pointer-events-none" aria-hidden>🌱</span>
+                    <div className="flex items-center gap-2.5 mb-1.5">
+                      <span className="text-[18px] leading-none select-none">🌱</span>
+                      <p className="text-[15px] font-bold text-foreground leading-tight">
+                        Join {childName}&apos;s care circle
+                      </p>
+                    </div>
+                    <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                      {yourName} is inviting you to be part of something very special.
+                    </p>
+                  </div>
+
+                  {/* Copy link box */}
+                  <div
+                    className="rounded-xl px-4 py-3 mb-3 flex items-center gap-3"
+                    style={{ background: "var(--surface-raised)", border: "1px solid var(--border-soft)" }}
+                  >
+                    <Link size={13} strokeWidth={1.8} className="shrink-0 text-muted-foreground/40" />
+                    <p className="flex-1 text-[12px] text-muted-foreground/50 truncate font-mono leading-none">
+                      {inviteLink}
+                    </p>
+                    <button
+                      onClick={copyLink}
+                      className="shrink-0 flex items-center gap-1.5 text-[12px] font-semibold transition-colors px-3 py-1.5 rounded-lg"
+                      style={{
+                        background: linkCopied ? "var(--sage-light)" : "var(--surface-card)",
+                        color:      linkCopied ? "var(--sage)"       : "var(--text-primary)",
+                        border:     "1px solid var(--border-soft)",
+                      }}
+                    >
+                      {linkCopied ? <Check size={11} strokeWidth={2.5} /> : <Copy size={11} strokeWidth={1.8} />}
+                      {linkCopied ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+
+                  {/* Email-ready copy */}
+                  <div
+                    className="rounded-xl px-4 py-3.5 mb-5"
+                    style={{ background: "var(--surface-raised)", border: "1px solid var(--border-soft)" }}
+                  >
+                    <div className="flex items-center justify-between mb-2.5">
+                      <p className="text-[11px] font-semibold text-muted-foreground/40 uppercase tracking-wider">
+                        Ready to paste into a message
+                      </p>
+                      <button
+                        onClick={copyEmailText}
+                        className="flex items-center gap-1.5 text-[11px] font-semibold transition-colors"
+                        style={{ color: textCopied ? "var(--sage)" : "var(--trust)" }}
+                      >
+                        {textCopied ? <Check size={10} strokeWidth={2.5} /> : <Copy size={10} strokeWidth={1.8} />}
+                        {textCopied ? "Copied" : "Copy message"}
+                      </button>
+                    </div>
+                    <p className="text-[12px] text-muted-foreground/55 leading-relaxed whitespace-pre-wrap">
+                      {emailText}
+                    </p>
+                  </div>
 
                   <button
                     onClick={onClose}
-                    className="mt-8 w-full h-12 rounded-2xl text-[14px] font-semibold transition-all active:scale-[0.98]"
+                    className="w-full h-12 rounded-2xl text-[14px] font-semibold transition-all active:scale-[0.98]"
                     style={{ background: "var(--surface-raised)", color: "var(--text-secondary)" }}
                   >
                     Done
@@ -496,12 +601,11 @@ function InviteSheet({ open, onClose, householdId, yourName, childName, onSent, 
                 </motion.div>
 
               ) : (
+                /* ── Compose ── */
                 <motion.div
                   key="compose"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.2 }}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}
                 >
                   {/* Invite preview card */}
                   <div
@@ -511,32 +615,22 @@ function InviteSheet({ open, onClose, householdId, yourName, childName, onSent, 
                       border:     "1px solid rgba(180,130,50,0.12)",
                     }}
                   >
-                    {/* Decorative large emoji — top right */}
-                    <span
-                      className="absolute -top-1 -right-1 text-[52px] opacity-[0.12] rotate-12 select-none pointer-events-none"
-                      aria-hidden
-                    >
-                      🌱
-                    </span>
-
+                    <span className="absolute -top-1 -right-1 text-[52px] opacity-[0.12] rotate-12 select-none pointer-events-none" aria-hidden>🌱</span>
                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700/50 mb-3">
-                      They&apos;ll receive
+                      They&apos;ll see
                     </p>
-
                     <div className="flex items-center gap-2.5 mb-2">
                       <span className="text-[20px] leading-none select-none">🌱</span>
                       <p className="text-[16px] font-bold text-foreground leading-tight">
                         Join {childName}&apos;s care circle
                       </p>
                     </div>
-
                     <p className="text-[12.5px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                      {yourName} is inviting you into something very special —
+                      {yourName || "Someone"} is inviting you into something very special —
                       the circle of people who show up for {childName} every day.
                     </p>
                   </div>
 
-                  {/* Close button row */}
                   <div className="flex items-center justify-between mb-5">
                     <p className="text-[17px] font-bold text-foreground">Who are you inviting?</p>
                     <button
@@ -548,53 +642,32 @@ function InviteSheet({ open, onClose, householdId, yourName, childName, onSent, 
                     </button>
                   </div>
 
-                  {/* Form */}
-                  <div className="space-y-3.5">
-                    <div>
-                      <label className="text-[11px] font-semibold text-muted-foreground/45 uppercase tracking-wider mb-2 block">
-                        Email address
-                      </label>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        placeholder="their@email.com"
-                        className="w-full rounded-xl px-4 py-3.5 text-[14px] text-foreground placeholder:text-muted-foreground/30 outline-none"
-                        style={{ background: "var(--surface-raised)", border: "1px solid var(--border-soft)" }}
-                        onKeyDown={e => e.key === "Enter" && send()}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-[11px] font-semibold text-muted-foreground/45 uppercase tracking-wider mb-2 block">
-                        Personal message
-                        <span className="font-normal normal-case ml-1 opacity-60">— adds a warm touch</span>
-                      </label>
-                      <textarea
-                        value={note}
-                        onChange={e => setNote(e.target.value)}
-                        placeholder={`Can't wait for you to be part of ${childName}'s world…`}
-                        rows={2}
-                        className="w-full rounded-xl px-4 py-3.5 text-[14px] text-foreground placeholder:text-muted-foreground/30 outline-none resize-none leading-relaxed"
-                        style={{ background: "var(--surface-raised)", border: "1px solid var(--border-soft)" }}
-                      />
-                    </div>
-                  </div>
+                  <label className="text-[11px] font-semibold text-muted-foreground/45 uppercase tracking-wider mb-2 block">
+                    Email address
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="their@email.com"
+                    className="w-full rounded-xl px-4 py-3.5 text-[14px] text-foreground placeholder:text-muted-foreground/30 outline-none"
+                    style={{ background: "var(--surface-raised)", border: "1px solid var(--border-soft)" }}
+                    onKeyDown={e => e.key === "Enter" && create()}
+                  />
 
                   {error && <p className="text-[12px] text-red-500/80 mt-3">{error}</p>}
 
                   <button
-                    onClick={send}
+                    onClick={create}
                     disabled={!email.trim() || loading}
                     className="mt-5 w-full h-[52px] rounded-2xl flex items-center justify-center gap-2.5 text-[14px] font-semibold transition-all active:scale-[0.98] disabled:opacity-40"
                     style={{ background: "var(--accent-primary)", color: "#fff" }}
                   >
-                    {loading ? (
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <Send size={14} strokeWidth={2} />
-                    )}
-                    Send invite
+                    {loading
+                      ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      : <Link size={14} strokeWidth={2} />
+                    }
+                    {loading ? "Creating link…" : "Create invite link"}
                   </button>
                 </motion.div>
               )}
@@ -615,6 +688,7 @@ export default function CareCirclePage() {
   const [loading,     setLoading]     = useState(true);
   const [inviteOpen,  setInviteOpen]  = useState(false);
   const [resendEmail, setResendEmail] = useState<string | null>(null);
+  const inviteBase = typeof window !== "undefined" ? window.location.origin : "";
 
   const load = useCallback(async () => {
     try {
@@ -808,6 +882,7 @@ export default function CareCirclePage() {
                       <InviteCard
                         invite={inv}
                         isParent={data.is_parent}
+                        inviteBase={inviteBase}
                         onCancel={cancelInvite}
                         onResend={openResend}
                       />
@@ -884,7 +959,7 @@ export default function CareCirclePage() {
           yourName={data.your_name}
           childName={data.child_name}
           initialEmail={resendEmail ?? undefined}
-          onSent={load}
+          onCreated={load}
         />
       )}
     </div>

@@ -38,7 +38,7 @@ export const ONBOARDING_STEPS: Step[] = [
     field: "name",
     type: "text-input",
     message: () =>
-      "Hi there! I'm Sunny ☀️\n\nI'm here to help create a magical, personalized experience for your little one.\n\nFirst — what's your child's name?",
+      "Hi there! I'm Sprout 🌱\n\nI'm here to help create a magical, personalized experience for your little one.\n\nFirst — what's your child's name?",
     placeholder: "Their name…",
   },
   {

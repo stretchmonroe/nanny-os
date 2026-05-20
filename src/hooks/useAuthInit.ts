@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -12,10 +12,14 @@ function normaliseRole(role: string): "nanny" | "parent" {
 }
 
 export function useAuthInit() {
-  const router = useRouter();
+  const router   = useRouter();
+  const pathname = usePathname();
   const { setActiveChild, setMemberNames, setCurrentUserRole } = useAppStore();
 
   useEffect(() => {
+    // Invite pages are public — don't redirect or seed store here
+    if (pathname.startsWith("/invite/")) return;
+
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -80,5 +84,5 @@ export function useAuthInit() {
 
     init();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pathname]);
 }

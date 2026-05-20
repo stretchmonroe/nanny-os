@@ -37,9 +37,10 @@ export default function PhotoUploader({ onSaved }: Props) {
   async function post() {
     if (!file) return;
     setUploading(true);
-    const childId = useAppStore.getState().activeChildId;
+    const { activeChildId, currentUserRole } = useAppStore.getState();
+    const createdBy = (currentUserRole ?? "nanny") as "nanny" | "parent";
     try {
-      const fileName = `${Date.now()}-${file.name}`;
+      const fileName = `${activeChildId}/${Date.now()}-${file.name}`;
       const { error } = await supabase.storage.from("photos").upload(fileName, file);
       if (error) throw error;
       const { data } = supabase.storage.from("photos").getPublicUrl(fileName);
@@ -48,8 +49,8 @@ export default function PhotoUploader({ onSaved }: Props) {
         type:       "photo",
         content,
         image_url:  data.publicUrl,
-        child_id:   childId,
-        created_by: "nanny",
+        child_id:   activeChildId,
+        created_by: createdBy,
         created_at: new Date().toISOString(),
       }).select().single();
       if (onSaved && insertData) {
@@ -60,7 +61,7 @@ export default function PhotoUploader({ onSaved }: Props) {
           content,
           category:  "play",
           imageUrl:  data.publicUrl,
-          createdBy: "nanny",
+          createdBy,
           time:      new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
         });
       }

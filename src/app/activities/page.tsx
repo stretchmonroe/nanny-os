@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ChildProfile } from "@/lib/onboarding-flow";
 import type { Activity, TimeWindow } from "@/lib/activities";
 import { TIME_WINDOW_META, TIME_WINDOW_ORDER } from "@/lib/activities";
@@ -38,9 +37,21 @@ function getContextualPattern(exec: ExecutionMap, acts: Activity[]): PatternInsi
 }
 
 export default function ActivitiesPage() {
-  const router = useRouter();
-  const { activeChildId } = useAppStore();
-  const [profile, setProfile] = useState<ChildProfile | null>(null);
+  const { activeChildId, activeChild } = useAppStore();
+
+  const profile = useMemo<ChildProfile>(() => ({
+    name:                 activeChild.name || "Child",
+    age:                  activeChild.age  || "1 year",
+    sleepPattern:         "regular",
+    activityLevel:        "moderate",
+    languageDevelopment:  "typical",
+    favoriteActivities:   [],
+    sensorySensitivities: [],
+    environmentPreference: "both",
+    developmentalFocus:   [],
+    montessoriInterest:   "moderate",
+  }), [activeChild.name, activeChild.age]);
+
   const [activities, setActivities] = useState<Activity[]>([]);
   const [status, setStatus] = useState<Status>("loading");
   const [swappingWindow, setSwappingWindow] = useState<TimeWindow | null>(null);
@@ -74,17 +85,10 @@ export default function ActivitiesPage() {
   }, []);
 
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem("nannyos_profile");
-      if (!raw) { router.push("/onboarding"); return; }
-      const prof: ChildProfile = JSON.parse(raw);
-      setProfile(prof);
-      setExecution(loadExecution());
-      fetchActivities(prof);
-    } catch {
-      router.push("/onboarding");
-    }
-  }, [router, fetchActivities]);
+    setExecution(loadExecution());
+    fetchActivities(profile);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeChildId]);
 
   // --- Execution handlers ---
 
@@ -168,7 +172,7 @@ export default function ActivitiesPage() {
   // --- Swap handler ---
 
   const handleSwap = async (window: TimeWindow) => {
-    if (!profile || swappingWindow) return;
+    if (swappingWindow) return;
     const prevActivity = activities.find(a => a.timeWindow === window);
     setSwappingWindow(window);
     const clearedExec: ExecutionMap = { ...execution };
@@ -206,10 +210,8 @@ export default function ActivitiesPage() {
   };
 
   const handleNewPlan = () => {
-    if (profile) {
-      updateExecution({});
-      fetchActivities(profile);
-    }
+    updateExecution({});
+    fetchActivities(profile);
   };
 
   const noteActivity = noteTarget
@@ -275,7 +277,7 @@ export default function ActivitiesPage() {
                 textOverflow: "ellipsis",
               }}
             >
-              {profile ? `${profile.name}'s Day` : "Today's Activities"}
+              {profile.name}&apos;s Day
             </h1>
             <p
               style={{ fontSize: 12, color: "var(--text-secondary)", margin: 0 }}
@@ -317,7 +319,7 @@ export default function ActivitiesPage() {
         {/* Content */}
         <div style={{ flex: 1, overflowY: "auto" }} className="scrollbar-hide">
           {status === "loading" && (
-            <ActivitiesLoadingSkeleton childName={profile?.name} />
+            <ActivitiesLoadingSkeleton childName={profile.name} />
           )}
 
           {status === "error" && (
@@ -411,7 +413,7 @@ export default function ActivitiesPage() {
                       margin: "0 0 8px 4px",
                     }}
                   >
-                    Pattern · Mateo
+                    Pattern · {activeChild.name}
                   </p>
                   <PatternCard
                     pattern={getContextualPattern(execution, activities)}

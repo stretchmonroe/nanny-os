@@ -240,16 +240,16 @@ export default function ProfileSheet({ open, onClose }: Props) {
                     border: "1.5px solid rgba(255,123,84,0.12)",
                   }}
                 >
-                  {/* Sunny attribution */}
+                  {/* Sprout attribution */}
                   <div className="flex items-center gap-2 mb-3">
                     <div
                       className="w-6 h-6 rounded-full flex items-center justify-center text-[12px]"
                       style={{ background: "linear-gradient(135deg, #FF7B54, #FFB085)" }}
                     >
-                      ☀️
+                      🌱
                     </div>
                     <span className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">
-                      Sunny&apos;s take on {childName}
+                      Sprout&apos;s take on {childName}
                     </span>
                   </div>
 

@@ -179,7 +179,7 @@ export function ProfileComplete({ profile }: ProfileCompleteProps) {
               ✦
             </span>
             <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)" }}>
-              Sunny&apos;s take
+              Sprout&apos;s take
             </span>
           </div>
           <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--text-primary)", margin: 0 }}>

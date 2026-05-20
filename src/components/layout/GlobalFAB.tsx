@@ -15,7 +15,6 @@ const ACTIONS = [
   { id: "research", icon: BookOpen,       label: "Research",   color: "#10B981" },
   { id: "grocery",  icon: ShoppingBasket, label: "Add Item",   color: "#8B5CF6" },
   { id: "note",     icon: PenLine,        label: "Quick Note", color: "#FF7B54" },
-  { id: "voice",    icon: Mic,            label: "Voice",      color: "#3B82F6" },
 ];
 
 export default function GlobalFAB() {
@@ -33,8 +32,16 @@ export default function GlobalFAB() {
       if      (id === "note")     setNoteOpen(true);
       else if (id === "grocery")  setGroceryOpen(true);
       else if (id === "research") setResearchOpen(true);
-      else if (id === "voice")    { voice.start(); navigator.vibrate?.(40); }
     }, 120);
+  }
+
+  function handleMicPress() {
+    if (voice.state === "idle" || voice.state === "error") {
+      navigator.vibrate?.(40);
+      voice.start();
+    } else if (voice.state === "listening") {
+      voice.stop();
+    }
   }
 
   async function handleNoteSave(text: string) {
@@ -118,20 +125,56 @@ export default function GlobalFAB() {
               ))}
             </AnimatePresence>
 
-            {/* FAB button */}
-            <motion.button
-              onClick={() => setExpanded(e => !e)}
-              className="w-12 h-12 rounded-full flex items-center justify-center select-none"
-              style={{
-                background: "linear-gradient(135deg, var(--accent-primary), var(--accent-soft))",
-                boxShadow: "0 4px 16px rgba(255,123,84,0.4), 0 2px 6px rgba(0,0,0,0.12)",
-              }}
-              animate={{ rotate: expanded ? 45 : 0 }}
-              transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <Plus size={22} strokeWidth={2.5} className="text-white" />
-            </motion.button>
+            {/* Bottom row: mic + FAB */}
+            <div className="flex items-center gap-2.5">
+              {/* Persistent mic button */}
+              <motion.button
+                onClick={handleMicPress}
+                whileTap={{ scale: 0.88 }}
+                className="w-10 h-10 rounded-full flex items-center justify-center select-none relative"
+                style={{
+                  background: "var(--surface-card)",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.07)",
+                  border: voice.state === "listening"
+                    ? "1.5px solid var(--accent-primary)"
+                    : "1.5px solid var(--border-soft)",
+                }}
+                aria-label="Voice input"
+              >
+                {voice.state === "listening" && (
+                  <motion.span
+                    className="absolute inset-0 rounded-full"
+                    style={{ border: "1.5px solid var(--accent-primary)", opacity: 0.4 }}
+                    animate={{ scale: [1, 1.5], opacity: [0.4, 0] }}
+                    transition={{ duration: 1.1, repeat: Infinity, ease: "easeOut" }}
+                  />
+                )}
+                <Mic
+                  size={15}
+                  strokeWidth={2}
+                  style={{
+                    color: voice.state === "listening"
+                      ? "var(--accent-primary)"
+                      : "var(--text-secondary)",
+                  }}
+                />
+              </motion.button>
+
+              {/* FAB button */}
+              <motion.button
+                onClick={() => setExpanded(e => !e)}
+                className="w-12 h-12 rounded-full flex items-center justify-center select-none"
+                style={{
+                  background: "linear-gradient(135deg, var(--accent-primary), var(--accent-soft))",
+                  boxShadow: "0 4px 16px rgba(255,123,84,0.4), 0 2px 6px rgba(0,0,0,0.12)",
+                }}
+                animate={{ rotate: expanded ? 45 : 0 }}
+                transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Plus size={22} strokeWidth={2.5} className="text-white" />
+              </motion.button>
+            </div>
 
           </div>
         </div>

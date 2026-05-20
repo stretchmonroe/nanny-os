@@ -71,7 +71,7 @@ export default function PatternsSection({ onResearch }: Props) {
       {/* Divider + footer */}
       <div className="mt-5 pt-4 border-t border-soft flex items-center justify-between">
         <p className="text-[9px] font-medium text-muted-foreground/25 tracking-wide">
-          Sunny · learns as {child.name}&apos;s days are logged
+          Sprout · learns as {child.name}&apos;s days are logged
         </p>
         {onResearch && (
           <button

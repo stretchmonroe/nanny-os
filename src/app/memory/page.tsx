@@ -15,13 +15,10 @@ import DatePicker from "@/components/memory/DatePicker";
 import PhotoUploader from "@/components/memory/PhotoUploader";
 import OnThisDay from "@/components/memory/OnThisDay";
 import DevelopmentStory from "@/components/memory/DevelopmentStory";
-import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import VoiceMemorySheet from "@/components/memory/VoiceMemorySheet";
 import { fetchTodayMoments, insertMoment, updateMoment, deleteMoment } from "@/lib/supabase/moments";
-import type { VoiceResult } from "@/lib/voice/transcriptParser";
 import type { JournalMoment } from "@/lib/data/demo";
 import { useAppStore } from "@/store/useAppStore";
-import { demoChildren } from "@/lib/data/demo";
 import { ArrowUp } from "lucide-react";
 
 type Tab = "today" | "week" | "favorites";
@@ -45,7 +42,7 @@ const todayStr = new Date().toLocaleDateString("en-US", {
 
 const NOTE_EMOJIS = ["😄", "🌿", "⭐", "🎯", "🍼", "💛"];
 
-function QuickWrite({ onSaved }: { onSaved: (m: JournalMoment) => void }) {
+function QuickWrite({ onSaved, role }: { onSaved: (m: JournalMoment) => void; role: "nanny" | "parent" }) {
   const [text,          setText]          = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState("");
   const [saving,        setSaving]        = useState(false);
@@ -58,7 +55,7 @@ function QuickWrite({ onSaved }: { onSaved: (m: JournalMoment) => void }) {
     if (!canSave || saving) return;
     setSaving(true);
     const content = selectedEmoji ? `${selectedEmoji} ${text.trim()}` : text.trim();
-    const moment = await insertMoment("note", content, "play", "parent");
+    const moment = await insertMoment("note", content, "play", role);
     onSaved(moment);
     setSaving(false);
     setSaved(true);
@@ -128,8 +125,8 @@ export default function MemoryPage() {
   const [dbMoments,    setDbMoments]    = useState<JournalMoment[]>([]);
   const [localMoments, setLocalMoments] = useState<JournalMoment[]>([]);
 
-  const { activeChildId } = useAppStore();
-  const activeChild = demoChildren.find(c => c.id === activeChildId) ?? demoChildren[0];
+  const { activeChildId, activeChild, currentUserRole } = useAppStore();
+  const role = (currentUserRole ?? "nanny") as "nanny" | "parent";
 
   // Re-fetch when active child changes; also clear local (session) moments
   useEffect(() => {
@@ -146,16 +143,10 @@ export default function MemoryPage() {
       "note",
       moment.content || "Voice memory",
       moment.category ?? "play",
-      moment.createdBy ?? "nanny",
+      moment.createdBy ?? role,
     );
     // Preserve audio URL for this session even though it can't be stored
     addMoment({ ...saved, type: "audio", audioUrl: moment.audioUrl, duration: moment.duration });
-  }
-
-  async function handleVoiceSave(result: VoiceResult) {
-    if (result.type !== "memory") return;
-    const moment = await insertMoment("note", result.content, result.category ?? "play", "nanny");
-    addMoment(moment);
   }
 
   function handleEdit(id: string, content: string) {
@@ -245,8 +236,6 @@ export default function MemoryPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 mb-0.5 shrink-0">
-            <VoiceRecorder context="memory" onSave={handleVoiceSave} className="w-9 h-9" />
-            {/* Voice memory recorder */}
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setVoiceSheetOpen(true)}
@@ -305,7 +294,7 @@ export default function MemoryPage() {
         >
           {view.type === "tab" && view.tab === "today" && (
             <div>
-              <QuickWrite onSaved={addMoment} />
+              <QuickWrite onSaved={addMoment} role={role} />
               <div className="mt-3">
                 <OnThisDay />
               </div>

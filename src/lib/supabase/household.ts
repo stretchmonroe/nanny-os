@@ -1,6 +1,6 @@
 import { supabase } from "./client";
 
-type AuthResult = { userId: string } | { error: string };
+type AuthResult = { userId: string; needsConfirmation?: boolean } | { error: string };
 type IdResult   = { id: string }     | { error: string };
 
 function friendlyAuthError(msg: string): string {
@@ -27,7 +27,8 @@ export async function signUpUser(
   });
   if (error) return { error: friendlyAuthError(error.message) };
   if (!data.user) return { error: "Sign up failed — please try again." };
-  return { userId: data.user.id };
+  // session is null when email confirmation is required
+  return { userId: data.user.id, needsConfirmation: !data.session };
 }
 
 export async function signInUser(

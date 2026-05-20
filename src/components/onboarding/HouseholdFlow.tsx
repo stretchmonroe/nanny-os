@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import SproutMark from "@/components/brand/SproutMark";
 import AnkurWordmark from "@/components/brand/AnkurWordmark";
 import { WelcomeSplash } from "./WelcomeSplash";
+import { supabase } from "@/lib/supabase/client";
 import {
   signUpUser, signInUser,
   createHousehold, createChild, createInvite,
@@ -51,7 +52,7 @@ const EMPTY: HouseholdData = {
 };
 
 type Step =
-  | "role" | "your-name" | "account" | "household"
+  | "role" | "your-name" | "account" | "confirm-email" | "household"
   | "child-name" | "child-age" | "invite" | "complete"
   | "caregiver-join" | "caregiver-name" | "caregiver-account" | "caregiver-complete"
   | "sign-in";
@@ -276,11 +277,11 @@ function YourNameStep({ value, onChange, onNext, onBack, dotIndex, dotTotal }: {
 
 // ── Step: Create account (email + password) ───────────────────────────────────
 
-function AccountStep({ email, password, yourName, onEmailChange, onPasswordChange, onSubmit, onNext, onBack, dotIndex, dotTotal }: {
+function AccountStep({ email, password, yourName, onEmailChange, onPasswordChange, onSubmit, onNext, onNeedsConfirmation, onBack, dotIndex, dotTotal }: {
   email: string; password: string; yourName: string;
   onEmailChange: (v: string) => void; onPasswordChange: (v: string) => void;
-  onSubmit: () => Promise<void>;
-  onNext: () => void; onBack: () => void;
+  onSubmit: () => Promise<{ needsConfirmation?: boolean }>;
+  onNext: () => void; onNeedsConfirmation: () => void; onBack: () => void;
   dotIndex: number; dotTotal: number;
 }) {
   const [showPw,   setShowPw]   = useState(false);
@@ -296,8 +297,12 @@ function AccountStep({ email, password, yourName, onEmailChange, onPasswordChang
     if (!canSubmit) return;
     setError(""); setLoading(true);
     try {
-      await onSubmit();
-      onNext();
+      const result = await onSubmit();
+      if (result.needsConfirmation) {
+        onNeedsConfirmation();
+      } else {
+        onNext();
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Something went wrong.";
       if (msg.includes("already has an account")) setSignMode("in");
@@ -804,6 +809,45 @@ function CaregiverCompleteStep({ data }: { data: HouseholdData }) {
   );
 }
 
+// ── Step: Confirm email ───────────────────────────────────────────────────────
+
+function ConfirmEmailStep({ email }: { email: string }) {
+  const router = useRouter();
+  const [checking, setChecking] = useState(false);
+  const [error,    setError]    = useState("");
+
+  async function handleCheckConfirmed() {
+    setChecking(true); setError("");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      router.replace("/home");
+    } else {
+      setError("Email not confirmed yet. Check your inbox and try again.");
+      setChecking(false);
+    }
+  }
+
+  return (
+    <Shell dotIndex={0} dotTotal={0}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 24px", textAlign: "center" }}>
+        <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20 }} style={{ fontSize: 64, marginBottom: 24 }}>
+          📬
+        </motion.div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: "#261E18", margin: "0 0 12px", lineHeight: 1.25, letterSpacing: "-0.02em" }}>Check your inbox</h1>
+        <p style={{ fontSize: 15, color: "#7A6D62", margin: "0 0 8px", lineHeight: 1.55 }}>
+          We sent a confirmation link to
+        </p>
+        <p style={{ fontSize: 15, fontWeight: 700, color: "#2A6965", margin: "0 0 32px" }}>{email}</p>
+        <p style={{ fontSize: 13, color: "rgba(42,105,101,0.5)", margin: "0 0 24px", lineHeight: 1.55 }}>
+          Click the link in the email, then come back and tap below.
+        </p>
+        {error && <ErrorNote msg={error} />}
+      </div>
+      <CTABar label={checking ? "Checking…" : "I've confirmed my email →"} loading={checking} onClick={handleCheckConfirmed} />
+    </Shell>
+  );
+}
+
 // ── Step: Sign in (returning users) ──────────────────────────────────────────
 
 function SignInStep({ onBack }: { onBack: () => void }) {
@@ -925,10 +969,17 @@ export function HouseholdFlow() {
             onSubmit={async () => {
               const r = await signUpUser(data.email, data.password, data.yourName);
               if ("error" in r) throw new Error(r.error);
+              return { needsConfirmation: r.needsConfirmation };
             }}
-            onNext={() => advance("household")} onBack={() => retreat("your-name")}
+            onNext={() => advance("household")}
+            onNeedsConfirmation={() => advance("confirm-email")}
+            onBack={() => retreat("your-name")}
             dotIndex={dotIdx} dotTotal={dotTotal}
           />
+        )}
+
+        {step === "confirm-email" && (
+          <ConfirmEmailStep email={data.email} />
         )}
 
         {step === "household" && (

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import { groceryItems as demoItems } from "@/lib/data/demo";
+import { useAppStore } from "@/store/useAppStore";
 import { ArrowUp } from "lucide-react";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import SwipeableRow from "@/components/lists/SwipeableRow";
@@ -15,6 +16,7 @@ const CHIPS = ["Bananas", "Milk", "Eggs", "Avocado", "Yogurt", "Blueberries", "C
 type Item = { id: string; name: string; completed: boolean };
 
 export default function ListsPage() {
+  const { activeChildId } = useAppStore();
   const [items,   setItems]   = useState<Item[]>([]);
   const [input,   setInput]   = useState("");
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function ListsPage() {
     if (!name) setInput("");
     const { data } = await supabase
       .from("grocery_items")
-      .insert({ name: n, child_id: "default", created_by: "parent" })
+      .insert({ name: n, child_id: activeChildId, created_by: "parent" })
       .select("id")
       .single();
     if (data) {

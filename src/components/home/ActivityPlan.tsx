@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Check, RefreshCw, Play, ChevronRight } from "lucide-react";
 import { dailyActivities, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 import GuidanceTag from "@/components/ui/GuidanceTag";
 import { isValidGuidanceSource } from "@/lib/ai/guidance";
 import { cn } from "@/lib/utils";
@@ -25,12 +26,13 @@ interface Props {
 export default function ActivityPlan({ focus }: Props) {
   const [activities, setActivities] = useState<PlannedActivity[]>(dailyActivities);
   const [swapping, setSwapping] = useState<string | null>(null);
+  const { activeChild } = useAppStore();
 
   useEffect(() => {
     const done = schedule.filter((s) => s.done).map((s) => s.title);
     callAI("activityPlan", {
-      childName: "Mateo",
-      childAge: "18 months",
+      childName: activeChild.name,
+      childAge: activeChild.age,
       focusArea: focus,
       completedToday: done,
       timeOfDay: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),

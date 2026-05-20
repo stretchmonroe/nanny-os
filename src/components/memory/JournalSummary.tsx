@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { aiJournalSummary, careNotes, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 
 type Summary  = { headline: string; summary: string; highlights: string[] };
@@ -19,13 +20,14 @@ const demoSummary: Summary = {
 export default function JournalSummary() {
   const [summary,  setSummary]  = useState<Summary>(demoSummary);
   const [liveNote, setLiveNote] = useState<string | null>(null);
+  const { activeChild } = useAppStore();
 
   useEffect(() => {
     const done = schedule.filter((s) => s.done);
 
     callAI("insights", {
-      childName:            "Mateo",
-      childAge:             "18 months",
+      childName:            activeChild.name,
+      childAge:             activeChild.age,
       developmentalFocus:   "Language & Communication",
       completedActivities:  done.map((s) => s.title),
       timeOfDay:            new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),

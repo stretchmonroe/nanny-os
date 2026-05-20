@@ -2,6 +2,7 @@
 
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
 
 export type AttributionActor  = "nanny" | "parent" | "ai" | "system";
 export type AttributionAction =
@@ -13,10 +14,10 @@ export type AttributionAction =
   | "logged";
 
 const ACTOR_CFG = {
-  nanny:  { defaultName: "Elena", circleBg: "bg-amber-100 dark:bg-amber-900/50",    circleText: "text-amber-700 dark:text-amber-300",   initial: "E"  },
-  parent: { defaultName: "Sofia", circleBg: "bg-rose-100 dark:bg-rose-900/40",      circleText: "text-rose-600 dark:text-rose-300",     initial: "S"  },
-  ai:     { defaultName: "Sprout", circleBg: "bg-lavender-light dark:bg-lavender/20", circleText: "text-lavender dark:text-lavender",  initial: null },
-  system: { defaultName: "",       circleBg: "bg-muted",                             circleText: "text-muted-foreground/35",             initial: "·"  },
+  nanny:  { circleBg: "bg-amber-100 dark:bg-amber-900/50",      circleText: "text-amber-700 dark:text-amber-300"  },
+  parent: { circleBg: "bg-rose-100 dark:bg-rose-900/40",        circleText: "text-rose-600 dark:text-rose-300"   },
+  ai:     { circleBg: "bg-lavender-light dark:bg-lavender/20",  circleText: "text-lavender dark:text-lavender"   },
+  system: { circleBg: "bg-muted",                               circleText: "text-muted-foreground/35"           },
 } as const;
 
 interface Props {
@@ -27,8 +28,14 @@ interface Props {
 }
 
 export default function AttributionLine({ actor, action, displayName, className }: Props) {
-  const cfg  = ACTOR_CFG[actor];
-  const name = displayName ?? cfg.defaultName;
+  const { memberNames } = useAppStore();
+  const cfg = ACTOR_CFG[actor];
+  const name = displayName ?? (
+    actor === "nanny" ? memberNames.nanny :
+    actor === "parent" ? memberNames.parent :
+    actor === "ai" ? "Sprout" : ""
+  );
+  const initial = actor === "system" ? "·" : actor === "ai" ? null : name[0]?.toUpperCase() ?? "?";
 
   if (actor === "system") {
     return (
@@ -45,7 +52,7 @@ export default function AttributionLine({ actor, action, displayName, className 
           <Sparkles className={cn("w-[8px] h-[8px]", cfg.circleText)} strokeWidth={2.2} />
         ) : (
           <span className={cn("text-[7px] font-bold leading-none", cfg.circleText)}>
-            {cfg.initial}
+            {initial}
           </span>
         )}
       </div>

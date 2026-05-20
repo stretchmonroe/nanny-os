@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, Lightbulb, FileText, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 import GuidanceTag from "@/components/ui/GuidanceTag";
 import SproutMark from "@/components/brand/SproutMark";
 import {
@@ -52,12 +53,13 @@ function SuggestPane() {
   const [data,    setData]    = useState<SuggestResult>(SUGGEST_DEMO);
   const [loading, setLoading] = useState(true);
   const [shared,  setShared]  = useState(false);
+  const { activeChild } = useAppStore();
 
   useEffect(() => {
     setLoading(true);
     callAI("nextBestAction", {
-      childName:          "Mateo",
-      childAge:           "18 months",
+      childName:          activeChild.name,
+      childAge:           activeChild.age,
       developmentalFocus: "Language & Communication",
       timeOfDay:          new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
     }).then((res) => {
@@ -87,7 +89,7 @@ function SuggestPane() {
             <SproutMark size={44} />
           </motion.div>
           <p className="text-[13px] text-muted-foreground/40 italic">
-            Thinking about Mateo…
+            Thinking about {activeChild.name}…
           </p>
         </div>
       ) : (
@@ -170,12 +172,13 @@ const SUMMARY_DEMO: SummaryResult = {
 function SummarizePane() {
   const [data,    setData]    = useState<SummaryResult>(SUMMARY_DEMO);
   const [loading, setLoading] = useState(true);
+  const { activeChild } = useAppStore();
 
   useEffect(() => {
     setLoading(true);
     callAI("dailySummary", {
-      childName: "Mateo",
-      childAge:  "18 months",
+      childName: activeChild.name,
+      childAge:  activeChild.age,
       notes:     careNotes.map((n) => `${n.label}: ${n.note}`).join("\n"),
     }).then((res) => {
       if (!res) { setLoading(false); return; }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { weeklyMoments } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 
 type Story = { headline: string; story: string };
@@ -15,6 +16,7 @@ const demo: Story = {
 
 export default function WeeklyStory() {
   const [story, setStory] = useState<Story>(demo);
+  const { activeChild } = useAppStore();
 
   useEffect(() => {
     const moments = weeklyMoments
@@ -24,8 +26,8 @@ export default function WeeklyStory() {
       .slice(0, 14);
 
     callAI("weeklyStory", {
-      childName: "Mateo",
-      childAge: "18 months",
+      childName: activeChild.name,
+      childAge: activeChild.age,
       moments,
       weekRange: "May 8–14",
     }).then(res => {

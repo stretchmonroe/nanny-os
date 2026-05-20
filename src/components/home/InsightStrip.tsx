@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { todayInsights, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 import { loadExecution } from "@/lib/execution";
 import type { ExecutionSummary } from "@/lib/ai/prompts/insights";
 
@@ -14,6 +15,7 @@ interface Props {
 
 export default function InsightStrip({ onResearch }: Props) {
   const [insight, setInsight] = useState(todayInsights[0]);
+  const { activeChild } = useAppStore();
 
   useEffect(() => {
     const done = schedule.filter((s) => s.done).map((s) => s.title);
@@ -41,8 +43,8 @@ export default function InsightStrip({ onResearch }: Props) {
     }
 
     callAI("insights", {
-      childName: "Mateo",
-      childAge: "18 months",
+      childName: activeChild.name,
+      childAge: activeChild.age,
       developmentalFocus: "Fine Motor Skills",
       completedActivities: done,
       currentActivity: current,

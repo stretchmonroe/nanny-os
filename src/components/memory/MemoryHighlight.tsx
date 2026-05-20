@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { weeklyMoments } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 
 type Highlight = { momentIndex: number; caption: string };
 
@@ -18,13 +19,14 @@ const demoHighlight: Highlight = {
 
 export default function MemoryHighlight() {
   const [highlight, setHighlight] = useState<Highlight>(demoHighlight);
+  const { activeChild } = useAppStore();
 
   useEffect(() => {
     const moments = allMoments.map(m => m.content);
 
     callAI("memoryHighlight", {
-      childName: "Mateo",
-      childAge: "18 months",
+      childName: activeChild.name,
+      childAge: activeChild.age,
       moments,
     }).then(res => {
       if (!res) return;

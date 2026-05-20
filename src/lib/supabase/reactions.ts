@@ -1,7 +1,7 @@
 import { supabase } from "./client"
+import { useAppStore } from "@/store/useAppStore"
 
 type AuthorType = "nanny" | "parent"
-const AUTHOR_NAMES: Record<AuthorType, string> = { nanny: "Elena", parent: "Sofia" }
 
 export async function toggleReaction(
   momentId: string,
@@ -9,6 +9,7 @@ export async function toggleReaction(
   authorType: AuthorType = "nanny",
 ): Promise<void> {
   try {
+    const authorName = useAppStore.getState().memberNames[authorType]
     const { data: existing } = await supabase
       .from("memory_reactions")
       .select("id")
@@ -26,7 +27,7 @@ export async function toggleReaction(
         target_id:   momentId,
         emoji,
         author_type: authorType,
-        author_name: AUTHOR_NAMES[authorType],
+        author_name: authorName,
         created_at:  new Date().toISOString(),
       })
     }

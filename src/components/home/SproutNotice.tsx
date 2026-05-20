@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 import SproutMark from "@/components/brand/SproutMark";
 import SproutSheet from "./SproutSheet";
 import SproutResearchSheet from "./SproutResearchSheet";
@@ -26,6 +27,7 @@ export default function SproutNotice() {
   const [stripVisible, setStripVisible]= useState(true);
   const [sheetMode,    setSheetMode]   = useState<SproutMode | null>(null);
   const [researchOpen, setResearchOpen]= useState(false);
+  const { activeChild } = useAppStore();
 
   // Auto-advance rotation
   useEffect(() => {
@@ -39,8 +41,8 @@ export default function SproutNotice() {
     const done    = schedule.filter((s) => s.done).map((s) => s.title);
     const active  = schedule.find((s) => s.active)?.title;
     callAI("insights", {
-      childName:           "Mateo",
-      childAge:            "18 months",
+      childName:           activeChild.name,
+      childAge:            activeChild.age,
       developmentalFocus:  "Language & Communication",
       completedActivities: done,
       currentActivity:     active,

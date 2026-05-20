@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { weeklyMoments } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 
 type OTD = { reflection: string };
 
@@ -20,6 +21,7 @@ const demo: OTD = {
 
 export default function OnThisDay() {
   const [data, setData] = useState<OTD>(demo);
+  const { activeChild } = useAppStore();
 
   useEffect(() => {
     if (!pastMoment) return;
@@ -28,8 +30,8 @@ export default function OnThisDay() {
       .find(m => m.type === "milestone")?.content;
 
     callAI("onThisDay", {
-      childName: "Mateo",
-      childAge: "18 months",
+      childName: activeChild.name,
+      childAge: activeChild.age,
       pastMoment: pastMoment.content,
       daysAgo: DAYS_AGO,
       presentMoment: todayMilestone,

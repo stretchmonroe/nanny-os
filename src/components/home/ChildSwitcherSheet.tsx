@@ -4,11 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Plus, X } from "lucide-react";
 import { demoChildren } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
+import type { ChildInfo } from "@/store/useAppStore";
 
 interface Props {
   open:          boolean;
   activeChildId: string;
-  onSelect(id: string): void;
+  onSelect(child: ChildInfo): void;
   onClose():     void;
 }
 
@@ -67,7 +68,7 @@ export default function ChildSwitcherSheet({ open, activeChildId, onSelect, onCl
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05, duration: 0.25 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => { onSelect(c.id); onClose(); }}
+                    onClick={() => { onSelect({ id: c.id, name: c.name, age: c.age }); onClose(); }}
                     className={cn(
                       "w-full flex items-center gap-4 px-5 py-4 rounded-[1.25rem] text-left transition-all",
                     )}

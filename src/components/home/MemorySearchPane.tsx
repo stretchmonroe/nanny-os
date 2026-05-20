@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ArrowUp, Loader2 } from "lucide-react";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 import { recentMemories } from "@/lib/data/demo";
 import SproutResultActions from "./SproutResultActions";
 import type { MemoryEvent } from "@/lib/data/demo";
@@ -45,6 +46,7 @@ export default function MemorySearchPane() {
   const [submitted, setSubmitted] = useState("");
   const [loading,   setLoading]   = useState(false);
   const [result,    setResult]    = useState<SearchResult | null>(null);
+  const { activeChild } = useAppStore();
 
   const canSearch = query.trim().length > 0;
 
@@ -64,8 +66,8 @@ export default function MemorySearchPane() {
 
     const res = await callAI("memorySearch", {
       query:       text,
-      childName:   "Mateo",
-      childAge:    "18 months",
+      childName:   activeChild.name,
+      childAge:    activeChild.age,
       memoryIndex: MEMORY_INDEX,
     });
 

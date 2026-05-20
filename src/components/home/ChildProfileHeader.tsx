@@ -38,9 +38,10 @@ export default function ChildProfileHeader({ focus, onFocusChange, onProfileOpen
   const [focusOpen,     setFocusOpen]     = useState(false);
   const [switcherOpen,  setSwitcherOpen]  = useState(false);
 
-  const { activeChildId, setActiveChildId } = useAppStore();
-  const activeChild = demoChildren.find(c => c.id === activeChildId) ?? demoChildren[0];
-  const multiChild  = demoChildren.length > 1;
+  const { activeChildId, activeChild, setActiveChild } = useAppStore();
+  // Visual fields (emoji, avatar gradient, mood) fall back to demo until Tier-3 real child media
+  const demoChild  = demoChildren.find(c => c.id === activeChildId) ?? demoChildren[0];
+  const multiChild = demoChildren.length > 1;
 
   useEffect(() => {
     setGreeting(getGreeting());
@@ -76,13 +77,13 @@ export default function ChildProfileHeader({ focus, onFocusChange, onProfileOpen
             <div
               className="w-14 h-14 rounded-[1.3rem] flex items-center justify-center text-[28px] shadow-elevated ring-[3px] ring-[#D4A882]/30"
               style={{
-                background: `linear-gradient(135deg, ${activeChild.avatarFrom}, ${activeChild.avatarTo})`,
+                background: `linear-gradient(135deg, ${demoChild.avatarFrom}, ${demoChild.avatarTo})`,
               }}
             >
-              {activeChild.emoji}
+              {demoChild.emoji}
             </div>
             <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-xl bg-surface-card shadow-card flex items-center justify-center text-[13px] border-soft">
-              {activeChild.mood}
+              {demoChild.mood}
             </div>
           </button>
         </div>
@@ -124,7 +125,7 @@ export default function ChildProfileHeader({ focus, onFocusChange, onProfileOpen
           </button>
 
           <p className="text-[13px] text-muted-foreground mt-2 font-medium">
-            {activeChild.age} · {activeChild.moodLabel}
+            {activeChild.age} · {demoChild.moodLabel}
           </p>
           <p className="text-[11px] text-muted-foreground/40 mt-1 font-medium">
             with Elena today
@@ -197,7 +198,7 @@ export default function ChildProfileHeader({ focus, onFocusChange, onProfileOpen
       <ChildSwitcherSheet
         open={switcherOpen}
         activeChildId={activeChildId}
-        onSelect={setActiveChildId}
+        onSelect={setActiveChild}
         onClose={() => setSwitcherOpen(false)}
       />
     </>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { weeklyMoments } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 
 type DevStory = { story: string };
 
@@ -13,6 +14,7 @@ const demo: DevStory = {
 
 export default function DevelopmentStory() {
   const [data, setData] = useState<DevStory>(demo);
+  const { activeChild } = useAppStore();
 
   useEffect(() => {
     const milestones = weeklyMoments
@@ -27,8 +29,8 @@ export default function DevelopmentStory() {
       .slice(0, 5);
 
     callAI("developmentStory", {
-      childName: "Mateo",
-      childAge: "18 months",
+      childName: activeChild.name,
+      childAge: activeChild.age,
       milestones,
       observations,
     }).then(res => {

@@ -5,17 +5,19 @@ import { useEffect, useState } from "react";
 import { TrendingUp, Star } from "lucide-react";
 import { weeklyMoments, weeklyPatterns, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 
 type WeekInsight = { weeklyPattern?: string; careNote?: string };
 
 export default function WeeklyRecap() {
   const [observations, setObservations] = useState(weeklyPatterns.observations);
+  const { activeChild } = useAppStore();
 
   useEffect(() => {
     const done = schedule.filter((s) => s.done).map((s) => s.title);
     callAI("insights", {
-      childName: "Mateo",
-      childAge: "18 months",
+      childName: activeChild.name,
+      childAge: activeChild.age,
       developmentalFocus: "Language & Communication",
       completedActivities: done,
       timeOfDay: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),

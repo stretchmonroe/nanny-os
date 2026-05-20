@@ -1,8 +1,8 @@
 import { supabase } from "./client"
 import type { MomentReply } from "@/lib/data/demo"
+import { useAppStore } from "@/store/useAppStore"
 
 type AuthorType = "nanny" | "parent"
-const AUTHOR_NAMES: Record<AuthorType, string> = { nanny: "Elena", parent: "Sofia" }
 
 export async function addReply(
   momentId: string,
@@ -17,6 +17,7 @@ export async function addReply(
     time:    now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
   }
   try {
+    const authorName = useAppStore.getState().memberNames[authorType]
     const { data } = await supabase
       .from("threaded_replies")
       .insert({
@@ -25,7 +26,7 @@ export async function addReply(
         target_id:   momentId,
         body,
         author_type: authorType,
-        author_name: AUTHOR_NAMES[authorType],
+        author_name: authorName,
         created_at:  now.toISOString(),
       })
       .select("id")

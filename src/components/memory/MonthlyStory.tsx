@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { weeklyMoments, favoriteMemories } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
+import { useAppStore } from "@/store/useAppStore";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 
 type MonthStory = { title: string; story: string };
@@ -15,6 +16,7 @@ const demo: MonthStory = {
 
 export default function MonthlyStory() {
   const [story, setStory] = useState<MonthStory>(demo);
+  const { activeChild } = useAppStore();
 
   useEffect(() => {
     const weekHighlights = weeklyMoments
@@ -28,8 +30,8 @@ export default function MonthlyStory() {
       .map(f => f.content);
 
     callAI("monthlyStory", {
-      childName: "Mateo",
-      childAge: "18 months",
+      childName: activeChild.name,
+      childAge: activeChild.age,
       month: "May 2026",
       highlights: [...weekHighlights, ...favHighlights],
     }).then(res => {

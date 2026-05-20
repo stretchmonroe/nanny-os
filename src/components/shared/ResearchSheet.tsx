@@ -7,6 +7,7 @@ import GuidanceTag from "@/components/ui/GuidanceTag"
 import { callAI, parseAIJson } from "@/lib/ai/client"
 import { isValidGuidanceSource } from "@/lib/ai/guidance"
 import type { GuidanceSource } from "@/lib/ai/guidance"
+import { useAppStore } from "@/store/useAppStore"
 
 const SUGGESTIONS = [
   "When do toddlers start sharing?",
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export default function ResearchSheet({ open, onClose, initialQuestion }: Props) {
+  const { activeChild } = useAppStore()
   const [question, setQuestion]     = useState(initialQuestion ?? "")
   const [loading,  setLoading]      = useState(false)
   const [result,   setResult]       = useState<ResearchResult | null>(null)
@@ -50,8 +52,8 @@ export default function ResearchSheet({ open, onClose, initialQuestion }: Props)
     setResult(null)
     const res = await callAI("research", {
       question: text,
-      childAge: "18 months",
-      childName: "Mateo",
+      childAge: activeChild.age,
+      childName: activeChild.name,
     })
     setLoading(false)
     if (!res) return

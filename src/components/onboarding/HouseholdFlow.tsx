@@ -596,22 +596,52 @@ function ParentCompleteStep({ data }: { data: HouseholdData }) {
       }
 
       const json = await res.json();
-      console.log("[complete] /api/me response:", JSON.stringify(json));
+      console.log("[complete] /api/me response:", JSON.stringify({
+        profile:    json.profile,
+        membership: json.membership,
+        household:  json.household,
+        children:   json.children,
+      }));
 
-      const hasMembership = json.membership && json.membership.status !== "invited";
-      if (!hasMembership) {
-        throw new Error("Household membership not found — it may not have saved. Please try again or contact support.");
+      // ── Check membership ────────────────────────────────────────────────────
+      if (!json.membership) {
+        throw new Error(
+          `Membership row not found in household_members.\n` +
+          `profile=${JSON.stringify(json.profile)}\n` +
+          `Check Supabase: household_members table, user_id=${session.user?.id}`
+        );
       }
 
-      const hasChild = Array.isArray(json.children) && json.children.length > 0;
-      if (!hasChild) {
-        throw new Error("Child profile not found — it may not have saved. Please go back and try the child setup again.");
+      // ── Check household ─────────────────────────────────────────────────────
+      if (!json.household) {
+        throw new Error(
+          `Household row missing — membership references household_id=${json.membership.household_id} but no matching row found.`
+        );
       }
 
-      // Pre-populate store so /home renders immediately with real data
+      // ── Check child ─────────────────────────────────────────────────────────
+      const children = Array.isArray(json.children) ? json.children : [];
+      const child    = children[0] ?? null;
+      const childName = child?.name?.trim() || child?.full_name?.trim() || null;
+
+      if (!child) {
+        // No child row at all — route back to child setup
+        console.warn("[complete] no child row — routing to child setup");
+        window.location.href = `/onboarding?resume=child&hid=${json.membership.household_id}`;
+        return;
+      }
+
+      if (!childName) {
+        // Child row exists but name is empty — route to child setup
+        console.warn("[complete] child exists but no name — routing to child setup. child:", JSON.stringify(child));
+        window.location.href = `/onboarding?resume=child&hid=${json.membership.household_id}`;
+        return;
+      }
+
+      // ── All good — populate store and navigate ──────────────────────────────
       setCurrentUserRole(json.membership.role === "parent" ? "parent" : "nanny");
-      const child = json.children[0];
-      setActiveChild({ id: String(child.id), name: String(child.name), age: String(child.focus ?? "") });
+      setActiveChild({ id: String(child.id), name: childName, age: String(child.focus ?? "") });
+      console.log("[complete] ✓ all checks passed — navigating to /home");
 
       window.location.href = "/home";
     } catch (e) {
@@ -937,13 +967,19 @@ function SignInStep({ onBack }: { onBack: () => void }) {
         });
         console.log("[signin] /api/me status:", meRes.status);
         const meJson = meRes.ok ? await meRes.json() : null;
-        console.log("[signin] /api/me response:", JSON.stringify(meJson));
-        const hasMembership = meJson?.membership && meJson.membership.status !== "invited";
-        const hasChild      = Array.isArray(meJson?.children) && meJson.children.length > 0;
-        if (!hasMembership) {
+        console.log("[signin] /api/me:", JSON.stringify({
+          membership: meJson?.membership,
+          household:  meJson?.household,
+          childCount: meJson?.children?.length ?? 0,
+        }));
+        const membership = meJson?.membership ?? null;
+        const children   = Array.isArray(meJson?.children) ? meJson.children : [];
+        const childName  = children[0]?.name?.trim() || children[0]?.full_name?.trim() || null;
+
+        if (!membership) {
           window.location.href = "/onboarding?resume=household";
-        } else if (!hasChild) {
-          window.location.href = `/onboarding?resume=child&hid=${meJson.membership.household_id}`;
+        } else if (!children.length || !childName) {
+          window.location.href = `/onboarding?resume=child&hid=${membership.household_id}`;
         } else {
           window.location.href = "/home";
         }

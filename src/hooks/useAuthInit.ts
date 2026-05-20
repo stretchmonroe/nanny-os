@@ -30,7 +30,6 @@ export function useAuthInit() {
       .from("household_members")
       .select("household_id, role")
       .eq("user_id", user.id)
-      .eq("status", "active")
       .maybeSingle();
 
     if (!membership) {

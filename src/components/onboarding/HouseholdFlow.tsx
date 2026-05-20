@@ -874,7 +874,6 @@ function SignInStep({ onBack }: { onBack: () => void }) {
           .from("household_members")
           .select("household_id")
           .eq("user_id", user.id)
-          .eq("status", "active")
           .maybeSingle();
         router.replace(membership ? "/home" : "/onboarding?resume=household");
       } else {

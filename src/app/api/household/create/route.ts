@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     const { error: mErr } = await admin
       .from("household_members")
-      .insert({ household_id: hh.id, user_id: user.id, role: "parent", status: "active" });
+      .insert({ household_id: hh.id, user_id: user.id, role: "parent" });
     if (mErr) {
       return NextResponse.json({ error: "Couldn't set up your household. Try again." }, { status: 500 });
     }

@@ -1,22 +1,24 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
-const admin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+function getAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
 
 export async function GET(req: NextRequest) {
   try {
     const token = req.headers.get("authorization")?.replace("Bearer ", "");
-    const { data: { user } } = await admin.auth.getUser(token ?? "");
+    const { data: { user } } = await getAdmin().auth.getUser(token ?? "");
 
     if (!user) {
       return NextResponse.json({ demo: true, members: [], invites: [], household_id: null });
     }
 
     // Get the user's household membership
-    const { data: membership } = await admin
+    const { data: membership } = await getAdmin()
       .from("household_members")
       .select("household_id, role")
       .eq("user_id", user.id)
@@ -29,7 +31,7 @@ export async function GET(req: NextRequest) {
     const householdId = membership.household_id as string;
 
     // Fetch all members of this household
-    const { data: members } = await admin
+    const { data: members } = await getAdmin()
       .from("household_members")
       .select("user_id, role, created_at")
       .eq("household_id", householdId)
@@ -38,7 +40,7 @@ export async function GET(req: NextRequest) {
     // Fetch user metadata for each member
     const enriched = await Promise.all(
       (members ?? []).map(async (m) => {
-        const { data: { user: u } } = await admin.auth.admin.getUserById(m.user_id as string);
+        const { data: { user: u } } = await getAdmin().auth.admin.getUserById(m.user_id as string);
         return {
           user_id:      m.user_id,
           role:         m.role,
@@ -51,7 +53,7 @@ export async function GET(req: NextRequest) {
     );
 
     // Fetch pending invites
-    const { data: invites } = await admin
+    const { data: invites } = await getAdmin()
       .from("household_invites")
       .select("id, email, inviter_name, note, created_at, expires_at")
       .eq("household_id", householdId)
@@ -60,13 +62,13 @@ export async function GET(req: NextRequest) {
       .order("created_at", { ascending: false });
 
     // Fetch household + child names for invite creation
-    const { data: household } = await admin
+    const { data: household } = await getAdmin()
       .from("households")
       .select("name")
       .eq("id", householdId)
       .single();
 
-    const { data: childRow } = await admin
+    const { data: childRow } = await getAdmin()
       .from("children")
       .select("name")
       .eq("household_id", householdId)

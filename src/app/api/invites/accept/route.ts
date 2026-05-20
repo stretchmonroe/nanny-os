@@ -1,10 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
-const admin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+function getAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing params" }, { status: 400 });
     }
 
-    const { data: invite } = await admin
+    const { data: invite } = await getAdmin()
       .from("household_invites")
       .select("household_id, status, expires_at")
       .eq("id", invite_id)
@@ -30,13 +32,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Create household membership
-    await admin.from("household_members").upsert(
+    await getAdmin().from("household_members").upsert(
       { user_id, household_id: invite.household_id, role: "nanny" },
       { onConflict: "user_id,household_id" },
     );
 
     // Mark invite accepted
-    await admin.from("household_invites").update({ status: "accepted" }).eq("id", invite_id);
+    await getAdmin().from("household_invites").update({ status: "accepted" }).eq("id", invite_id);
 
     return NextResponse.json({ household_id: invite.household_id });
   } catch {

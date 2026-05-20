@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
 
 function normaliseRole(role: string): "nanny" | "parent" {
+  // 'caregiver' and 'grandparent' are treated as 'nanny' internally
   return role === "parent" ? "parent" : "nanny";
 }
 
@@ -20,22 +21,25 @@ export function useAuthInit() {
       return;
     }
 
-    console.log("[auth] init — pathname:", pathname);
-
+    // ── Step 1: user (session) ────────────────────────────────────────────────
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      console.log("[auth] no session — redirecting to /onboarding");
-      if (!pathname.startsWith("/onboarding")) {
-        router.replace("/onboarding");
-      }
+      console.log("[auth] ✗ user: no session");
+      if (!pathname.startsWith("/onboarding")) router.replace("/onboarding");
       setAuthReady(true);
       return;
     }
+    console.log("[auth] ✓ user:", session.user.id);
 
-    console.log("[auth] session OK, fetching /api/me");
-    let membership: { household_id: string; role: string } | null = null;
-    let children: { id: string; name: string; focus?: string }[] = [];
-    let fetchSucceeded = false;
+    // ── Step 2–4: profile / membership / children via /api/me ─────────────────
+    type MeResponse = {
+      profile:    { id: string; full_name: string | null; default_household_id: string | null } | null;
+      membership: { household_id: string; role: string; status: string } | null;
+      children:   { id: string; name: string; focus?: string }[];
+    };
+
+    let me: MeResponse | null = null;
+    let fetchOk = false;
 
     try {
       const res = await fetch("/api/me", {
@@ -43,21 +47,41 @@ export function useAuthInit() {
       });
       console.log("[auth] /api/me status:", res.status);
       if (res.ok) {
-        const json = await res.json();
-        console.log("[auth] /api/me response:", JSON.stringify(json));
-        membership = json.membership ?? null;
-        children   = json.children  ?? [];
-        fetchSucceeded = true;
+        me = await res.json() as MeResponse;
+        fetchOk = true;
       } else {
-        const errBody = await res.text().catch(() => "");
-        console.warn("[auth] /api/me non-OK:", res.status, errBody);
+        const body = await res.text().catch(() => "");
+        console.warn("[auth] /api/me error body:", body);
       }
     } catch (err) {
       console.warn("[auth] /api/me network error:", err);
     }
 
-    if (fetchSucceeded && membership === null) {
-      console.log("[auth] membership null — redirecting to /onboarding?resume=household");
+    if (!fetchOk || !me) {
+      // Network or server error — don't redirect, let page render as-is
+      console.warn("[auth] /api/me failed — staying on current page");
+      setAuthReady(true);
+      return;
+    }
+
+    // ── Checklist logging ─────────────────────────────────────────────────────
+    const { profile, membership, children } = me;
+
+    console.log("[auth] checklist:");
+    console.log("  ✓ user:                 ", session.user.id);
+    console.log("  " + (profile   ? "✓" : "✗") + " profile:              ", profile   ? `full_name=${profile.full_name}` : "MISSING");
+    console.log("  " + (membership ? "✓" : "✗") + " household_membership: ", membership ? `hid=${membership.household_id} role=${membership.role} status=${membership.status}` : "MISSING");
+    console.log("  " + (membership ? "✓" : "✗") + " activeHouseholdId:    ", membership?.household_id ?? "MISSING");
+    console.log("  " + (children?.length ? "✓" : "✗") + " child:                ", children?.length ? `name=${children[0].name} id=${children[0].id}` : "MISSING");
+    console.log("  " + (children?.length ? "✓" : "✗") + " activeChildId:        ", children?.length ? children[0].id : "MISSING");
+
+    // ── Step 3: profile ───────────────────────────────────────────────────────
+    // Profile row is now created by trigger (or upserted by /api/me above).
+    // No redirect needed for missing profile — it was just created.
+
+    // ── Step 4: household membership ─────────────────────────────────────────
+    if (!membership) {
+      console.log("[auth] ✗ household_membership: redirecting to /onboarding?resume=household");
       if (!pathname.startsWith("/onboarding")) {
         router.replace("/onboarding?resume=household");
       }
@@ -65,28 +89,42 @@ export function useAuthInit() {
       return;
     }
 
-    if (!fetchSucceeded) {
-      console.warn("[auth] /api/me failed — staying on current page, not redirecting");
+    // ── Step 5: membership must be active ────────────────────────────────────
+    // 'invited' status means the membership row exists but the user hasn't
+    // been activated yet (new schema). Treat the same as missing.
+    if (membership.status === "invited") {
+      console.log("[auth] ✗ household_membership: status=invited — redirecting to /onboarding?resume=household");
+      if (!pathname.startsWith("/onboarding")) {
+        router.replace("/onboarding?resume=household");
+      }
       setAuthReady(true);
       return;
     }
 
-    setCurrentUserRole(normaliseRole(membership!.role));
-    console.log("[auth] role set:", membership!.role);
-
-    if (children.length > 0) {
-      const storedId = useAppStore.getState().activeChildId;
-      const match    = children.find((c) => c.id === storedId) ?? children[0];
-      setActiveChild({
-        id:   String(match.id),
-        name: String(match.name),
-        age:  String(match.focus ?? ""),
-      });
-      console.log("[auth] activeChild set:", match.name, match.id);
-    } else {
-      console.log("[auth] no children in /api/me response");
+    // ── Step 6: children ─────────────────────────────────────────────────────
+    if (!children || children.length === 0) {
+      console.log("[auth] ✗ child: none — redirecting to /onboarding?resume=child");
+      if (!pathname.startsWith("/onboarding")) {
+        router.replace(`/onboarding?resume=child&hid=${membership.household_id}`);
+      }
+      setAuthReady(true);
+      return;
     }
 
+    // ── All requirements met — populate store ─────────────────────────────────
+    setCurrentUserRole(normaliseRole(membership.role));
+    console.log("[auth] ✓ role set:", membership.role);
+
+    const storedId = useAppStore.getState().activeChildId;
+    const match    = children.find((c) => c.id === storedId) ?? children[0];
+    setActiveChild({
+      id:   String(match.id),
+      name: String(match.name),
+      age:  String(match.focus ?? ""),
+    });
+    console.log("[auth] ✓ activeChild set:", match.name, match.id);
+
+    // Load member display names
     try {
       const circleRes  = await fetch("/api/care-circle", {
         headers: { authorization: `Bearer ${session.access_token}` },

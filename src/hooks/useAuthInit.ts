@@ -80,7 +80,7 @@ export function useAuthInit() {
     console.log(`  ${household                                 ? "✓" : "✗"} household:           ${household ? `name="${household.name}" id=${household.id}` : "MISSING"}`);
     console.log(`  ${membership                                ? "✓" : "✗"} activeHouseholdId:   ${membership?.household_id ?? "MISSING"}`);
     console.log(`  ${firstChild                                ? "✓" : "✗"} child:               ${firstChild ? `id=${firstChild.id} name="${firstChild.name}" full_name="${firstChild.full_name}" birth_date=${firstChild.birth_date}` : "MISSING"}`);
-    console.log(`  ${childName                                 ? "✓" : "✗"} child name usable:   ${childName ?? "MISSING"}`);
+    console.log(`  ${childName ? "✓" : "·"} child name (optional): ${childName ?? "not set"}`);
     console.log(`  ${firstChild                                ? "✓" : "✗"} activeChildId:       ${firstChild?.id ?? "MISSING"}`);
     console.log("[auth] ───────────────────────────────────────────────────");
 
@@ -104,10 +104,10 @@ export function useAuthInit() {
       return;
     }
 
-    // ── Requirement 4: child ──────────────────────────────────────────────────
-    if (!firstChild || !childName) {
+    // ── Requirement 4: child row must exist (name/birth_date are optional) ──────
+    if (!firstChild) {
       const url = `/onboarding?resume=child&hid=${membership.household_id}`;
-      console.log(`[auth] ✗ child: ${!firstChild ? "no child row" : "child has no name"} → ${url}`);
+      console.log(`[auth] ✗ child: no child row → ${url}`);
       if (!pathname.startsWith("/onboarding")) {
         router.replace(url);
       }

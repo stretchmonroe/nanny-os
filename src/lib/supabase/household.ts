@@ -44,9 +44,19 @@ export async function signInUser(
 }
 
 export async function createHousehold(name: string): Promise<IdResult> {
-  const { data, error } = await supabase.rpc("create_household_for_user", { p_name: name });
-  if (error) return { error: "Couldn't create your family home. Try again." };
-  return { id: String(data) };
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { error: "Not signed in." };
+  const res = await fetch("/api/household/create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ name: name.trim() }),
+  });
+  const json = await res.json();
+  if (!res.ok) return { error: json.error ?? "Couldn't create your family home. Try again." };
+  return { id: String(json.id) };
 }
 
 export async function createChild(
@@ -54,13 +64,19 @@ export async function createChild(
   age:  string,
   householdId: string,
 ): Promise<IdResult> {
-  const { data, error } = await supabase.rpc("create_child_for_household", {
-    p_name:         name,
-    p_age:          age,
-    p_household_id: householdId,
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { error: "Not signed in." };
+  const res = await fetch("/api/household/create-child", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ name: name.trim(), age, householdId }),
   });
-  if (error) return { error: "Couldn't save your child's profile. Try again." };
-  return { id: String(data) };
+  const json = await res.json();
+  if (!res.ok) return { error: json.error ?? "Couldn't save your child's profile. Try again." };
+  return { id: String(json.id) };
 }
 
 export async function createInvite(

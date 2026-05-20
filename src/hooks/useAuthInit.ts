@@ -44,7 +44,7 @@ export function useAuthInit() {
       // Load children in this household
       const { data: children } = await supabase
         .from("children")
-        .select("id, name, age")
+        .select("id, name, focus")
         .eq("household_id", membership.household_id)
         .order("created_at", { ascending: true })
         .limit(10);
@@ -55,7 +55,7 @@ export function useAuthInit() {
         setActiveChild({
           id:   String(match.id),
           name: String(match.name),
-          age:  String(match.age ?? ""),
+          age:  String((match as { focus?: string }).focus ?? ""),
         });
       }
 

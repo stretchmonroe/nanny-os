@@ -2,18 +2,13 @@
 
 import { motion } from "framer-motion"
 import AuthorBadge from "@/components/ui/AuthorBadge"
+import { useAppStore } from "@/store/useAppStore"
 import type { Suggestion } from "@/lib/data/demo"
 
 const CATEGORY_CONFIG = {
   activity: { emoji: "🎯", label: "Activity", accent: "#8B5CF6", bg: "rgba(139,92,246,0.08)" },
   food:     { emoji: "🥣", label: "Food",     accent: "#10B981", bg: "rgba(16,185,129,0.08)" },
   schedule: { emoji: "🗓", label: "Schedule", accent: "#0EA5E9", bg: "rgba(14,165,233,0.08)" },
-}
-
-const STATUS_CONFIG = {
-  pending:  { label: "Waiting for Sofia", bg: "rgba(217,119,6,0.08)",  color: "#B45309" },
-  approved: { label: "✓ Sofia approved",  bg: "var(--sage-light)",      color: "var(--sage)"   },
-  rejected: { label: "Not this time",     bg: "var(--surface-page)",   color: "var(--muted-foreground)" },
 }
 
 function formatTime(iso: string) {
@@ -28,7 +23,13 @@ interface Props {
 }
 
 export default function SuggestionCard({ suggestion, replyCount = 0, onOpen, index = 0 }: Props) {
-  const cat    = CATEGORY_CONFIG[suggestion.type]
+  const { memberNames } = useAppStore()
+  const cat = CATEGORY_CONFIG[suggestion.type]
+  const STATUS_CONFIG = {
+    pending:  { label: `Waiting for ${memberNames.parent}`, bg: "rgba(217,119,6,0.08)", color: "#B45309" },
+    approved: { label: `✓ ${memberNames.parent} approved`, bg: "var(--sage-light)",     color: "var(--sage)" },
+    rejected: { label: "Not this time",                    bg: "var(--surface-page)",   color: "var(--muted-foreground)" },
+  }
   const status = STATUS_CONFIG[suggestion.status]
 
   return (

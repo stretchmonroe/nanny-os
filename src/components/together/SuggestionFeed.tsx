@@ -7,7 +7,7 @@ import SuggestionCard from "@/components/together/SuggestionCard"
 import SuggestionDetailSheet from "@/components/together/SuggestionDetailSheet"
 import CreateSuggestionSheet from "@/components/together/CreateSuggestionSheet"
 import { fetchSuggestions, fetchReplies } from "@/lib/supabase/suggestions"
-import { demoSuggestionReplies } from "@/lib/data/demo"
+import { useAppStore } from "@/store/useAppStore"
 import type { Suggestion, SuggestionStatus } from "@/lib/data/demo"
 
 type Filter = "all" | "pending" | "approved"
@@ -28,19 +28,15 @@ export default function SuggestionFeed({ createOpen, onCreateClose }: Props) {
   const [selected,    setSelected]        = useState<Suggestion | null>(null)
   const [filter,      setFilter]          = useState<Filter>("all")
   const [replyCounts, setReplyCounts]     = useState<Record<string, number>>({})
+  const { memberNames } = useAppStore()
 
   const load = useCallback(async () => {
     const data = await fetchSuggestions()
     setSuggestions(data)
-    // Load reply counts (use demo fallback if needed)
     const counts: Record<string, number> = {}
     for (const s of data) {
-      try {
-        const replies = await fetchReplies(s.id)
-        counts[s.id] = replies.length
-      } catch {
-        counts[s.id] = demoSuggestionReplies.filter(r => r.suggestion_id === s.id).length
-      }
+      const replies = await fetchReplies(s.id)
+      counts[s.id] = replies.length
     }
     setReplyCounts(counts)
   }, [])
@@ -100,7 +96,7 @@ export default function SuggestionFeed({ createOpen, onCreateClose }: Props) {
                 Nothing shared yet
               </p>
               <p className="text-[13px] text-muted-foreground/55 mt-1">
-                Elena can add a suggestion with the + button
+                {memberNames.nanny} can add a suggestion with the + button
               </p>
             </motion.div>
           )}

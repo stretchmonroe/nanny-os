@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
-import { groceryItems as demoItems } from "@/lib/data/demo";
 import { useAppStore } from "@/store/useAppStore";
 import { ArrowUp } from "lucide-react";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
@@ -13,38 +12,64 @@ import type { VoiceResult } from "@/lib/voice/transcriptParser";
 
 const CHIPS = ["Bananas", "Milk", "Eggs", "Avocado", "Yogurt", "Blueberries", "Cheese", "Crackers"];
 
-type Item = { id: string; name: string; completed: boolean };
+type Item = {
+  id: string;
+  name: string;
+  completed: boolean;
+  created_by: "nanny" | "parent";
+  created_at: string;
+};
 
 export default function ListsPage() {
-  const { activeChildId } = useAppStore();
+  const { activeChildId, activeChild, currentUserRole } = useAppStore();
+  const authorType = (currentUserRole ?? "nanny") as "nanny" | "parent";
+
   const [items,   setItems]   = useState<Item[]>([]);
   const [input,   setInput]   = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { load(); }, []);
+  // Stable ref so callbacks always see the latest items without re-creating load()
+  const itemsRef = useRef<Item[]>(items);
+  useEffect(() => { itemsRef.current = items; }, [items]);
 
-  async function load() {
+  async function load(childId: string) {
+    setLoading(true);
     const { data } = await supabase
       .from("grocery_items")
       .select("*")
+      .eq("child_id", childId)
       .order("created_at", { ascending: true });
-    setItems(data && data.length > 0 ? data : demoItems);
+    setItems(data ?? []);
     setLoading(false);
   }
+
+  useEffect(() => {
+    load(activeChildId);
+  }, [activeChildId]);
 
   async function addItem(name?: string) {
     const n = (name ?? input).trim();
     if (!n) return;
     const tempId = `temp_${Date.now()}`;
-    setItems(prev => [...prev, { id: tempId, name: n, completed: false }]);
+    const optimistic: Item = {
+      id: tempId,
+      name: n,
+      completed: false,
+      created_by: authorType,
+      created_at: new Date().toISOString(),
+    };
+    setItems(prev => [...prev, optimistic]);
     if (!name) setInput("");
-    const { data } = await supabase
+
+    const { data, error } = await supabase
       .from("grocery_items")
-      .insert({ name: n, child_id: activeChildId, created_by: "parent" })
-      .select("id")
+      .insert({ name: n, child_id: activeChildId, created_by: authorType })
+      .select()
       .single();
-    if (data) {
-      setItems(prev => prev.map(i => i.id === tempId ? { ...i, id: String(data.id) } : i));
+    if (error || !data) {
+      setItems(prev => prev.filter(i => i.id !== tempId));
+    } else {
+      setItems(prev => prev.map(i => i.id === tempId ? (data as Item) : i));
     }
   }
 
@@ -57,26 +82,36 @@ export default function ListsPage() {
   }
 
   async function toggle(id: string) {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, completed: !i.completed } : i));
-    const item = items.find(i => i.id === id);
-    if (item) {
-      await supabase.from("grocery_items").update({ completed: !item.completed }).eq("id", id);
+    const item = itemsRef.current.find(i => i.id === id);
+    if (!item) return;
+    const next = !item.completed;
+    setItems(prev => prev.map(i => i.id === id ? { ...i, completed: next } : i));
+    const { error } = await supabase.from("grocery_items").update({ completed: next }).eq("id", id);
+    if (error) {
+      setItems(prev => prev.map(i => i.id === id ? { ...i, completed: item.completed } : i));
     }
   }
 
   async function deleteItem(id: string) {
+    const snapshot = itemsRef.current.find(i => i.id === id);
     setItems(prev => prev.filter(i => i.id !== id));
-    await supabase.from("grocery_items").delete().eq("id", id);
+    const { error } = await supabase.from("grocery_items").delete().eq("id", id);
+    if (error && snapshot) {
+      setItems(prev => [...prev, snapshot].sort((a, b) => a.created_at.localeCompare(b.created_at)));
+    }
   }
 
   async function renameItem(id: string, name: string) {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, name } : i));
-    await supabase.from("grocery_items").update({ name }).eq("id", id);
+    const prev = itemsRef.current.find(i => i.id === id);
+    setItems(curr => curr.map(i => i.id === id ? { ...i, name } : i));
+    const { error } = await supabase.from("grocery_items").update({ name }).eq("id", id);
+    if (error && prev) {
+      setItems(curr => curr.map(i => i.id === id ? { ...i, name: prev.name } : i));
+    }
   }
 
   const pending   = items.filter(i => !i.completed);
   const done      = items.filter(i => i.completed);
-  const remaining = pending.length;
 
   return (
     <div className="min-h-screen bg-surface-page flex flex-col">
@@ -92,7 +127,7 @@ export default function ListsPage() {
           </h1>
         </div>
         <p className="text-[12px] text-muted-foreground/50 mt-0.5 font-medium">
-          Mateo&apos;s favorites + household staples
+          {activeChild.name}&apos;s favorites + household staples
         </p>
       </div>
 
@@ -100,8 +135,27 @@ export default function ListsPage() {
       <div className="flex-1 px-4 pt-4 pb-4">
         {!loading && (
           <>
+            {pending.length === 0 && done.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-[36px] mb-3">🛒</p>
+                <p className="text-[14px] font-semibold text-foreground/50 mb-1">
+                  List is empty
+                </p>
+                <p className="text-[12px] text-muted-foreground/40">
+                  Add something above or tap a chip
+                </p>
+              </div>
+            )}
+
             {pending.map(item => (
-              <SwipeableRow key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} onRename={renameItem} />
+              <SwipeableRow
+                key={item.id}
+                item={item}
+                createdBy={item.created_by}
+                onToggle={toggle}
+                onDelete={deleteItem}
+                onRename={renameItem}
+              />
             ))}
 
             {done.length > 0 && (
@@ -111,7 +165,13 @@ export default function ListsPage() {
                   Got it
                 </p>
                 {done.map(item => (
-                  <SwipeableRow key={item.id} item={item} onToggle={toggle} onDelete={deleteItem} onRename={renameItem} />
+                  <SwipeableRow
+                    key={item.id}
+                    item={item}
+                    onToggle={toggle}
+                    onDelete={deleteItem}
+                    onRename={renameItem}
+                  />
                 ))}
               </>
             )}

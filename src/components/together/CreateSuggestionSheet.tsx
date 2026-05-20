@@ -26,7 +26,9 @@ export default function CreateSuggestionSheet({ open, onClose, onCreated }: Prop
   const [reason,      setReason]      = useState("")
   const [saving,      setSaving]      = useState(false)
   const [saved,       setSaved]       = useState(false)
-  const { activeChildId } = useAppStore()
+  const { activeChildId, activeChild, memberNames, currentUserRole } = useAppStore()
+  const authorType = (currentUserRole ?? "nanny") as "nanny" | "parent"
+  const recipientName = authorType === "nanny" ? memberNames.parent : memberNames.nanny
 
   const canSave = title.trim().length > 0
 
@@ -48,7 +50,7 @@ export default function CreateSuggestionSheet({ open, onClose, onCreated }: Prop
       title:       title.trim(),
       description: description.trim(),
       reason:      reason.trim(),
-      created_by:  "nanny",
+      created_by:  authorType,
       child_id:    activeChildId,
     })
     setSaving(false)
@@ -92,7 +94,7 @@ export default function CreateSuggestionSheet({ open, onClose, onCreated }: Prop
                   className="text-[11px] font-bold uppercase tracking-widest"
                   style={{ color: "var(--accent-primary)" }}
                 >
-                  Share with Sofia
+                  Share with {recipientName}
                 </span>
                 <button
                   onClick={handleClose}
@@ -146,7 +148,7 @@ export default function CreateSuggestionSheet({ open, onClose, onCreated }: Prop
               {/* Reason */}
               <div className="mb-5">
                 <p className="text-[10px] font-bold text-muted-foreground/45 uppercase tracking-widest mb-1.5">
-                  Why is this good for Mateo?
+                  Why is this good for {activeChild.name}?
                 </p>
                 <textarea
                   value={reason}
@@ -172,7 +174,7 @@ export default function CreateSuggestionSheet({ open, onClose, onCreated }: Prop
                 {saved ? (
                   <><Check className="w-4 h-4" strokeWidth={2.5} /> Shared!</>
                 ) : (
-                  "Share with Sofia"
+                  `Share with ${recipientName}`
                 )}
               </motion.button>
             </div>

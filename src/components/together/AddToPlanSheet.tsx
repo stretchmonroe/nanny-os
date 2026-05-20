@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { X, Check } from "lucide-react"
+import { useAppStore } from "@/store/useAppStore"
 import type { Suggestion } from "@/lib/data/demo"
 
 // ── Day options ────────────────────────────────────────────────────────────────
@@ -40,10 +41,12 @@ interface Props {
 }
 
 export default function AddToPlanSheet({ suggestion, open, onClose, onScheduled }: Props) {
+  const { memberNames, currentUserRole } = useAppStore()
   const [selected, setSelected] = useState<string | null>(null)
   const [done,     setDone]     = useState(false)
 
   const days = getUpcomingDays()
+  const caregiverName = currentUserRole === "parent" ? memberNames.nanny : memberNames.nanny
 
   function handleConfirm() {
     if (!selected || done) return
@@ -109,7 +112,7 @@ export default function AddToPlanSheet({ suggestion, open, onClose, onScheduled 
 
               {/* Day grid */}
               <p className="text-[12px] font-semibold text-muted-foreground/50 mb-3">
-                When should Elena try this?
+                When should {caregiverName} try this?
               </p>
               <div className="grid grid-cols-3 gap-2 mb-6">
                 {days.map(({ label, sub }) => {

@@ -2,12 +2,18 @@
 
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ChevronDown, X } from "lucide-react"
+import { ChevronDown, Send, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import AuthorBadge from "@/components/ui/AuthorBadge"
-import ReplyThread from "@/components/memory/ReplyThread"
 import AddToPlanSheet from "@/components/together/AddToPlanSheet"
-import { fetchReplies, updateSuggestionStatus, updateSuggestionWorkflow } from "@/lib/supabase/suggestions"
+import {
+  fetchReplies,
+  updateSuggestionStatus,
+  updateSuggestionWorkflow,
+  addSuggestionReply,
+  deleteSuggestionReply,
+} from "@/lib/supabase/suggestions"
+import { useAppStore } from "@/store/useAppStore"
 import type { Suggestion, SuggestionReply, SuggestionStatus } from "@/lib/data/demo"
 
 const CATEGORY_CONFIG = {
@@ -20,14 +26,107 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
 }
 
-function toMomentReply(r: SuggestionReply) {
-  return {
-    id:      r.id,
-    author:  r.author,
-    content: r.content,
-    time:    new Date(r.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-  }
+// ── Inline reply thread for suggestion_replies ─────────────────────────────
+
+interface ReplyThreadProps {
+  replies: SuggestionReply[]
+  suggestionId: string
+  onRepliesChange(replies: SuggestionReply[]): void
 }
+
+function SuggestionReplyThread({ replies, suggestionId, onRepliesChange }: ReplyThreadProps) {
+  const { memberNames, currentUserRole } = useAppStore()
+  const authorType = (currentUserRole ?? "nanny") as "nanny" | "parent"
+  const [draft, setDraft] = useState("")
+  const [sending, setSending] = useState(false)
+
+  async function submit() {
+    const text = draft.trim()
+    if (!text || sending) return
+    setSending(true)
+    setDraft("")
+    const optimistic: SuggestionReply = {
+      id: `opt-${Date.now()}`,
+      suggestion_id: suggestionId,
+      author: authorType,
+      content: text,
+      created_at: new Date().toISOString(),
+    }
+    onRepliesChange([...replies, optimistic])
+    try {
+      const saved = await addSuggestionReply(suggestionId, authorType, text)
+      onRepliesChange([...replies, saved])
+    } catch {
+      onRepliesChange(replies) // rollback
+    }
+    setSending(false)
+  }
+
+  async function handleDelete(id: string) {
+    onRepliesChange(replies.filter(r => r.id !== id))
+    await deleteSuggestionReply(id)
+  }
+
+  return (
+    <div>
+      {replies.length > 0 && (
+        <div className="space-y-3 mb-4">
+          {replies.map(r => (
+            <div key={r.id} className="flex items-start gap-2">
+              <div className="flex-1">
+                <AuthorBadge
+                  author={r.author}
+                  time={new Date(r.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                  showRole={false}
+                  variant="inline"
+                />
+                <p className="text-[13px] text-foreground/75 leading-relaxed mt-1 pl-7">
+                  {r.content}
+                </p>
+              </div>
+              {r.author === authorType && !r.id.startsWith("opt-") && (
+                <button
+                  onClick={() => handleDelete(r.id)}
+                  className="mt-0.5 opacity-30 hover:opacity-60 transition-opacity"
+                >
+                  <X className="w-3 h-3 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Composer */}
+      <div
+        className="flex items-center gap-2 rounded-2xl px-3 py-2"
+        style={{ background: "var(--surface-raised)", border: "1.5px solid var(--border-soft)" }}
+      >
+        <input
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit() } }}
+          placeholder={`Reply as ${memberNames[authorType]}…`}
+          className="flex-1 text-[13px] bg-transparent outline-none text-foreground placeholder:text-muted-foreground/40"
+        />
+        <motion.button
+          whileTap={{ scale: 0.88 }}
+          onClick={submit}
+          disabled={!draft.trim() || sending}
+          className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
+          style={{
+            background: draft.trim() ? "var(--accent-primary)" : "transparent",
+            opacity: draft.trim() ? 1 : 0.3,
+          }}
+        >
+          <Send className="w-3.5 h-3.5 text-white" strokeWidth={2} />
+        </motion.button>
+      </div>
+    </div>
+  )
+}
+
+// ── SuggestionDetailSheet ──────────────────────────────────────────────────
 
 interface Props {
   suggestion: Suggestion | null
@@ -38,6 +137,7 @@ interface Props {
 }
 
 export default function SuggestionDetailSheet({ suggestion, open, onClose, onStatusChange, onWorkflowUpdate }: Props) {
+  const { memberNames } = useAppStore()
   const [expanded,  setExpanded]  = useState(false)
   const [replies,   setReplies]   = useState<SuggestionReply[]>([])
   const [planOpen,  setPlanOpen]  = useState(false)
@@ -203,7 +303,7 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
                 {suggestion.status === "pending" && (
                   <div className="mb-6">
                     <p className="text-[10px] font-bold text-muted-foreground/45 uppercase tracking-widest mb-3">
-                      Sofia's call
+                      {memberNames.parent}&apos;s call
                     </p>
                     <div className="space-y-2">
                       <motion.button
@@ -220,7 +320,7 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
                         className="w-full py-3.5 rounded-2xl text-[14px] font-semibold text-left px-4 transition-all duration-150"
                         style={{ background: "var(--surface-page)", color: "var(--foreground)" }}
                       >
-                        Let's talk about it 💬
+                        Let&apos;s talk about it 💬
                       </motion.button>
                       <motion.button
                         whileTap={{ scale: 0.97 }}
@@ -240,11 +340,11 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
                     {suggestion.status === "approved" && (
                       <div className="rounded-2xl px-4 py-3.5 bg-sage-light dark:bg-sage-light/10">
                         <p className="text-[12px] font-semibold text-sage dark:text-sage-muted mb-0.5">
-                          Sofia approved this
+                          {memberNames.parent} approved this
                         </p>
                         {suggestion.response_note && (
                           <p className="text-[13px] text-foreground/70 italic leading-relaxed">
-                            "{suggestion.response_note}"
+                            &ldquo;{suggestion.response_note}&rdquo;
                           </p>
                         )}
                       </div>
@@ -256,7 +356,7 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
                         </p>
                         {suggestion.response_note && (
                           <p className="text-[13px] text-muted-foreground italic leading-relaxed mt-0.5">
-                            "{suggestion.response_note}"
+                            &ldquo;{suggestion.response_note}&rdquo;
                           </p>
                         )}
                       </div>
@@ -395,8 +495,10 @@ export default function SuggestionDetailSheet({ suggestion, open, onClose, onSta
 
                 {/* Reply thread */}
                 <div ref={replyRef}>
-                  <ReplyThread
-                    initialReplies={replies.map(toMomentReply)}
+                  <SuggestionReplyThread
+                    replies={replies}
+                    suggestionId={suggestion.id}
+                    onRepliesChange={setReplies}
                   />
                 </div>
               </div>

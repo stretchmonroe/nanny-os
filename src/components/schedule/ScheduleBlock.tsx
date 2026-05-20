@@ -1,49 +1,73 @@
-import { cn } from "@/lib/utils";
-import { typeConfig } from "@/lib/data/demo";
-import { Check, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+"use client"
+
+import { cn } from "@/lib/utils"
+import { typeConfig } from "@/lib/data/demo"
+import { Check, MoreHorizontal, Pencil, Trash2, SkipForward, RefreshCw } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { useState } from "react"
+import { useAppStore } from "@/store/useAppStore"
+
+type ItemStatus = "planned" | "completed" | "skipped" | "replaced"
 
 type ScheduleItem = {
-  id:     string;
-  time:   string;
-  title:  string;
-  type:   keyof typeof typeConfig;
-  done?:  boolean;
-  active?: boolean;
-  notes?: string;
-};
-
-interface Props {
-  item:        ScheduleItem;
-  onToggle?:   (id: string) => void;
-  onEdit?:     (id: string) => void;
-  onDelete?:   (id: string) => void;
+  id:           string
+  time:         string
+  title:        string
+  type:         keyof typeof typeConfig
+  status?:      ItemStatus
+  done?:        boolean
+  active?:      boolean
+  notes?:       string
+  description?: string
+  created_by?:  "nanny" | "parent"
+  completed_by?: "nanny" | "parent" | null
 }
 
-export default function ScheduleBlock({ item, onToggle, onEdit, onDelete }: Props) {
-  const config = typeConfig[item.type] ?? typeConfig.play;
-  const [menuOpen, setMenuOpen] = useState(false);
+interface Props {
+  item:       ScheduleItem
+  onToggle?:  (id: string) => void
+  onEdit?:    (id: string) => void
+  onDelete?:  (id: string) => void
+  onSkip?:    (id: string) => void
+  onReplace?: (id: string) => void
+}
 
-  const hasActions = onEdit || onDelete;
+const STATUS_BADGE = {
+  skipped:  { label: "Skipped",  bg: "var(--surface-raised)",  color: "var(--muted-foreground)" },
+  replaced: { label: "Replaced", bg: "rgba(217,119,6,0.08)",   color: "#B45309"                 },
+} as const
+
+export default function ScheduleBlock({ item, onToggle, onEdit, onDelete, onSkip, onReplace }: Props) {
+  const { memberNames } = useAppStore()
+  const config = typeConfig[item.type] ?? typeConfig.play
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const status   = item.status ?? (item.done ? "completed" : "planned")
+  const isDone   = status === "completed"
+  const isSkipped  = status === "skipped"
+  const isReplaced = status === "replaced"
+  const isInactive = isDone || isSkipped || isReplaced
+  const isPending  = status === "planned"
+
+  const hasActions = onEdit || onDelete || onSkip || onReplace
 
   return (
     <motion.div
-      whileTap={!item.done && onToggle ? { scale: 0.985 } : undefined}
+      whileTap={isPending && onToggle ? { scale: 0.985 } : undefined}
       transition={{ type: "spring", stiffness: 420, damping: 28 }}
       className={cn(
         "relative flex items-start gap-4 bg-surface-card rounded-2xl px-4 py-4 shadow-card border-soft overflow-visible transition-opacity",
-        item.active && "ring-1 ring-amber-300/60 dark:ring-amber-800/40",
-        item.done && "opacity-50"
+        item.active && isPending && "ring-1 ring-amber-300/60 dark:ring-amber-800/40",
+        isInactive && "opacity-50"
       )}
     >
       {/* Left accent bar */}
       <div
         className={cn(
           "absolute left-0 top-0 bottom-0 w-[3px] rounded-l-full",
-          item.active
+          item.active && isPending
             ? "bg-gradient-to-b from-amber-400 to-orange-400"
-            : item.done
+            : isInactive
             ? "bg-border"
             : config.dot
         )}
@@ -51,11 +75,14 @@ export default function ScheduleBlock({ item, onToggle, onEdit, onDelete }: Prop
 
       {/* Tappable area — toggle done */}
       <div
-        className="flex items-start gap-4 flex-1 min-w-0 pl-1 cursor-pointer"
-        onClick={() => !item.done && onToggle?.(item.id)}
+        className={cn(
+          "flex items-start gap-4 flex-1 min-w-0 pl-1",
+          isPending && onToggle && "cursor-pointer"
+        )}
+        onClick={() => isPending && onToggle?.(item.id)}
       >
         {/* Time */}
-        <div className="shrink-0">
+        <div className="shrink-0 pt-0.5">
           <p className="text-[13px] font-bold text-foreground tabular-nums leading-none">
             {item.time}
           </p>
@@ -67,22 +94,35 @@ export default function ScheduleBlock({ item, onToggle, onEdit, onDelete }: Prop
             <p
               className={cn(
                 "text-[14px] font-semibold leading-snug tracking-tight",
-                item.done ? "text-muted-foreground/55" : "text-foreground"
+                isInactive
+                  ? cn("text-muted-foreground/55", (isSkipped || isReplaced) && "line-through")
+                  : "text-foreground"
               )}
             >
               {item.title}
             </p>
 
             <div className="shrink-0 flex items-center gap-1.5">
-              {item.active && (
+              {item.active && isPending && (
                 <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
                   NOW
                 </span>
               )}
-              {item.done ? (
+
+              {isDone ? (
                 <div className="w-5 h-5 rounded-full bg-sage-light flex items-center justify-center">
                   <Check size={11} strokeWidth={2.5} className="text-sage" />
                 </div>
+              ) : isSkipped || isReplaced ? (
+                <span
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{
+                    background: STATUS_BADGE[status as "skipped" | "replaced"].bg,
+                    color:      STATUS_BADGE[status as "skipped" | "replaced"].color,
+                  }}
+                >
+                  {STATUS_BADGE[status as "skipped" | "replaced"].label}
+                </span>
               ) : !item.active ? (
                 <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", config.color)}>
                   {config.label}
@@ -95,6 +135,21 @@ export default function ScheduleBlock({ item, onToggle, onEdit, onDelete }: Prop
             <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">
               {item.notes}
             </p>
+          )}
+
+          {/* Attribution */}
+          {(item.created_by || item.completed_by) && (
+            <div className="flex items-center gap-2 mt-1.5">
+              {isDone && item.completed_by ? (
+                <span className="text-[10px] text-muted-foreground/40 font-medium">
+                  ✓ {memberNames[item.completed_by]}
+                </span>
+              ) : item.created_by && isPending ? (
+                <span className="text-[10px] text-muted-foreground/35 font-medium">
+                  added by {memberNames[item.created_by]}
+                </span>
+              ) : null}
+            </div>
           )}
         </div>
       </div>
@@ -123,12 +178,45 @@ export default function ScheduleBlock({ item, onToggle, onEdit, onDelete }: Prop
                     background: "var(--surface-card)",
                     border:     "1px solid var(--border-soft)",
                     boxShadow:  "var(--shadow-elevated)",
-                    minWidth:   "148px",
+                    minWidth:   "156px",
                   }}
                 >
+                  {/* Status actions — only for planned items */}
+                  {isPending && onToggle && (
+                    <button
+                      onClick={() => { setMenuOpen(false); onToggle(item.id) }}
+                      className="flex items-center gap-2.5 w-full px-4 py-3 text-[13px] font-medium text-sage active:bg-muted/50"
+                      style={{ borderBottom: "1px solid var(--border-soft)" }}
+                    >
+                      <Check size={12} strokeWidth={2} />
+                      Mark done
+                    </button>
+                  )}
+                  {isPending && onSkip && (
+                    <button
+                      onClick={() => { setMenuOpen(false); onSkip(item.id) }}
+                      className="flex items-center gap-2.5 w-full px-4 py-3 text-[13px] font-medium text-muted-foreground/70 active:bg-muted/50"
+                      style={{ borderBottom: "1px solid var(--border-soft)" }}
+                    >
+                      <SkipForward size={12} strokeWidth={1.8} />
+                      Skip
+                    </button>
+                  )}
+                  {isPending && onReplace && (
+                    <button
+                      onClick={() => { setMenuOpen(false); onReplace(item.id) }}
+                      className="flex items-center gap-2.5 w-full px-4 py-3 text-[13px] font-medium text-muted-foreground/70 active:bg-muted/50"
+                      style={{ borderBottom: "1px solid var(--border-soft)" }}
+                    >
+                      <RefreshCw size={12} strokeWidth={1.8} />
+                      Replace
+                    </button>
+                  )}
+
+                  {/* Edit / Delete — always shown */}
                   {onEdit && (
                     <button
-                      onClick={() => { setMenuOpen(false); onEdit(item.id); }}
+                      onClick={() => { setMenuOpen(false); onEdit(item.id) }}
                       className="flex items-center gap-2.5 w-full px-4 py-3 text-[13px] font-medium text-foreground/70 active:bg-muted/50"
                       style={{ borderBottom: onDelete ? "1px solid var(--border-soft)" : "none" }}
                     >
@@ -138,7 +226,7 @@ export default function ScheduleBlock({ item, onToggle, onEdit, onDelete }: Prop
                   )}
                   {onDelete && (
                     <button
-                      onClick={() => { setMenuOpen(false); onDelete(item.id); }}
+                      onClick={() => { setMenuOpen(false); onDelete(item.id) }}
                       className="flex items-center gap-2.5 w-full px-4 py-3 text-[13px] font-medium text-red-500/80 active:bg-red-50/40"
                     >
                       <Trash2 size={12} strokeWidth={1.8} />
@@ -152,5 +240,5 @@ export default function ScheduleBlock({ item, onToggle, onEdit, onDelete }: Prop
         </div>
       )}
     </motion.div>
-  );
+  )
 }

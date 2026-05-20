@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import AnkurWordmark from "@/components/brand/AnkurWordmark";
 
 interface WelcomeSplashProps {
-  onEnter: () => void;
+  onEnter:   () => void;
+  onSignIn?: () => void;
 }
 
 const PILLS = [
@@ -14,7 +15,7 @@ const PILLS = [
   { emoji: "🏡", text: "Premium experience" },
 ];
 
-export function WelcomeSplash({ onEnter }: WelcomeSplashProps) {
+export function WelcomeSplash({ onEnter, onSignIn }: WelcomeSplashProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -102,6 +103,17 @@ export function WelcomeSplash({ onEnter }: WelcomeSplashProps) {
         >
           Takes about 2 minutes · Free to start
         </p>
+        {onSignIn && (
+          <p style={{ textAlign: "center", marginTop: 22, fontSize: 13, fontWeight: 500, color: "rgba(42,105,101,0.45)" }}>
+            Already have an account?{" "}
+            <button
+              onClick={onSignIn}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 13, fontWeight: 700, color: "#2A6965" }}
+            >
+              Sign in
+            </button>
+          </p>
+        )}
       </div>
     </div>
   );

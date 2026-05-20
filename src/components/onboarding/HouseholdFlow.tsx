@@ -53,7 +53,8 @@ const EMPTY: HouseholdData = {
 type Step =
   | "role" | "your-name" | "account" | "household"
   | "child-name" | "child-age" | "invite" | "complete"
-  | "caregiver-join" | "caregiver-name" | "caregiver-account" | "caregiver-complete";
+  | "caregiver-join" | "caregiver-name" | "caregiver-account" | "caregiver-complete"
+  | "sign-in";
 
 const PARENT_STEPS:    Step[] = ["role","your-name","account","household","child-name","child-age","invite","complete"];
 const CAREGIVER_STEPS: Step[] = ["role","caregiver-join","caregiver-name","caregiver-account","caregiver-complete"];
@@ -803,6 +804,71 @@ function CaregiverCompleteStep({ data }: { data: HouseholdData }) {
   );
 }
 
+// ── Step: Sign in (returning users) ──────────────────────────────────────────
+
+function SignInStep({ onBack }: { onBack: () => void }) {
+  const router  = useRouter();
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw,   setShowPw]   = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState("");
+
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const canSubmit  = validEmail && password.length >= 6 && !loading;
+
+  async function handle() {
+    if (!canSubmit) return;
+    setError(""); setLoading(true);
+    try {
+      const result = await signInUser(email, password);
+      if ("error" in result) throw new Error(result.error);
+      router.replace("/home");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't sign in. Check your email and password.");
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Shell dotIndex={0} dotTotal={0} onBack={onBack}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "36px 24px 0" }}>
+        <StepHeading title="Welcome back." sub="Sign in to your family's home." />
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <input
+            autoFocus type="email" value={email}
+            onChange={(e) => { setEmail(e.target.value); setError(""); }}
+            onKeyDown={(e) => { if (e.key === "Tab") e.preventDefault(); }}
+            placeholder="Email address…"
+            autoCapitalize="none" autoComplete="email"
+            style={inputStyle} onFocus={onFocus} onBlur={onBlur}
+          />
+          <div style={{ position: "relative" }}>
+            <input
+              type={showPw ? "text" : "password"} value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(""); }}
+              onKeyDown={(e) => { if (e.key === "Enter") handle(); }}
+              placeholder="Password…"
+              autoComplete="current-password"
+              style={{ ...inputStyle, paddingRight: 48 }}
+              onFocus={onFocus} onBlur={onBlur}
+            />
+            <button
+              type="button" onClick={() => setShowPw((v) => !v)}
+              style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4, color: "rgba(42,105,101,0.45)" }}
+            >
+              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+          {error && <ErrorNote msg={error} />}
+        </div>
+      </div>
+      <CTABar label={loading ? "Signing in…" : "Sign in →"} loading={loading} disabled={!canSubmit} onClick={handle} />
+    </Shell>
+  );
+}
+
+
 // ── Main orchestrator ─────────────────────────────────────────────────────────
 
 export function HouseholdFlow() {
@@ -820,11 +886,20 @@ export function HouseholdFlow() {
   const dotTotal = dotSteps.length;
   const dotIdx   = dotSteps.indexOf(step);
 
-  if (!started) return <WelcomeSplash onEnter={() => setStarted(true)} />;
+  if (!started) return (
+    <WelcomeSplash
+      onEnter={() => setStarted(true)}
+      onSignIn={() => { setStarted(true); advance("sign-in"); }}
+    />
+  );
 
   return (
     <AnimatePresence mode="wait" custom={dir}>
       <motion.div key={step} custom={dir} variants={SLIDE} initial="enter" animate="center" exit="exit" transition={SLIDE_T} style={{ position: "relative" }}>
+
+        {step === "sign-in" && (
+          <SignInStep onBack={() => retreat("role")} />
+        )}
 
         {step === "role" && (
           <RoleStep

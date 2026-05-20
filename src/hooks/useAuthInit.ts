@@ -1,26 +1,41 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
 
+// DB role values include 'caregiver' (new) and 'nanny' (legacy).
+// The store uses 'nanny' as the caregiver key throughout the app.
+function normaliseRole(role: string): "nanny" | "parent" {
+  return role === "parent" ? "parent" : "nanny";
+}
+
 export function useAuthInit() {
+  const router = useRouter();
   const { setActiveChild, setMemberNames, setCurrentUserRole } = useAppStore();
 
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        router.replace("/onboarding");
+        return;
+      }
 
       const { data: membership } = await supabase
         .from("household_members")
         .select("household_id, role")
         .eq("user_id", user.id)
-        .single();
+        .eq("status", "active")
+        .maybeSingle();
 
-      if (!membership) return;
+      if (!membership) {
+        router.replace("/onboarding");
+        return;
+      }
 
-      setCurrentUserRole(membership.role as "nanny" | "parent");
+      setCurrentUserRole(normaliseRole(membership.role));
 
       // Load children in this household
       const { data: children } = await supabase
@@ -32,11 +47,11 @@ export function useAuthInit() {
 
       if (children && children.length > 0) {
         const storedId = useAppStore.getState().activeChildId;
-        const match = children.find(c => c.id === storedId) ?? children[0];
+        const match = children.find((c) => c.id === storedId) ?? children[0];
         setActiveChild({
           id:   String(match.id),
           name: String(match.name),
-          age:  String(match.age),
+          age:  String(match.age ?? ""),
         });
       }
 
@@ -49,12 +64,12 @@ export function useAuthInit() {
         const res = await fetch("/api/care-circle", {
           headers: { authorization: `Bearer ${token}` },
         });
-        const data = await res.json();
-        if (!data.demo && Array.isArray(data.members)) {
+        const json = await res.json();
+        if (!json.demo && Array.isArray(json.members)) {
           const names = { nanny: "Caregiver", parent: "Parent" };
-          for (const m of data.members as { role: string; display_name: string }[]) {
-            if (m.role === "nanny")  names.nanny  = m.display_name;
-            if (m.role === "parent") names.parent = m.display_name;
+          for (const m of json.members as { role: string; display_name: string }[]) {
+            const key = normaliseRole(m.role);
+            if (m.display_name) names[key] = m.display_name;
           }
           setMemberNames(names);
         }

@@ -1,38 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, ChevronLeft, Plus, X, Check } from "lucide-react";
+import { CalendarDays, ChevronLeft, Plus, X, Check, RefreshCw } from "lucide-react";
 import { NavMenuButton } from "@/components/layout/NavMenuButton";
-import { schedule as demoSchedule, typeConfig, demoPatterns, demoChildren } from "@/lib/data/demo";
-import { supabase } from "@/lib/supabase/client";
+import { typeConfig, demoPatterns } from "@/lib/data/demo";
 import { useAppStore } from "@/store/useAppStore";
 import ScheduleBlock from "@/components/schedule/ScheduleBlock";
 import DatePicker from "@/components/memory/DatePicker";
 import { PatternCard } from "@/components/insights/PatternCard";
 import { cn } from "@/lib/utils";
+import {
+  fetchSchedule,
+  createScheduleItem,
+  updateScheduleItem,
+  markItemStatus,
+  deleteScheduleItem,
+  labelToISODate,
+  type ScheduleItem,
+  type ActivityType,
+  type ItemStatus,
+} from "@/lib/supabase/schedule";
 
-type ScheduleItem = {
-  id:    string;
-  time:  string;
-  title: string;
-  type:  keyof typeof typeConfig;
-  done:  boolean;
-  active: boolean;
-  notes: string;
-};
-
-function normalize(raw: Record<string, unknown>): ScheduleItem {
-  return {
-    id:     String(raw.id ?? ""),
-    time:   String(raw.time ?? ""),
-    title:  String(raw.title ?? ""),
-    type:   (raw.type ?? "play") as keyof typeof typeConfig,
-    done:   Boolean(raw.done ?? false),
-    active: Boolean(raw.active ?? false),
-    notes:  String(raw.notes ?? ""),
-  };
-}
+const TYPE_OPTIONS = Object.keys(typeConfig) as ActivityType[];
 
 const todayStr = new Date().toLocaleDateString("en-US", {
   weekday: "long",
@@ -40,44 +30,53 @@ const todayStr = new Date().toLocaleDateString("en-US", {
   day:     "numeric",
 });
 
-const TYPE_OPTIONS = (Object.keys(typeConfig) as (keyof typeof typeConfig)[]).filter(
-  k => k !== "play" ? true : true,
-);
-
-// ── Edit / Add Sheet ───────────────────────────────────────────────────────────
+// ── Edit / Add Sheet ──────────────────────────────────────────────────────────
 
 interface EditSheetProps {
-  open:     boolean;
-  item?:    ScheduleItem | null;
+  open:      boolean;
+  item?:     ScheduleItem | null;
   onClose(): void;
-  onSave(item: Partial<ScheduleItem> & { id?: string }): void;
+  onSave(patch: {
+    id?:                   string;
+    title:                 string;
+    time:                  string;
+    type:                  ActivityType;
+    notes:                 string;
+    description:           string;
+    flexible_window_label: string;
+  }): void;
 }
 
 function EditSheet({ open, item, onClose, onSave }: EditSheetProps) {
   const isNew = !item;
-  const [title, setTitle] = useState(item?.title ?? "");
-  const [time,  setTime]  = useState(item?.time  ?? "");
-  const [type,  setType]  = useState<keyof typeof typeConfig>(item?.type ?? "play");
-  const [notes, setNotes] = useState(item?.notes ?? "");
+  const [title,  setTitle]  = useState(item?.title  ?? "");
+  const [time,   setTime]   = useState(item?.time   ?? "");
+  const [type,   setType]   = useState<ActivityType>(item?.type  ?? "play");
+  const [notes,  setNotes]  = useState(item?.notes  ?? "");
+  const [desc,   setDesc]   = useState(item?.description           ?? "");
+  const [window, setWindow] = useState(item?.flexible_window_label ?? "");
 
-  // Sync when item changes (reopened for edit)
   useEffect(() => {
     if (open) {
-      setTitle(item?.title ?? "");
-      setTime(item?.time   ?? "");
-      setType(item?.type   ?? "play");
-      setNotes(item?.notes ?? "");
+      setTitle(item?.title  ?? "");
+      setTime(item?.time    ?? "");
+      setType(item?.type    ?? "play");
+      setNotes(item?.notes  ?? "");
+      setDesc(item?.description           ?? "");
+      setWindow(item?.flexible_window_label ?? "");
     }
   }, [open, item]);
 
   function handleSave() {
-    if (!title.trim() || !time.trim()) return;
+    if (!title.trim()) return;
     onSave({
-      id:    item?.id,
-      title: title.trim(),
-      time:  time.trim(),
+      id:                   item?.id,
+      title:                title.trim(),
+      time:                 time.trim(),
       type,
-      notes: notes.trim(),
+      notes:                notes.trim(),
+      description:          desc.trim(),
+      flexible_window_label: window.trim(),
     });
     onClose();
   }
@@ -104,13 +103,12 @@ function EditSheet({ open, item, onClose, onSave }: EditSheetProps) {
             className="fixed bottom-0 left-0 right-0 z-[70] max-w-md mx-auto rounded-t-[2rem] px-5 pt-4 pb-10"
             style={{ background: "var(--surface-card)" }}
           >
-            {/* Handle */}
             <div className="w-9 h-1 rounded-full mx-auto mb-5 opacity-20"
               style={{ background: "var(--text-primary)" }} />
 
             <div className="flex items-center justify-between mb-5">
               <p className="text-[17px] font-bold text-foreground">
-                {isNew ? "Add to today" : "Edit activity"}
+                {isNew ? "Add activity" : "Edit activity"}
               </p>
               <button
                 onClick={onClose}
@@ -125,7 +123,7 @@ function EditSheet({ open, item, onClose, onSave }: EditSheetProps) {
               {/* Title */}
               <div>
                 <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-1.5 block">
-                  Activity name
+                  Activity
                 </label>
                 <input
                   value={title}
@@ -137,15 +135,15 @@ function EditSheet({ open, item, onClose, onSave }: EditSheetProps) {
                 />
               </div>
 
-              {/* Time */}
+              {/* When — flexible label */}
               <div>
                 <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50 mb-1.5 block">
-                  Time
+                  When <span className="font-normal normal-case">(optional)</span>
                 </label>
                 <input
                   value={time}
                   onChange={e => setTime(e.target.value)}
-                  placeholder="e.g. 10:30 AM"
+                  placeholder="e.g. 10:30 AM, After nap, Morning"
                   className="w-full rounded-xl px-4 py-3 text-[14px] text-foreground outline-none"
                   style={{ background: "var(--surface-raised)", border: "1px solid var(--border-soft)" }}
                 />
@@ -189,7 +187,7 @@ function EditSheet({ open, item, onClose, onSave }: EditSheetProps) {
                 <textarea
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
-                  placeholder="Any details or reminders…"
+                  placeholder="Snack ideas, materials needed, anything helpful…"
                   rows={2}
                   className="w-full rounded-xl px-4 py-3 text-[14px] text-foreground outline-none resize-none"
                   style={{ background: "var(--surface-raised)", border: "1px solid var(--border-soft)" }}
@@ -199,7 +197,7 @@ function EditSheet({ open, item, onClose, onSave }: EditSheetProps) {
 
             <button
               onClick={handleSave}
-              disabled={!title.trim() || !time.trim()}
+              disabled={!title.trim()}
               className="mt-5 w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-[14px] font-semibold disabled:opacity-40 transition-all active:scale-[0.98]"
               style={{ background: "var(--accent-primary)", color: "#fff" }}
             >
@@ -213,112 +211,269 @@ function EditSheet({ open, item, onClose, onSave }: EditSheetProps) {
   );
 }
 
+// ── Replace Sheet ─────────────────────────────────────────────────────────────
+
+interface ReplaceSheetProps {
+  open:      boolean;
+  itemTitle: string;
+  onClose(): void;
+  onConfirm(replacementNote: string): void;
+}
+
+function ReplaceSheet({ open, itemTitle, onClose, onConfirm }: ReplaceSheetProps) {
+  const [value, setValue] = useState("");
+
+  useEffect(() => { if (open) setValue(""); }, [open]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            key="replace-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-[1px]"
+            onClick={onClose}
+          />
+          <motion.div
+            key="replace-sheet"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 32, stiffness: 320 }}
+            className="fixed bottom-0 left-0 right-0 z-[70] max-w-md mx-auto rounded-t-[2rem] px-5 pt-4 pb-10"
+            style={{ background: "var(--surface-card)" }}
+          >
+            <div className="w-9 h-1 rounded-full mx-auto mb-5 opacity-20"
+              style={{ background: "var(--text-primary)" }} />
+
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[17px] font-bold text-foreground">What did you do instead?</p>
+              <button onClick={onClose} className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "rgba(0,0,0,0.07)" }}>
+                <X size={12} strokeWidth={2.2} className="text-foreground/40" />
+              </button>
+            </div>
+            <p className="text-[13px] text-muted-foreground/55 mb-5">
+              Replacing <span className="font-semibold text-foreground/70">{itemTitle}</span>
+            </p>
+
+            <input
+              value={value}
+              onChange={e => setValue(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && value.trim()) { onConfirm(value.trim()); onClose(); } }}
+              placeholder="e.g. Indoor sensory play, Backyard water table…"
+              className="w-full rounded-xl px-4 py-3 text-[14px] text-foreground outline-none mb-4"
+              style={{ background: "var(--surface-raised)", border: "1px solid var(--border-soft)" }}
+              autoFocus
+            />
+
+            <button
+              onClick={() => { if (value.trim()) { onConfirm(value.trim()); onClose(); } }}
+              disabled={!value.trim()}
+              className="w-full h-12 rounded-2xl flex items-center justify-center gap-2 text-[14px] font-semibold disabled:opacity-40 transition-all active:scale-[0.98]"
+              style={{ background: "var(--foreground)", color: "var(--background)" }}
+            >
+              <RefreshCw size={14} strokeWidth={2} />
+              Mark replaced
+            </button>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SchedulePage() {
-  const [items,        setItems]        = useState<ScheduleItem[]>([]);
-  const [pickerOpen,   setPickerOpen]   = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const { activeChildId, activeChild, memberNames, currentUserRole } = useAppStore();
+
+  const [items,         setItems]         = useState<ScheduleItem[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [pickerOpen,    setPickerOpen]    = useState(false);
+  const [selectedDate,  setSelectedDate]  = useState<string | null>(null);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
-  const [editingItem,   setEditingItem]  = useState<ScheduleItem | null>(null);
+  const [editingItem,   setEditingItem]   = useState<ScheduleItem | null>(null);
+  const [replaceTarget, setReplaceTarget] = useState<ScheduleItem | null>(null);
 
-  const { activeChildId } = useAppStore();
-  const activeChild = demoChildren.find(c => c.id === activeChildId) ?? demoChildren[0];
+  const itemsRef = useRef<ScheduleItem[]>(items);
+  useEffect(() => { itemsRef.current = items; }, [items]);
 
-  // Re-fetch when active child changes
-  useEffect(() => {
-    supabase.from("schedule_items").select("*").eq("child_id", activeChildId).then(({ data }) => {
-      const raw = data && data.length > 0 ? data : demoSchedule;
-      setItems((raw as Record<string, unknown>[]).map(normalize));
-    });
-  }, [activeChildId]);
+  // ── Load ─────────────────────────────────────────────────────────────────────
 
-  function handleSelectDay(date: string) {
-    setSelectedDate(date === "Today" ? null : date);
+  async function load(dateLabel: string | null) {
+    setLoading(true);
+    const isoDate = labelToISODate(dateLabel);
+    const data = await fetchSchedule(isoDate);
+    setItems(data);
+    setLoading(false);
   }
+
+  useEffect(() => {
+    load(selectedDate);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeChildId, selectedDate]);
+
+  // ── Derived ──────────────────────────────────────────────────────────────────
+
+  const isPastDay    = selectedDate !== null;
+  const headerDate   = isPastDay ? selectedDate! : todayStr;
+  const upcoming     = items.filter(i => i.status === "planned");
+  const done         = items.filter(i => i.status !== "planned");
+
+  // ── Mutations ─────────────────────────────────────────────────────────────────
 
   async function handleToggleDone(id: string) {
-    const item = items.find(i => i.id === id);
-    if (!item || isPastDay) return;
-    const newDone = !item.done;
-    setItems(prev => prev.map(i => i.id === id ? { ...i, done: newDone, active: newDone ? false : i.active } : i));
-    await supabase.from("schedule_items").update({ done: newDone, active: newDone ? false : item.active }).eq("id", id);
+    if (isPastDay) return;
+    const item = itemsRef.current.find(i => i.id === id);
+    if (!item || item.status !== "planned") return;
+    const authorType = (currentUserRole ?? "nanny") as "nanny" | "parent";
+    // Optimistic
+    setItems(prev => prev.map(i =>
+      i.id === id ? { ...i, status: "completed" as ItemStatus, done: true, completed_by: authorType } : i
+    ));
+    const { error } = await (async () => {
+      try {
+        await markItemStatus(id, "completed", authorType);
+        return { error: null };
+      } catch (e) {
+        return { error: e };
+      }
+    })();
+    if (error) {
+      // Rollback
+      setItems(prev => prev.map(i => i.id === id ? { ...i, ...item } : i));
+    }
   }
 
-  function openAdd() {
-    setEditingItem(null);
-    setEditSheetOpen(true);
-  }
-
-  function openEdit(id: string) {
-    const item = items.find(i => i.id === id);
+  async function handleSkip(id: string) {
+    if (isPastDay) return;
+    const item = itemsRef.current.find(i => i.id === id);
     if (!item) return;
-    setEditingItem(item);
-    setEditSheetOpen(true);
+    setItems(prev => prev.map(i =>
+      i.id === id ? { ...i, status: "skipped" as ItemStatus, done: false } : i
+    ));
+    try {
+      await markItemStatus(id, "skipped");
+    } catch {
+      setItems(prev => prev.map(i => i.id === id ? { ...i, ...item } : i));
+    }
   }
 
-  async function handleSave(patch: Partial<ScheduleItem> & { id?: string }) {
+  function openReplace(id: string) {
+    const item = itemsRef.current.find(i => i.id === id);
+    if (!item) return;
+    setReplaceTarget(item);
+  }
+
+  async function handleReplace(replacementNote: string) {
+    if (!replaceTarget) return;
+    const id   = replaceTarget.id;
+    const prev = replaceTarget;
+    const newNotes = replacementNote
+      ? `Replaced with: ${replacementNote}`
+      : prev.notes;
+    setItems(curr => curr.map(i =>
+      i.id === id ? { ...i, status: "replaced" as ItemStatus, done: false, notes: newNotes } : i
+    ));
+    try {
+      await markItemStatus(id, "replaced");
+      await updateScheduleItem(id, { notes: newNotes });
+    } catch {
+      setItems(curr => curr.map(i => i.id === id ? { ...i, ...prev } : i));
+    }
+    setReplaceTarget(null);
+  }
+
+  async function handleSave(patch: {
+    id?:                   string;
+    title:                 string;
+    time:                  string;
+    type:                  ActivityType;
+    notes:                 string;
+    description:           string;
+    flexible_window_label: string;
+  }) {
     if (patch.id) {
       // Update existing
-      setItems(prev => prev.map(i => i.id === patch.id ? { ...i, ...patch } : i));
-      await supabase.from("schedule_items").update({
-        title: patch.title,
-        time:  patch.time,
-        type:  patch.type,
-        notes: patch.notes,
-      }).eq("id", patch.id);
+      const prev = itemsRef.current.find(i => i.id === patch.id);
+      setItems(curr => curr.map(i => i.id === patch.id ? { ...i, ...patch } : i));
+      try {
+        await updateScheduleItem(patch.id, {
+          title:                 patch.title,
+          time:                  patch.time,
+          type:                  patch.type,
+          notes:                 patch.notes,
+          description:           patch.description,
+          flexible_window_label: patch.flexible_window_label,
+        });
+      } catch {
+        if (prev) setItems(curr => curr.map(i => i.id === patch.id ? prev : i));
+      }
     } else {
-      // Create new
+      // Create new — temp placeholder first
       const tempId = `temp_${Date.now()}`;
-      const newItem: ScheduleItem = {
-        id:     tempId,
-        title:  patch.title ?? "",
-        time:   patch.time  ?? "",
-        type:   patch.type  ?? "play",
-        notes:  patch.notes ?? "",
-        done:   false,
-        active: false,
+      const isoDate = labelToISODate(selectedDate);
+      const authorType = (currentUserRole ?? "nanny") as "nanny" | "parent";
+      const optimistic: ScheduleItem = {
+        id:                    tempId,
+        child_id:              activeChildId,
+        scheduled_date:        isoDate,
+        title:                 patch.title,
+        time:                  patch.time,
+        type:                  patch.type,
+        status:                "planned",
+        notes:                 patch.notes,
+        description:           patch.description,
+        flexible_window_label: patch.flexible_window_label,
+        created_by:            authorType,
+        completed_by:          null,
+        created_at:            new Date().toISOString(),
+        done:                  false,
+        active:                false,
       };
-      setItems(prev => [...prev, newItem].sort((a, b) => a.time.localeCompare(b.time)));
-      const today = new Date().toISOString().split("T")[0];
-      const { data } = await supabase.from("schedule_items").insert({
-        id:             tempId,
-        title:          newItem.title,
-        time:           newItem.time,
-        type:           newItem.type,
-        notes:          newItem.notes,
-        done:           false,
-        active:         false,
-        child_id:       activeChildId,
-        scheduled_date: today,
-      }).select("id").single();
-      if (data && (data as Record<string, unknown>).id !== tempId) {
-        const realId = String((data as Record<string, unknown>).id);
-        setItems(prev => prev.map(i => i.id === tempId ? { ...i, id: realId } : i));
+      setItems(prev => [...prev, optimistic].sort((a, b) => a.time.localeCompare(b.time)));
+      const saved = await createScheduleItem({
+        title:                 patch.title,
+        time:                  patch.time,
+        type:                  patch.type,
+        notes:                 patch.notes,
+        description:           patch.description,
+        flexible_window_label: patch.flexible_window_label,
+        scheduled_date:        isoDate,
+      });
+      if (saved) {
+        setItems(prev => prev.map(i => i.id === tempId ? saved : i));
+      } else {
+        setItems(prev => prev.filter(i => i.id !== tempId));
       }
     }
   }
 
   async function handleDelete(id: string) {
+    const snapshot = itemsRef.current.find(i => i.id === id);
     setItems(prev => prev.filter(i => i.id !== id));
-    await supabase.from("schedule_items").delete().eq("id", id);
+    try {
+      await deleteScheduleItem(id);
+    } catch {
+      if (snapshot) setItems(prev => [...prev, snapshot].sort((a, b) => a.time.localeCompare(b.time)));
+    }
   }
 
-  const isPastDay     = selectedDate !== null;
-  const displayItems  = isPastDay
-    ? items.map(i => ({ ...i, done: true, active: false }))
-    : items;
+  function openAdd()  { setEditingItem(null);                                       setEditSheetOpen(true); }
+  function openEdit(id: string) { setEditingItem(itemsRef.current.find(i => i.id === id) ?? null); setEditSheetOpen(true); }
 
-  const completed = displayItems.filter(i => i.done);
-  const upcoming  = displayItems.filter(i => !i.done);
-  const headerDate = isPastDay ? selectedDate : todayStr;
+  const caregiverLabel = memberNames.nanny !== "Caregiver" ? `with ${memberNames.nanny}` : "";
 
   return (
     <div className="min-h-screen bg-surface-page">
       <DatePicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSelectDay={handleSelectDay}
+        onSelectDay={date => setSelectedDate(date === "Today" ? null : date)}
         dayOnly
         title="Schedule"
       />
@@ -328,6 +483,13 @@ export default function SchedulePage() {
         item={editingItem}
         onClose={() => setEditSheetOpen(false)}
         onSave={handleSave}
+      />
+
+      <ReplaceSheet
+        open={!!replaceTarget}
+        itemTitle={replaceTarget?.title ?? ""}
+        onClose={() => setReplaceTarget(null)}
+        onConfirm={handleReplace}
       />
 
       {/* Header */}
@@ -355,7 +517,7 @@ export default function SchedulePage() {
 
         {!isPastDay ? (
           <p className="text-[12px] font-medium text-muted-foreground/45 mt-1.5">
-            {activeChild.name}&apos;s day · with Elena
+            {activeChild.name}&apos;s day{caregiverLabel ? ` · ${caregiverLabel}` : ""}
           </p>
         ) : (
           <button
@@ -382,19 +544,37 @@ export default function SchedulePage() {
           transition={{ duration: 0.18 }}
           className="p-4 pb-28 space-y-6"
         >
-          {isPastDay ? (
+          {loading ? (
+            <div className="space-y-2 pt-2">
+              {[0, 1, 2].map(i => (
+                <div
+                  key={i}
+                  className="h-16 rounded-2xl animate-pulse"
+                  style={{ background: "var(--surface-card)", opacity: 1 - i * 0.25 }}
+                />
+              ))}
+            </div>
+          ) : isPastDay ? (
+            /* Past day — all items shown read-only */
             <section>
               <p className="text-[11px] font-semibold text-muted-foreground/50 tracking-wide px-1 mb-3">
                 {selectedDate}
               </p>
-              <div className="space-y-2">
-                {displayItems.map(item => (
-                  <ScheduleBlock key={item.id} item={item} />
-                ))}
-              </div>
+              {items.length === 0 ? (
+                <p className="text-center text-[13px] text-muted-foreground/40 py-10">
+                  No activities recorded for this day
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {items.map(item => (
+                    <ScheduleBlock key={item.id} item={item} />
+                  ))}
+                </div>
+              )}
             </section>
           ) : (
             <>
+              {/* Upcoming */}
               {upcoming.length > 0 && (
                 <section>
                   <p className="text-[11px] font-semibold text-muted-foreground/45 tracking-wide px-1 mb-3">
@@ -408,22 +588,25 @@ export default function SchedulePage() {
                         onToggle={handleToggleDone}
                         onEdit={openEdit}
                         onDelete={handleDelete}
+                        onSkip={handleSkip}
+                        onReplace={openReplace}
                       />
                     ))}
                   </div>
                 </section>
               )}
-              {completed.length > 0 && (
+
+              {/* Done / skipped / replaced */}
+              {done.length > 0 && (
                 <section>
                   <p className="text-[11px] font-semibold text-muted-foreground/45 tracking-wide px-1 mb-3">
                     Earlier today
                   </p>
                   <div className="space-y-2">
-                    {completed.map(item => (
+                    {done.map(item => (
                       <ScheduleBlock
                         key={item.id}
                         item={item}
-                        onToggle={handleToggleDone}
                         onEdit={openEdit}
                         onDelete={handleDelete}
                       />
@@ -433,13 +616,14 @@ export default function SchedulePage() {
               )}
 
               {/* Empty state */}
-              {items.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-[14px] text-muted-foreground/50 font-medium">
-                    Nothing scheduled yet
+              {!loading && items.length === 0 && (
+                <div className="text-center py-14">
+                  <p className="text-[36px] mb-3">🌤</p>
+                  <p className="text-[14px] text-muted-foreground/50 font-semibold mb-1">
+                    Nothing planned yet
                   </p>
-                  <p className="text-[12px] text-muted-foreground/35 mt-1">
-                    Tap + to add an activity
+                  <p className="text-[12px] text-muted-foreground/35">
+                    Tap + to add an activity for today
                   </p>
                 </div>
               )}
@@ -448,7 +632,7 @@ export default function SchedulePage() {
         </motion.div>
       </AnimatePresence>
 
-      {/* FAB — add activity */}
+      {/* FAB — add activity (today only) */}
       {!isPastDay && (
         <motion.button
           whileTap={{ scale: 0.92 }}

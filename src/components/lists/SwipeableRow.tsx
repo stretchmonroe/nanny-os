@@ -4,15 +4,18 @@ import { useMotionValue, useTransform, motion, AnimatePresence } from "framer-mo
 import { Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useEffect, useRef, useState } from "react"
+import { useAppStore } from "@/store/useAppStore"
 
 interface Props {
   item:        { id: string; name: string; completed: boolean }
+  createdBy?:  "nanny" | "parent"
   onToggle(id: string): void
   onDelete(id: string): void
   onRename?(id: string, name: string): void
 }
 
-export default function SwipeableRow({ item, onToggle, onDelete, onRename }: Props) {
+export default function SwipeableRow({ item, createdBy, onToggle, onDelete, onRename }: Props) {
+  const { memberNames } = useAppStore()
   const [removed,  setRemoved]  = useState(false)
   const [editing,  setEditing]  = useState(false)
   const [draft,    setDraft]    = useState(item.name)
@@ -129,6 +132,19 @@ export default function SwipeableRow({ item, onToggle, onDelete, onRename }: Pro
                 </span>
               )}
             </div>
+
+            {/* Author initial — only on pending items */}
+            {createdBy && !item.completed && (
+              <div
+                className="shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-bold select-none"
+                style={{
+                  background: createdBy === "nanny" ? "var(--trust-light)" : "var(--accent-light)",
+                  color:      createdBy === "nanny" ? "var(--trust)"       : "var(--accent-primary)",
+                }}
+              >
+                {(memberNames[createdBy] ?? createdBy)[0]?.toUpperCase()}
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

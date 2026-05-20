@@ -867,7 +867,19 @@ function SignInStep({ onBack }: { onBack: () => void }) {
     try {
       const result = await signInUser(email, password);
       if ("error" in result) throw new Error(result.error);
-      router.replace("/home");
+      // Check if this user has a household; if not, resume setup
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: membership } = await supabase
+          .from("household_members")
+          .select("household_id")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .maybeSingle();
+        router.replace(membership ? "/home" : "/onboarding?resume=household");
+      } else {
+        router.replace("/home");
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't sign in. Check your email and password.");
     } finally {

@@ -18,6 +18,7 @@ import { demoPatterns } from "@/lib/data/demo";
 import { loadAdaptiveProfile } from "@/lib/adaptive-profile";
 import type { PatternInsight } from "@/lib/data/demo";
 import type { AdaptiveProfile } from "@/lib/adaptive-profile";
+import { useAppStore } from "@/store/useAppStore";
 
 type Status = "loading" | "loaded" | "error";
 
@@ -38,6 +39,7 @@ function getContextualPattern(exec: ExecutionMap, acts: Activity[]): PatternInsi
 
 export default function ActivitiesPage() {
   const router = useRouter();
+  const { activeChildId } = useAppStore();
   const [profile, setProfile] = useState<ChildProfile | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [status, setStatus] = useState<Status>("loading");
@@ -122,7 +124,7 @@ export default function ActivitiesPage() {
     if (activity) {
       saveActivityLog({
         date: new Date().toISOString().slice(0, 10),
-        child_id: "default",
+        child_id: activeChildId,
         time_window: window,
         planned_title: activity.title,
         planned_category: activity.category,
@@ -148,7 +150,7 @@ export default function ActivitiesPage() {
     if (activity) {
       saveActivityLog({
         date: new Date().toISOString().slice(0, 10),
-        child_id: "default",
+        child_id: activeChildId,
         time_window: noteTarget,
         planned_title: activity.title,
         planned_category: activity.category,
@@ -188,7 +190,7 @@ export default function ActivitiesPage() {
       if (prevActivity) {
         saveActivityLog({
           date: new Date().toISOString().slice(0, 10),
-          child_id: "default",
+          child_id: activeChildId,
           time_window: window,
           planned_title: prevActivity.title,
           planned_category: prevActivity.category,

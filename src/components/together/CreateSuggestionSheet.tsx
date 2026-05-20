@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Check, X } from "lucide-react"
 import { createSuggestion } from "@/lib/supabase/suggestions"
 import type { SuggestionType } from "@/lib/data/demo"
+import { useAppStore } from "@/store/useAppStore"
 
 const CATEGORIES: { type: SuggestionType; emoji: string; label: string }[] = [
   { type: "activity", emoji: "🎯", label: "Activity" },
@@ -25,6 +26,7 @@ export default function CreateSuggestionSheet({ open, onClose, onCreated }: Prop
   const [reason,      setReason]      = useState("")
   const [saving,      setSaving]      = useState(false)
   const [saved,       setSaved]       = useState(false)
+  const { activeChildId } = useAppStore()
 
   const canSave = title.trim().length > 0
 
@@ -47,7 +49,7 @@ export default function CreateSuggestionSheet({ open, onClose, onCreated }: Prop
       description: description.trim(),
       reason:      reason.trim(),
       created_by:  "nanny",
-      child_id:    "default",
+      child_id:    activeChildId,
     })
     setSaving(false)
     setSaved(true)

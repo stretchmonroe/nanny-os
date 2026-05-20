@@ -1,5 +1,6 @@
 import { supabase } from "./client"
 import { weeklyMoments } from "@/lib/data/demo"
+import { useAppStore } from "@/store/useAppStore"
 import type { JournalMoment, MomentReaction, MomentReply } from "@/lib/data/demo"
 
 function rowToMoment(row: Record<string, unknown>): JournalMoment {
@@ -62,6 +63,7 @@ async function attachInteractions(moments: JournalMoment[]): Promise<JournalMome
 }
 
 export async function fetchTodayMoments(): Promise<JournalMoment[]> {
+  const childId = useAppStore.getState().activeChildId
   try {
     const now   = new Date()
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
@@ -69,7 +71,7 @@ export async function fetchTodayMoments(): Promise<JournalMoment[]> {
     const { data, error } = await supabase
       .from("memory_events")
       .select("*")
-      .eq("child_id", "default")
+      .eq("child_id", childId)
       .gte("created_at", start)
       .lt("created_at", end)
       .order("created_at", { ascending: true })
@@ -99,6 +101,7 @@ export async function insertMoment(
   createdBy: "nanny" | "parent" = "nanny",
   imageUrl?: string,
 ): Promise<JournalMoment> {
+  const childId = useAppStore.getState().activeChildId
   const now = new Date()
   const optimistic: JournalMoment = {
     id:       `local_${Date.now()}`,
@@ -114,7 +117,7 @@ export async function insertMoment(
       .from("memory_events")
       .insert({
         type, content, category,
-        child_id:   "default",
+        child_id:   childId,
         created_by: createdBy,
         image_url:  imageUrl ?? null,
         created_at: now.toISOString(),

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import { moments as demoMoments } from "@/lib/data/demo";
+import { useAppStore } from "@/store/useAppStore";
 import Image from "next/image";
 
 type Moment = {
@@ -33,20 +34,21 @@ function normalize(raw: any): Moment {
 
 export default function MemoryFeed({ filter = "all" }: { filter?: "all" | "photos" | "notes" }) {
   const [items, setItems] = useState<Moment[]>([]);
+  const { activeChildId } = useAppStore();
 
   useEffect(() => {
     async function load() {
       const { data } = await supabase
         .from("memory_events")
         .select("*")
-        .eq("child_id", "default")
+        .eq("child_id", activeChildId)
         .order("created_at", { ascending: false });
 
       const raw = data && data.length > 0 ? data : demoMoments;
       setItems(raw.map(normalize));
     }
     load();
-  }, []);
+  }, [activeChildId]);
 
   const filtered = items.filter((i) => {
     if (filter === "photos") return i.type === "photo";

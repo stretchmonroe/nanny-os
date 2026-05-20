@@ -13,6 +13,7 @@ import SproutResultActions from "./SproutResultActions";
 import MemorySearchPane from "./MemorySearchPane";
 import { createSuggestion } from "@/lib/supabase/suggestions";
 import type { SuggestionType } from "@/lib/data/demo";
+import { useAppStore } from "@/store/useAppStore";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -75,6 +76,7 @@ function AskPane({ category }: { category: Exclude<ResearchCategory, "history"> 
   const [shareTitle,   setShareTitle]   = useState("");
   const [shareNote,    setShareNote]    = useState("");
   const [shareSending, setShareSending] = useState(false);
+  const { activeChildId } = useAppStore();
 
   const suggestions = SUGGESTIONS[category];
   const canAsk = question.trim().length > 0;
@@ -96,7 +98,7 @@ function AskPane({ category }: { category: Exclude<ResearchCategory, "history"> 
       reason:         result.ageContext || result.headline,
       type:           shareType,
       created_by:     "nanny",
-      child_id:       "default",
+      child_id:       activeChildId,
       researchBacked: true,
     })
     setShareSending(false);

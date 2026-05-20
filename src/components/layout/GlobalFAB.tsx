@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, PenLine, ShoppingBasket, Mic, BookOpen } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { useAppStore } from "@/store/useAppStore";
 import QuickCaptureSheet from "@/components/shared/QuickCaptureSheet";
 import ResearchSheet from "@/components/shared/ResearchSheet";
 import VoiceInputModal from "@/components/voice/VoiceInputModal";
@@ -24,6 +25,7 @@ export default function GlobalFAB() {
   const [researchOpen, setResearchOpen] = useState(false);
 
   const voice = useVoiceInput({ continuous: true });
+  const { activeChildId } = useAppStore();
 
   function handleAction(id: string) {
     setExpanded(false);
@@ -37,13 +39,13 @@ export default function GlobalFAB() {
 
   async function handleNoteSave(text: string) {
     await supabase.from("memory_events").insert({
-      content: text, type: "note", child_id: "default", created_by: "parent",
+      content: text, type: "note", child_id: activeChildId, created_by: "parent",
     });
   }
 
   async function handleInstantAdd(name: string) {
     await supabase.from("grocery_items").insert({
-      name, child_id: "default", created_by: "parent",
+      name, child_id: activeChildId, created_by: "parent",
     });
   }
 
@@ -52,7 +54,7 @@ export default function GlobalFAB() {
     if (result.type === "grocery") {
       await Promise.all(
         result.items.map(name =>
-          supabase.from("grocery_items").insert({ name, child_id: "default", created_by: "nanny" })
+          supabase.from("grocery_items").insert({ name, child_id: activeChildId, created_by: "nanny" })
         )
       );
     } else {
@@ -60,7 +62,7 @@ export default function GlobalFAB() {
         type: "note",
         content: result.content,
         category: "play",
-        child_id: "default",
+        child_id: activeChildId,
         created_by: "nanny",
         created_at: new Date().toISOString(),
       });

@@ -11,7 +11,8 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import AnkurWordmark from "@/components/brand/AnkurWordmark"
-import { child } from "@/lib/data/demo"
+import { demoChildren } from "@/lib/data/demo"
+import { useAppStore } from "@/store/useAppStore"
 import type { LucideIcon } from "lucide-react"
 
 // ── Nav data ───────────────────────────────────────────────────────────────────
@@ -62,6 +63,8 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
 export default function GlobalNav() {
   const [open, setOpen] = useState(false)
   const router = useRouter()
+  const { activeChildId } = useAppStore()
+  const activeChild = demoChildren.find(c => c.id === activeChildId) ?? demoChildren[0]
 
   useEffect(() => {
     const handler = () => setOpen(true)
@@ -105,9 +108,9 @@ export default function GlobalNav() {
               <div className="flex items-start justify-between mb-4">
                 <div
                   className="w-11 h-11 rounded-[1rem] flex items-center justify-center text-[22px] shadow-card ring-[2.5px] ring-[#D4A882]/20"
-                  style={{ background: "linear-gradient(135deg, #F5D9A8, #E8A87C)" }}
+                  style={{ background: `linear-gradient(135deg, ${activeChild.avatarFrom}, ${activeChild.avatarTo})` }}
                 >
-                  {child.emoji}
+                  {activeChild.emoji}
                 </div>
                 <button
                   onClick={() => setOpen(false)}
@@ -120,7 +123,7 @@ export default function GlobalNav() {
               </div>
 
               <p className="text-[16px] font-bold text-foreground leading-tight">
-                {child.name}&apos;s home
+                {activeChild.name}&apos;s home
               </p>
               <p className="text-[12px] font-medium text-muted-foreground/45 mt-0.5">
                 Elena &middot; Nanny

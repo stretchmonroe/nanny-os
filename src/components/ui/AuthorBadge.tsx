@@ -3,16 +3,19 @@
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type AuthorType = "nanny" | "parent" | "ai";
+export type AuthorType = "nanny" | "parent" | "ai" | "system";
 
 const cfg = {
-  nanny:  { name: "Elena",  role: "Nanny",  initial: "E", circleBg: "bg-amber-100 dark:bg-amber-900/50",   circleText: "text-amber-700 dark:text-amber-300"  },
-  parent: { name: "Sofia",  role: "Parent", initial: "S", circleBg: "bg-rose-100 dark:bg-rose-900/40",     circleText: "text-rose-600 dark:text-rose-300"    },
-  ai:     { name: "Claude", role: "AI",     initial: null, circleBg: "bg-lavender-light dark:bg-lavender/20", circleText: "text-lavender dark:text-lavender" },
+  nanny:  { name: "Elena",  role: "Nanny",  initial: "E",  circleBg: "bg-amber-100 dark:bg-amber-900/50",      circleText: "text-amber-700 dark:text-amber-300"  },
+  parent: { name: "Sofia",  role: "Parent", initial: "S",  circleBg: "bg-rose-100 dark:bg-rose-900/40",        circleText: "text-rose-600 dark:text-rose-300"    },
+  ai:     { name: "Sprout", role: "AI",     initial: null, circleBg: "bg-lavender-light dark:bg-lavender/20",  circleText: "text-lavender dark:text-lavender"    },
+  system: { name: "",       role: "",       initial: "·",  circleBg: "bg-muted",                               circleText: "text-muted-foreground/35"             },
 } as const;
 
 interface Props {
   author: AuthorType;
+  /** Override the default display name */
+  displayName?: string;
   time?: string;
   /** "inline" = circle + name + time. "dot" = circle only. */
   variant?: "inline" | "dot";
@@ -23,7 +26,7 @@ interface Props {
   className?: string;
 }
 
-export default function AuthorBadge({ author, time, variant = "inline", light = false, showRole = true, className }: Props) {
+export default function AuthorBadge({ author, displayName, time, variant = "inline", light = false, showRole = true, className }: Props) {
   const c = cfg[author];
 
   const circle = (
@@ -46,9 +49,10 @@ export default function AuthorBadge({ author, time, variant = "inline", light = 
 
   if (variant === "dot") return circle;
 
-  const nameLabel = showRole && author !== "ai"
-    ? `${c.name} · ${c.role}`
-    : c.name;
+  const resolvedName = displayName ?? c.name;
+  const nameLabel = showRole && author !== "ai" && author !== "system"
+    ? `${resolvedName} · ${c.role}`
+    : resolvedName;
 
   return (
     <div className={cn("flex items-center gap-2", className)}>

@@ -1,15 +1,52 @@
 // ── Family ───────────────────────────────────────────────────────────────────
 
-export const child = {
-  name: "Mateo",
-  fullName: "Mateo Rivera",
-  age: "18 months",
-  birthDate: "November 14, 2024",
-  emoji: "🧒",
-  focus: "Language & Communication",
-  mood: "😄",
-  moodLabel: "Happy",
+export interface DemoChild {
+  id:         string
+  name:       string
+  fullName:   string
+  age:        string
+  birthDate:  string
+  emoji:      string
+  focus:      string
+  mood:       string
+  moodLabel:  string
+  /** Tailwind gradient "from" color for the avatar */
+  avatarFrom: string
+  /** Tailwind gradient "to" color for the avatar */
+  avatarTo:   string
 }
+
+export const demoChildren: DemoChild[] = [
+  {
+    id:         "mateo",
+    name:       "Mateo",
+    fullName:   "Mateo Rivera",
+    age:        "18 months",
+    birthDate:  "November 14, 2024",
+    emoji:      "🧒",
+    focus:      "Language & Communication",
+    mood:       "😄",
+    moodLabel:  "Happy",
+    avatarFrom: "#F5D9A8",
+    avatarTo:   "#E8A87C",
+  },
+  {
+    id:         "luna",
+    name:       "Luna",
+    fullName:   "Luna Rivera",
+    age:        "4 months",
+    birthDate:  "January 9, 2026",
+    emoji:      "👶",
+    focus:      "Sensory & Touch",
+    mood:       "😴",
+    moodLabel:  "Sleepy",
+    avatarFrom: "#D4C0E8",
+    avatarTo:   "#B8A0D4",
+  },
+]
+
+/** Single-child alias kept for backwards compatibility */
+export const child = demoChildren[0]
 
 export const family = {
   parents: ["Sofia Rivera", "Marco Rivera"],
@@ -18,15 +55,43 @@ export const family = {
 
 // ── Today's Schedule (May 14, 2026 — Thursday) ──────────────────────────────
 
-export const schedule = [
-  { id: "1", time: "07:30", title: "Breakfast",       type: "meal"     as const, done: true,  loggedBy: "nanny"  as const, notes: "Scrambled eggs with cheddar + banana — cleared the plate"       },
-  { id: "2", time: "08:45", title: "Morning Park",    type: "outdoor"  as const, done: true,  loggedBy: "nanny"  as const, notes: "45 min — first time down the big slide solo"                     },
-  { id: "3", time: "10:00", title: "Morning Snack",   type: "meal"     as const, done: true,  loggedBy: "nanny"  as const, notes: "Rice cakes + mango — said 'more' for the first time! 🌟"        },
-  { id: "4", time: "10:30", title: "Sensory Bin Play",type: "play"     as const, done: false, active: true, loggedBy: "nanny" as const, notes: "Rice bin with cups, scoops, and small safari animals" },
-  { id: "5", time: "12:00", title: "Lunch",           type: "meal"     as const, done: false, notes: "Avocado toast + blueberries + cheese stick"                      },
-  { id: "6", time: "12:45", title: "Nap",             type: "nap"      as const, done: false, notes: "Target 90 min — blackout curtains + white noise on"              },
-  { id: "7", time: "14:30", title: "Afternoon Snack", type: "meal"     as const, done: false, notes: "Yogurt with soft berries"                                        },
-  { id: "8", time: "15:00", title: "Reading Time",    type: "learning" as const, done: false, notes: "Brown Bear + new Pete the Cat book"                              },
+export interface ScheduleItem {
+  id: string
+  time: string
+  title: string
+  type: "meal" | "outdoor" | "play" | "nap" | "learning"
+  done?: boolean
+  active?: boolean
+  loggedBy?: "nanny" | "parent"
+  notes?: string
+  completedBy?: "nanny" | "parent"
+  approvedBy?: "nanny" | "parent"
+  reactions?: { emoji: string; count: number }[]
+}
+
+export interface SproutEntry {
+  id: string
+  time: string
+  entryType: "sprout"
+  headline: string
+  body: string
+}
+
+export type TimelineItem = ScheduleItem | SproutEntry
+
+export const schedule: ScheduleItem[] = [
+  { id: "1", time: "07:30", title: "Breakfast",        type: "meal",     done: true,  loggedBy: "nanny", completedBy: "nanny", notes: "Scrambled eggs with cheddar + banana — cleared the plate",         reactions: [{ emoji: "❤️", count: 1 }]                                       },
+  { id: "2", time: "08:45", title: "Morning Park",     type: "outdoor",  done: true,  loggedBy: "nanny", completedBy: "nanny", notes: "45 min — first time down the big slide solo",                      reactions: [{ emoji: "🥹", count: 1 }]                                       },
+  { id: "3", time: "10:00", title: "Morning Snack",    type: "meal",     done: true,  loggedBy: "nanny", completedBy: "nanny", notes: "Rice cakes + mango — said 'more' for the first time! 🌟",          reactions: [{ emoji: "❤️", count: 2 }, { emoji: "🌟", count: 1 }]           },
+  { id: "4", time: "10:30", title: "Sensory Bin Play", type: "play",     done: false, active: true, loggedBy: "nanny", approvedBy: "parent", notes: "Rice bin with cups, scoops, and small safari animals" },
+  { id: "5", time: "12:00", title: "Lunch",            type: "meal",     done: false, notes: "Avocado toast + blueberries + cheese stick"                               },
+  { id: "6", time: "12:45", title: "Nap",              type: "nap",      done: false, notes: "Target 90 min — blackout curtains + white noise on"                       },
+  { id: "7", time: "14:30", title: "Afternoon Snack",  type: "meal",     done: false, notes: "Yogurt with soft berries"                                                 },
+  { id: "8", time: "15:00", title: "Reading Time",     type: "learning", done: false, approvedBy: "parent", notes: "Brown Bear + new Pete the Cat book"                },
+]
+
+export const sproutEntries: SproutEntry[] = [
+  { id: "s1", time: "10:20", entryType: "sprout", headline: "Language is landing", body: "'More' isn't just a word — it's Mateo's first act of asking. That shift from pointing to naming usually happens right in this window." },
 ]
 
 // ── Moments Carousel (home screen) ──────────────────────────────────────────

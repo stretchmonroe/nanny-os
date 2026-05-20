@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, ChevronLeft, Plus, X, Check } from "lucide-react";
 import { NavMenuButton } from "@/components/layout/NavMenuButton";
-import { schedule as demoSchedule, typeConfig, demoPatterns } from "@/lib/data/demo";
+import { schedule as demoSchedule, typeConfig, demoPatterns, demoChildren } from "@/lib/data/demo";
 import { supabase } from "@/lib/supabase/client";
+import { useAppStore } from "@/store/useAppStore";
 import ScheduleBlock from "@/components/schedule/ScheduleBlock";
 import DatePicker from "@/components/memory/DatePicker";
 import { PatternCard } from "@/components/insights/PatternCard";
@@ -221,12 +222,16 @@ export default function SchedulePage() {
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [editingItem,   setEditingItem]  = useState<ScheduleItem | null>(null);
 
+  const { activeChildId } = useAppStore();
+  const activeChild = demoChildren.find(c => c.id === activeChildId) ?? demoChildren[0];
+
+  // Re-fetch when active child changes
   useEffect(() => {
-    supabase.from("schedule_items").select("*").then(({ data }) => {
+    supabase.from("schedule_items").select("*").eq("child_id", activeChildId).then(({ data }) => {
       const raw = data && data.length > 0 ? data : demoSchedule;
       setItems((raw as Record<string, unknown>[]).map(normalize));
     });
-  }, []);
+  }, [activeChildId]);
 
   function handleSelectDay(date: string) {
     setSelectedDate(date === "Today" ? null : date);
@@ -284,7 +289,7 @@ export default function SchedulePage() {
         notes:          newItem.notes,
         done:           false,
         active:         false,
-        child_id:       "default",
+        child_id:       activeChildId,
         scheduled_date: today,
       }).select("id").single();
       if (data && (data as Record<string, unknown>).id !== tempId) {
@@ -350,7 +355,7 @@ export default function SchedulePage() {
 
         {!isPastDay ? (
           <p className="text-[12px] font-medium text-muted-foreground/45 mt-1.5">
-            Mateo&apos;s day · with Elena
+            {activeChild.name}&apos;s day · with Elena
           </p>
         ) : (
           <button

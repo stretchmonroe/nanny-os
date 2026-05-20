@@ -20,6 +20,8 @@ import VoiceMemorySheet from "@/components/memory/VoiceMemorySheet";
 import { fetchTodayMoments, insertMoment, updateMoment, deleteMoment } from "@/lib/supabase/moments";
 import type { VoiceResult } from "@/lib/voice/transcriptParser";
 import type { JournalMoment } from "@/lib/data/demo";
+import { useAppStore } from "@/store/useAppStore";
+import { demoChildren } from "@/lib/data/demo";
 import { ArrowUp } from "lucide-react";
 
 type Tab = "today" | "week" | "favorites";
@@ -126,9 +128,14 @@ export default function MemoryPage() {
   const [dbMoments,    setDbMoments]    = useState<JournalMoment[]>([]);
   const [localMoments, setLocalMoments] = useState<JournalMoment[]>([]);
 
+  const { activeChildId } = useAppStore();
+  const activeChild = demoChildren.find(c => c.id === activeChildId) ?? demoChildren[0];
+
+  // Re-fetch when active child changes; also clear local (session) moments
   useEffect(() => {
+    setLocalMoments([]);
     fetchTodayMoments().then(setDbMoments);
-  }, []);
+  }, [activeChildId]);
 
   function addMoment(moment: JournalMoment) {
     setLocalMoments(prev => [moment, ...prev]);
@@ -233,7 +240,7 @@ export default function MemoryPage() {
               />
             </button>
             <p className="text-[11px] font-medium text-muted-foreground/40">
-              Mateo&apos;s story · 18 months
+              {activeChild.name}&apos;s story · {activeChild.age}
             </p>
             </div>
           </div>

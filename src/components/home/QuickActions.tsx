@@ -8,17 +8,19 @@ import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import QuickCaptureSheet from "@/components/shared/QuickCaptureSheet";
 import ResearchSheet from "@/components/shared/ResearchSheet";
 import type { VoiceResult } from "@/lib/voice/transcriptParser";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function QuickActions() {
   const [noteOpen,     setNoteOpen]     = useState(false);
   const [groceryOpen,  setGroceryOpen]  = useState(false);
   const [researchOpen, setResearchOpen] = useState(false);
+  const { activeChildId } = useAppStore();
 
   async function handleNoteSave(text: string) {
     await supabase.from("memory_events").insert({
       content:    text,
       type:       "note",
-      child_id:   "default",
+      child_id:   activeChildId,
       created_by: "parent",
     });
   }
@@ -26,7 +28,7 @@ export default function QuickActions() {
   async function handleInstantAdd(name: string) {
     await supabase.from("grocery_items").insert({
       name,
-      child_id:   "default",
+      child_id:   activeChildId,
       created_by: "parent",
     });
   }
@@ -35,7 +37,7 @@ export default function QuickActions() {
     if (result.type === "grocery") {
       await Promise.all(
         result.items.map(name =>
-          supabase.from("grocery_items").insert({ name, child_id: "default", created_by: "nanny" })
+          supabase.from("grocery_items").insert({ name, child_id: activeChildId, created_by: "nanny" })
         )
       );
     } else {
@@ -43,7 +45,7 @@ export default function QuickActions() {
         type:       "note",
         content:    result.content,
         category:   result.type === "schedule" ? result.category : "play",
-        child_id:   "default",
+        child_id:   activeChildId,
         created_by: "nanny",
         created_at: new Date().toISOString(),
       });

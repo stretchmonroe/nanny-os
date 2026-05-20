@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
+import { useAppStore } from "@/store/useAppStore";
 import { Camera, Loader2, X } from "lucide-react";
 import type { JournalMoment } from "@/lib/data/demo";
 
@@ -36,6 +37,7 @@ export default function PhotoUploader({ onSaved }: Props) {
   async function post() {
     if (!file) return;
     setUploading(true);
+    const childId = useAppStore.getState().activeChildId;
     try {
       const fileName = `${Date.now()}-${file.name}`;
       const { error } = await supabase.storage.from("photos").upload(fileName, file);
@@ -46,7 +48,7 @@ export default function PhotoUploader({ onSaved }: Props) {
         type:       "photo",
         content,
         image_url:  data.publicUrl,
-        child_id:   "default",
+        child_id:   childId,
         created_by: "nanny",
         created_at: new Date().toISOString(),
       }).select().single();

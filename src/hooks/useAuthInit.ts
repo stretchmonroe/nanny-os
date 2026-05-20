@@ -26,26 +26,40 @@ export function useAuthInit() {
     }
 
     // Use service-role endpoint to bypass RLS for membership lookup
-    const res = await fetch("/api/me", {
-      headers: { authorization: `Bearer ${session.access_token}` },
-    });
-    if (!res.ok) {
-      if (!pathname.startsWith("/onboarding")) router.replace("/onboarding");
-      return;
+    let membership: { household_id: string; role: string } | null = null;
+    let children: { id: string; name: string; focus?: string }[] = [];
+    let fetchSucceeded = false;
+
+    try {
+      const res = await fetch("/api/me", {
+        headers: { authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        membership = json.membership ?? null;
+        children = json.children ?? [];
+        fetchSucceeded = true;
+      }
+      // On 5xx we leave fetchSucceeded=false — don't redirect, let page render
+    } catch {
+      // network error — stay on current page
     }
 
-    const json = await res.json();
-
-    if (!json.membership) {
+    if (fetchSucceeded && membership === null) {
+      // Definitively no membership — redirect to household setup
       if (!pathname.startsWith("/onboarding")) {
         router.replace("/onboarding?resume=household");
       }
       return;
     }
 
-    setCurrentUserRole(normaliseRole(json.membership.role));
+    if (!fetchSucceeded) {
+      // Can't confirm membership state — don't redirect
+      return;
+    }
 
-    const children = json.children as { id: string; name: string; focus?: string }[];
+    setCurrentUserRole(normaliseRole(membership!.role));
+
     if (children.length > 0) {
       const storedId = useAppStore.getState().activeChildId;
       const match = children.find((c) => c.id === storedId) ?? children[0];

@@ -12,20 +12,27 @@ function normaliseRole(role: string): "nanny" | "parent" {
 export function useAuthInit() {
   const router   = useRouter();
   const pathname = usePathname();
-  const { setActiveChild, setMemberNames, setCurrentUserRole } = useAppStore();
+  const { setActiveChild, setMemberNames, setCurrentUserRole, setAuthReady } = useAppStore();
 
   const init = useCallback(async () => {
-    if (pathname.startsWith("/invite/")) return;
-
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      if (!pathname.startsWith("/onboarding")) {
-        router.replace("/onboarding");
-      }
+    if (pathname.startsWith("/invite/")) {
+      setAuthReady(true);
       return;
     }
 
-    // Use service-role endpoint to bypass RLS for membership lookup
+    console.log("[auth] init — pathname:", pathname);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.log("[auth] no session — redirecting to /onboarding");
+      if (!pathname.startsWith("/onboarding")) {
+        router.replace("/onboarding");
+      }
+      setAuthReady(true);
+      return;
+    }
+
+    console.log("[auth] session OK, fetching /api/me");
     let membership: { household_id: string; role: string } | null = null;
     let children: { id: string; name: string; focus?: string }[] = [];
     let fetchSucceeded = false;
@@ -34,45 +41,54 @@ export function useAuthInit() {
       const res = await fetch("/api/me", {
         headers: { authorization: `Bearer ${session.access_token}` },
       });
+      console.log("[auth] /api/me status:", res.status);
       if (res.ok) {
         const json = await res.json();
+        console.log("[auth] /api/me response:", JSON.stringify(json));
         membership = json.membership ?? null;
-        children = json.children ?? [];
+        children   = json.children  ?? [];
         fetchSucceeded = true;
+      } else {
+        const errBody = await res.text().catch(() => "");
+        console.warn("[auth] /api/me non-OK:", res.status, errBody);
       }
-      // On 5xx we leave fetchSucceeded=false — don't redirect, let page render
-    } catch {
-      // network error — stay on current page
+    } catch (err) {
+      console.warn("[auth] /api/me network error:", err);
     }
 
     if (fetchSucceeded && membership === null) {
-      // Definitively no membership — redirect to household setup
+      console.log("[auth] membership null — redirecting to /onboarding?resume=household");
       if (!pathname.startsWith("/onboarding")) {
         router.replace("/onboarding?resume=household");
       }
+      setAuthReady(true);
       return;
     }
 
     if (!fetchSucceeded) {
-      // Can't confirm membership state — don't redirect
+      console.warn("[auth] /api/me failed — staying on current page, not redirecting");
+      setAuthReady(true);
       return;
     }
 
     setCurrentUserRole(normaliseRole(membership!.role));
+    console.log("[auth] role set:", membership!.role);
 
     if (children.length > 0) {
       const storedId = useAppStore.getState().activeChildId;
-      const match = children.find((c) => c.id === storedId) ?? children[0];
+      const match    = children.find((c) => c.id === storedId) ?? children[0];
       setActiveChild({
         id:   String(match.id),
         name: String(match.name),
         age:  String(match.focus ?? ""),
       });
+      console.log("[auth] activeChild set:", match.name, match.id);
+    } else {
+      console.log("[auth] no children in /api/me response");
     }
 
-    // Load member display names
     try {
-      const circleRes = await fetch("/api/care-circle", {
+      const circleRes  = await fetch("/api/care-circle", {
         headers: { authorization: `Bearer ${session.access_token}` },
       });
       const circleJson = await circleRes.json();
@@ -88,10 +104,12 @@ export function useAuthInit() {
       // keep defaults
     }
 
+    setAuthReady(true);
+
     if (pathname === "/") {
       router.replace("/home");
     }
-  }, [pathname, router, setActiveChild, setMemberNames, setCurrentUserRole]);
+  }, [pathname, router, setActiveChild, setMemberNames, setCurrentUserRole, setAuthReady]);
 
   useEffect(() => {
     init();
@@ -99,9 +117,7 @@ export function useAuthInit() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
-        init();
-      }
+      if (event === "SIGNED_IN") init();
     });
     return () => subscription.unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps

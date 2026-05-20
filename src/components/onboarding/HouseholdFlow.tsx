@@ -3,11 +3,12 @@
 import { useRef, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Eye, EyeOff, Check } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import SproutMark from "@/components/brand/SproutMark";
 import AnkurWordmark from "@/components/brand/AnkurWordmark";
 import { WelcomeSplash } from "./WelcomeSplash";
 import { supabase } from "@/lib/supabase/client";
+import { useAppStore } from "@/store/useAppStore";
 import {
   signUpUser, signInUser,
   createHousehold, createChild, createInvite,
@@ -566,11 +567,55 @@ function InviteStep({ email, note, onEmailChange, onNoteChange, childName, onNex
 // ── Step: Parent complete ─────────────────────────────────────────────────────
 
 function ParentCompleteStep({ data }: { data: HouseholdData }) {
-  const router = useRouter(); // kept for caregiver complete step
+  const { setActiveChild, setCurrentUserRole } = useAppStore();
+  const [entering,    setEntering]    = useState(false);
+  const [enterError,  setEnterError]  = useState("");
+
   const childAgeLabel = AGE_OPTIONS.find((a) => a.id === data.childAge)?.label ?? data.childAge;
   const invitedName   = data.inviteEmail
     ? (() => { const s = data.inviteEmail.split("@")[0].split(".")[0]; return s.charAt(0).toUpperCase() + s.slice(1); })()
     : null;
+
+  async function handleEnterHome() {
+    setEntering(true);
+    setEnterError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("[complete] session:", session ? "OK" : "MISSING");
+      if (!session) throw new Error("Session lost — please sign in again.");
+
+      const res = await fetch("/api/me", {
+        headers: { authorization: `Bearer ${session.access_token}` },
+      });
+      console.log("[complete] /api/me status:", res.status);
+
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        console.warn("[complete] /api/me error:", res.status, errBody);
+        throw new Error(`Could not verify your household (${res.status}). Check your Vercel env vars or try again.`);
+      }
+
+      const json = await res.json();
+      console.log("[complete] /api/me response:", JSON.stringify(json));
+
+      if (!json.membership) {
+        throw new Error("Household not found — the membership row may not have saved. Please try again or contact support.");
+      }
+
+      // Pre-populate store so /home renders immediately with real data
+      setCurrentUserRole(json.membership.role === "parent" ? "parent" : "nanny");
+      if (Array.isArray(json.children) && json.children.length > 0) {
+        const child = json.children[0];
+        setActiveChild({ id: String(child.id), name: String(child.name), age: String(child.focus ?? "") });
+      }
+
+      window.location.href = "/home";
+    } catch (e) {
+      console.error("[complete] enter home error:", e);
+      setEnterError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      setEntering(false);
+    }
+  }
 
   return (
     <div style={{ minHeight: "100dvh", background: "#F4EFE8", display: "flex", flexDirection: "column", maxWidth: 480, margin: "0 auto" }}>
@@ -619,11 +664,26 @@ function ParentCompleteStep({ data }: { data: HouseholdData }) {
             Ankur learns as {data.childName || "your child"}&apos;s days are logged. Each moment deepens the picture.
           </p>
         </motion.div>
+
+        {enterError && (
+          <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+            style={{ padding: "12px 16px", borderRadius: 12, background: "rgba(192,57,43,0.07)", border: "1.5px solid rgba(192,57,43,0.15)" }}
+          >
+            <p style={{ fontSize: 13, color: "#C0392B", fontWeight: 600, margin: 0, lineHeight: 1.5 }}>{enterError}</p>
+          </motion.div>
+        )}
       </div>
 
       <div style={{ padding: "24px 24px 44px" }}>
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-          <button className="btn-brand" onClick={() => { window.location.href = "/home"; }}>Enter your home →</button>
+          <button className="btn-brand" disabled={entering} onClick={handleEnterHome}>
+            {entering ? (
+              <span style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
+                <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+                Setting up your home…
+              </span>
+            ) : "Enter your home →"}
+          </button>
         </motion.div>
       </div>
     </div>
@@ -766,7 +826,6 @@ function CaregiverAccountStep({ caregiverName, onSubmit, onNext, onBack, dotInde
 // ── Step: Caregiver complete ──────────────────────────────────────────────────
 
 function CaregiverCompleteStep({ data }: { data: HouseholdData }) {
-  const router = useRouter();
   const childAge = AGE_OPTIONS.find((a) => a.id === data.inviteChildName)?.emoji;
 
   return (
@@ -812,7 +871,6 @@ function CaregiverCompleteStep({ data }: { data: HouseholdData }) {
 // ── Step: Confirm email ───────────────────────────────────────────────────────
 
 function ConfirmEmailStep({ email }: { email: string }) {
-  const router = useRouter();
   const [checking, setChecking] = useState(false);
   const [error,    setError]    = useState("");
 
@@ -820,7 +878,7 @@ function ConfirmEmailStep({ email }: { email: string }) {
     setChecking(true); setError("");
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      router.replace("/home");
+      window.location.href = "/onboarding?resume=household";
     } else {
       setError("Email not confirmed yet. Check your inbox and try again.");
       setChecking(false);
@@ -851,7 +909,6 @@ function ConfirmEmailStep({ email }: { email: string }) {
 // ── Step: Sign in (returning users) ──────────────────────────────────────────
 
 function SignInStep({ onBack }: { onBack: () => void }) {
-  const router  = useRouter();
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [showPw,   setShowPw]   = useState(false);
@@ -867,21 +924,22 @@ function SignInStep({ onBack }: { onBack: () => void }) {
     try {
       const result = await signInUser(email, password);
       if ("error" in result) throw new Error(result.error);
-      // Check if this user has a household; if not, resume setup
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: membership } = await supabase
-          .from("household_members")
-          .select("household_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        router.replace(membership ? "/home" : "/onboarding?resume=household");
+      // Use service-role endpoint — bypasses RLS, reliable for all users
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("[signin] session after sign-in:", session ? "OK" : "MISSING");
+      if (session) {
+        const meRes  = await fetch("/api/me", {
+          headers: { authorization: `Bearer ${session.access_token}` },
+        });
+        console.log("[signin] /api/me status:", meRes.status);
+        const meJson = meRes.ok ? await meRes.json() : null;
+        console.log("[signin] /api/me response:", JSON.stringify(meJson));
+        window.location.href = meJson?.membership ? "/home" : "/onboarding?resume=household";
       } else {
-        router.replace("/home");
+        window.location.href = "/home";
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't sign in. Check your email and password.");
-    } finally {
       setLoading(false);
     }
   }

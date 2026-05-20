@@ -566,7 +566,7 @@ function InviteStep({ email, note, onEmailChange, onNoteChange, childName, onNex
 // ── Step: Parent complete ─────────────────────────────────────────────────────
 
 function ParentCompleteStep({ data }: { data: HouseholdData }) {
-  const router = useRouter();
+  const router = useRouter(); // kept for caregiver complete step
   const childAgeLabel = AGE_OPTIONS.find((a) => a.id === data.childAge)?.label ?? data.childAge;
   const invitedName   = data.inviteEmail
     ? (() => { const s = data.inviteEmail.split("@")[0].split(".")[0]; return s.charAt(0).toUpperCase() + s.slice(1); })()
@@ -623,7 +623,7 @@ function ParentCompleteStep({ data }: { data: HouseholdData }) {
 
       <div style={{ padding: "24px 24px 44px" }}>
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-          <button className="btn-brand" onClick={() => router.push("/home")}>Enter your home →</button>
+          <button className="btn-brand" onClick={() => { window.location.href = "/home"; }}>Enter your home →</button>
         </motion.div>
       </div>
     </div>
@@ -803,7 +803,7 @@ function CaregiverCompleteStep({ data }: { data: HouseholdData }) {
       )}
 
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }} style={{ width: "100%" }}>
-        <button className="btn-brand" onClick={() => router.push("/home")}>Start caregiving →</button>
+        <button className="btn-brand" onClick={() => { window.location.href = "/home"; }}>Start caregiving →</button>
       </motion.div>
     </div>
   );

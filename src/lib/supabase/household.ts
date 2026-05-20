@@ -12,7 +12,7 @@ function friendlyAuthError(msg: string): string {
     return "Please enter a valid email address.";
   if (msg.includes("Email not confirmed"))
     return "Please confirm your email before signing in.";
-  return `Something went wrong (${msg}). Please try again.`;
+  return "Something went wrong. Please try again.";
 }
 
 export async function signUpUser(

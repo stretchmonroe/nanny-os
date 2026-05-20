@@ -148,7 +148,9 @@ export function useAuthInit() {
 
     setAuthReady(true);
 
-    if (pathname === "/") {
+    console.log(`[auth] appReady=true onboardingRequired=false route="${pathname}"`);
+    if (pathname === "/" || pathname.startsWith("/onboarding")) {
+      console.log("[auth] → redirecting to /home (was on:", pathname, ")");
       router.replace("/home");
     }
   }, [pathname, router, setActiveChild, setMemberNames, setCurrentUserRole, setAuthReady]);

@@ -39,7 +39,11 @@ export async function signInUser(
     email: email.trim().toLowerCase(),
     password,
   });
-  if (error) return { error: "Incorrect email or password." };
+  if (error) {
+    if (error.message.toLowerCase().includes("email not confirmed"))
+      return { error: "Please confirm your email first — check your inbox." };
+    return { error: "Incorrect email or password." };
+  }
   if (!data.user) return { error: "Sign in failed — please try again." };
   return { userId: data.user.id };
 }

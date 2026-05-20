@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Eye, EyeOff, Check } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import SproutMark from "@/components/brand/SproutMark";
 import AnkurWordmark from "@/components/brand/AnkurWordmark";
 import { WelcomeSplash } from "./WelcomeSplash";
@@ -870,6 +870,7 @@ function SignInStep({ onBack }: { onBack: () => void }) {
       router.replace("/home");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't sign in. Check your email and password.");
+    } finally {
       setLoading(false);
     }
   }
@@ -916,10 +917,20 @@ function SignInStep({ onBack }: { onBack: () => void }) {
 // ── Main orchestrator ─────────────────────────────────────────────────────────
 
 export function HouseholdFlow() {
+  const searchParams = useSearchParams();
   const [started, setStarted] = useState(false);
   const [step,    setStep]    = useState<Step>("role");
   const [dir,     setDir]     = useState(1);
   const [data,    setData]    = useState<HouseholdData>(EMPTY);
+
+  // If redirected back after sign-in with no household, skip straight to setup
+  useEffect(() => {
+    if (searchParams.get("resume") === "household") {
+      setStarted(true);
+      setData((d) => ({ ...d, role: "parent" }));
+      setStep("household");
+    }
+  }, [searchParams]);
 
   function update(patch: Partial<HouseholdData>) { setData((d) => ({ ...d, ...patch })); }
   function advance(to: Step) { setDir(1);  setStep(to); }

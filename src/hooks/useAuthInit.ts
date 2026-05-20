@@ -34,8 +34,9 @@ export function useAuthInit() {
       .maybeSingle();
 
     if (!membership) {
+      // Authenticated but no household — resume onboarding from household step
       if (!pathname.startsWith("/onboarding")) {
-        router.replace("/onboarding");
+        router.replace("/onboarding?resume=household");
       }
       return;
     }

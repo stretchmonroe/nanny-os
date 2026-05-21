@@ -13,7 +13,7 @@ function normaliseRole(role: string): "nanny" | "parent" {
 export function useAuthInit() {
   const router   = useRouter();
   const pathname = usePathname();
-  const { setActiveChild, setMemberNames, setCurrentUserRole, setAuthReady } = useAppStore();
+  const { setActiveChild, setMemberNames, setCurrentUserRole, setAuthReady, setProfileFullName, setChildBirthDate } = useAppStore();
 
   const init = useCallback(async () => {
     if (pathname.startsWith("/invite/")) {
@@ -126,6 +126,8 @@ export function useAuthInit() {
       name: String(matchName),
       age:  String(match.focus ?? ""),
     });
+    setProfileFullName(profile?.full_name ?? null);
+    setChildBirthDate(firstChild?.birth_date ?? null);
     console.log("[auth] ✓ store populated — role:", membership.role, "child:", matchName, match.id);
 
     // Load member display names from care-circle
@@ -153,7 +155,7 @@ export function useAuthInit() {
       console.log("[auth] → redirecting to /home (was on:", pathname, ")");
       router.replace("/home");
     }
-  }, [pathname, router, setActiveChild, setMemberNames, setCurrentUserRole, setAuthReady]);
+  }, [pathname, router, setActiveChild, setMemberNames, setCurrentUserRole, setAuthReady, setProfileFullName, setChildBirthDate]);
 
   useEffect(() => {
     init();

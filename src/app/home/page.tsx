@@ -8,6 +8,7 @@ import TimelineFeed from "@/components/home/TimelineFeed";
 import MomentsCarousel from "@/components/home/MomentsCarousel";
 import ProfileSheet from "@/components/profile/ProfileSheet";
 import AnkurWordmark from "@/components/brand/AnkurWordmark";
+import { ProfileSetupCard } from "@/components/home/ProfileSetupCard";
 import type { FocusArea } from "@/lib/data/demo";
 
 export default function HomePage() {
@@ -25,6 +26,10 @@ export default function HomePage() {
       {/* Intentional spacing rhythm — not uniform */}
       <div className="pt-3 pb-12">
         <SproutNotice />
+
+        <div className="mt-4">
+          <ProfileSetupCard />
+        </div>
 
         <div className="mt-5">
           <ActivityPlan focus={focus} />

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAppStore } from "@/store/useAppStore";
 import ChildProfileHeader from "@/components/home/ChildProfileHeader";
 import SproutNotice from "@/components/home/SproutNotice";
 import ActivityPlan from "@/components/home/ActivityPlan";
@@ -14,6 +15,17 @@ import type { FocusArea } from "@/lib/data/demo";
 export default function HomePage() {
   const [focus,       setFocus]       = useState<FocusArea>("language");
   const [profileOpen, setProfileOpen] = useState(false);
+
+  const { authReady, activeChild } = useAppStore();
+  useEffect(() => {
+    console.log("[home] mounted — route=/home");
+    console.log("[home] authReady:", authReady);
+    console.log("[home] activeChildId:", activeChild.id, "activeChild.name:", activeChild.name);
+    console.log("[home] onboardingRequired: false (reached /home)");
+    console.log("[home] → no redirect, staying on /home");
+  // Run once on mount only
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] dark:bg-[#1A1714]">

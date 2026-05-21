@@ -6,9 +6,12 @@ import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
 
 function normaliseRole(role: string): "nanny" | "parent" {
-  // 'caregiver' / 'grandparent' map to 'nanny' internally
   return role === "parent" ? "parent" : "nanny";
 }
+
+// Module-level guard — prevents React Strict Mode double-invoke from
+// triggering two window.location.href navigations before the page unloads.
+let _navigatingToHome = false;
 
 export function useAuthInit() {
   const router   = useRouter();
@@ -152,8 +155,13 @@ export function useAuthInit() {
 
     console.log(`[auth] appReady=true onboardingRequired=false route="${pathname}"`);
     if (pathname === "/" || pathname.startsWith("/onboarding")) {
-      console.log("[auth] → redirecting to /home (was on:", pathname, ")");
-      router.replace("/home");
+      // router.replace is unreliable when called from async/onAuthStateChange context
+      // in Next.js App Router. window.location.href is the guaranteed path.
+      if (!_navigatingToHome) {
+        _navigatingToHome = true;
+        console.log("[auth] → navigating to /home via window.location (was on:", pathname, ")");
+        window.location.href = "/home";
+      }
     }
   }, [pathname, router, setActiveChild, setMemberNames, setCurrentUserRole, setAuthReady, setProfileFullName, setChildBirthDate]);
 
@@ -163,9 +171,15 @@ export function useAuthInit() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") init();
+      console.log("[auth] onAuthStateChange:", event, "pathname:", pathname);
+      // SIGNED_IN: user just authenticated
+      // TOKEN_REFRESHED: expired token was silently renewed — re-check so guarded
+      //   routes don't stay stuck if getSession() returned null on first load
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        _navigatingToHome = false; // reset guard so a fresh check can redirect
+        init();
+      }
     });
     return () => subscription.unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [pathname, init]);
 }

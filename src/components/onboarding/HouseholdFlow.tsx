@@ -625,8 +625,10 @@ function ParentCompleteStep({ data }: { data: HouseholdData }) {
       const childName = child?.name?.trim() || child?.full_name?.trim() || "";
 
       if (!child) {
-        // No child row at all — route back to child setup
-        console.warn("[complete] no child row — routing to child setup");
+        console.log('[route-guard] currentRoute="/onboarding"');
+        console.log("[route-guard] appReady=false");
+        console.log("[route-guard] onboardingRequired=true");
+        console.log('[route-guard] action="redirect:/onboarding?resume=child" reason=no-child source=ParentCompleteStep');
         window.location.href = `/onboarding?resume=child&hid=${json.membership.household_id}`;
         return;
       }
@@ -634,7 +636,10 @@ function ParentCompleteStep({ data }: { data: HouseholdData }) {
       // ── All good — populate store and navigate (name/birth_date optional) ───
       setCurrentUserRole(json.membership.role === "parent" ? "parent" : "nanny");
       setActiveChild({ id: String(child.id), name: childName, age: String(child.focus ?? "") });
-      console.log("[complete] ✓ all checks passed — navigating to /home");
+      console.log('[route-guard] currentRoute="/onboarding"');
+      console.log("[route-guard] appReady=true");
+      console.log("[route-guard] onboardingRequired=false");
+      console.log('[route-guard] action="redirect:/home" source=ParentCompleteStep');
 
       window.location.href = "/home";
     } catch (e) {
@@ -969,10 +974,22 @@ function SignInStep({ onBack }: { onBack: () => void }) {
         const children   = Array.isArray(meJson?.children) ? meJson.children : [];
 
         if (!membership) {
+          console.log('[route-guard] currentRoute="/onboarding"');
+          console.log("[route-guard] appReady=false");
+          console.log("[route-guard] onboardingRequired=true");
+          console.log('[route-guard] action="redirect:/onboarding?resume=household" reason=no-membership');
           window.location.href = "/onboarding?resume=household";
         } else if (!children.length) {
+          console.log('[route-guard] currentRoute="/onboarding"');
+          console.log("[route-guard] appReady=false");
+          console.log("[route-guard] onboardingRequired=true");
+          console.log(`[route-guard] action="redirect:/onboarding?resume=child" reason=no-child`);
           window.location.href = `/onboarding?resume=child&hid=${membership.household_id}`;
         } else {
+          console.log('[route-guard] currentRoute="/onboarding"');
+          console.log("[route-guard] appReady=true");
+          console.log("[route-guard] onboardingRequired=false");
+          console.log('[route-guard] action="redirect:/home" source=SignInStep');
           window.location.href = "/home";
         }
       } else {

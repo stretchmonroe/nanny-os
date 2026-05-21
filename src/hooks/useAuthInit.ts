@@ -13,6 +13,18 @@ function normaliseRole(role: string): "nanny" | "parent" {
 // triggering two window.location.href navigations before the page unloads.
 let _navigatingToHome = false;
 
+function logGuard(
+  route: string,
+  appReady: boolean,
+  onboardingRequired: boolean,
+  action: string,
+) {
+  console.log(`[route-guard] currentRoute="${route}"`);
+  console.log(`[route-guard] appReady=${appReady}`);
+  console.log(`[route-guard] onboardingRequired=${onboardingRequired}`);
+  console.log(`[route-guard] action="${action}"`);
+}
+
 export function useAuthInit() {
   const router   = useRouter();
   const pathname = usePathname();
@@ -27,8 +39,11 @@ export function useAuthInit() {
     // ── Requirement 1: user ───────────────────────────────────────────────────
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      console.log("[auth] ✗ user: no session → /onboarding");
-      if (!pathname.startsWith("/onboarding")) router.replace("/onboarding");
+      console.log("[auth] ✗ user: no session");
+      const target = "/onboarding";
+      const action = pathname.startsWith("/onboarding") ? "stay" : `redirect:${target}`;
+      logGuard(pathname, false, true, action);
+      if (!pathname.startsWith("/onboarding")) router.replace(target);
       setAuthReady(true);
       return;
     }
@@ -67,6 +82,7 @@ export function useAuthInit() {
 
     if (!fetchOk || !me) {
       console.warn("[auth] /api/me unreachable — staying on page, not redirecting");
+      logGuard(pathname, false, false, "stay (api-unreachable)");
       setAuthReady(true);
       return;
     }
@@ -89,31 +105,32 @@ export function useAuthInit() {
 
     // ── Requirement 3: household membership ───────────────────────────────────
     if (!membership) {
-      console.log("[auth] ✗ household_membership: MISSING → /onboarding?resume=household");
-      if (!pathname.startsWith("/onboarding")) {
-        router.replace("/onboarding?resume=household");
-      }
+      const target = "/onboarding?resume=household";
+      const action = pathname.startsWith("/onboarding") ? "stay" : `redirect:${target}`;
+      console.log("[auth] ✗ household_membership: MISSING");
+      logGuard(pathname, false, true, action);
+      if (!pathname.startsWith("/onboarding")) router.replace(target);
       setAuthReady(true);
       return;
     }
 
-    // 'invited' only meaningful after migration_add_member_status.sql is run
     if (membership.status === "invited") {
-      console.log("[auth] ✗ household_membership: status=invited → /onboarding?resume=household");
-      if (!pathname.startsWith("/onboarding")) {
-        router.replace("/onboarding?resume=household");
-      }
+      const target = "/onboarding?resume=household";
+      const action = pathname.startsWith("/onboarding") ? "stay" : `redirect:${target}`;
+      console.log("[auth] ✗ household_membership: status=invited");
+      logGuard(pathname, false, true, action);
+      if (!pathname.startsWith("/onboarding")) router.replace(target);
       setAuthReady(true);
       return;
     }
 
     // ── Requirement 4: child row must exist (name/birth_date are optional) ──────
     if (!firstChild) {
-      const url = `/onboarding?resume=child&hid=${membership.household_id}`;
-      console.log(`[auth] ✗ child: no child row → ${url}`);
-      if (!pathname.startsWith("/onboarding")) {
-        router.replace(url);
-      }
+      const target = `/onboarding?resume=child&hid=${membership.household_id}`;
+      const action = pathname.startsWith("/onboarding") ? "stay" : `redirect:${target}`;
+      console.log("[auth] ✗ child: no child row");
+      logGuard(pathname, false, true, action);
+      if (!pathname.startsWith("/onboarding")) router.replace(target);
       setAuthReady(true);
       return;
     }
@@ -153,15 +170,17 @@ export function useAuthInit() {
 
     setAuthReady(true);
 
-    console.log(`[auth] appReady=true onboardingRequired=false route="${pathname}"`);
     if (pathname === "/" || pathname.startsWith("/onboarding")) {
-      // router.replace is unreliable when called from async/onAuthStateChange context
-      // in Next.js App Router. window.location.href is the guaranteed path.
+      logGuard(pathname, true, false, "redirect:/home");
+      // router.replace is unreliable from async/onAuthStateChange context in
+      // Next.js App Router — window.location.href is the guaranteed path.
       if (!_navigatingToHome) {
         _navigatingToHome = true;
-        console.log("[auth] → navigating to /home via window.location (was on:", pathname, ")");
+        console.log("[auth] → navigating to /home via window.location");
         window.location.href = "/home";
       }
+    } else {
+      logGuard(pathname, true, false, "stay");
     }
   }, [pathname, router, setActiveChild, setMemberNames, setCurrentUserRole, setAuthReady, setProfileFullName, setChildBirthDate]);
 

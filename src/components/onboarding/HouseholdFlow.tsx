@@ -620,9 +620,9 @@ function ParentCompleteStep({ data }: { data: HouseholdData }) {
       }
 
       // ── Check child ─────────────────────────────────────────────────────────
-      const children = Array.isArray(json.children) ? json.children : [];
-      const child    = children[0] ?? null;
-      const childName = child?.name?.trim() || child?.full_name?.trim() || null;
+      const children  = Array.isArray(json.children) ? json.children : [];
+      const child     = children[0] ?? null;
+      const childName = child?.name?.trim() || child?.full_name?.trim() || "";
 
       if (!child) {
         // No child row at all — route back to child setup
@@ -631,14 +631,7 @@ function ParentCompleteStep({ data }: { data: HouseholdData }) {
         return;
       }
 
-      if (!childName) {
-        // Child row exists but name is empty — route to child setup
-        console.warn("[complete] child exists but no name — routing to child setup. child:", JSON.stringify(child));
-        window.location.href = `/onboarding?resume=child&hid=${json.membership.household_id}`;
-        return;
-      }
-
-      // ── All good — populate store and navigate ──────────────────────────────
+      // ── All good — populate store and navigate (name/birth_date optional) ───
       setCurrentUserRole(json.membership.role === "parent" ? "parent" : "nanny");
       setActiveChild({ id: String(child.id), name: childName, age: String(child.focus ?? "") });
       console.log("[complete] ✓ all checks passed — navigating to /home");
@@ -974,11 +967,10 @@ function SignInStep({ onBack }: { onBack: () => void }) {
         }));
         const membership = meJson?.membership ?? null;
         const children   = Array.isArray(meJson?.children) ? meJson.children : [];
-        const childName  = children[0]?.name?.trim() || children[0]?.full_name?.trim() || null;
 
         if (!membership) {
           window.location.href = "/onboarding?resume=household";
-        } else if (!children.length || !childName) {
+        } else if (!children.length) {
           window.location.href = `/onboarding?resume=child&hid=${membership.household_id}`;
         } else {
           window.location.href = "/home";

@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Eye, EyeOff, Check } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import SproutMark from "@/components/brand/SproutMark";
 import AnkurWordmark from "@/components/brand/AnkurWordmark";
 import { WelcomeSplash } from "./WelcomeSplash";
@@ -1044,13 +1044,42 @@ function SignInStep({ onBack }: { onBack: () => void }) {
 
 export function HouseholdFlow() {
   const searchParams = useSearchParams();
+  const router       = useRouter();
+  const authReady    = useAppStore((s) => s.authReady);
   const [started, setStarted] = useState(false);
   const [step,    setStep]    = useState<Step>("role");
   const [dir,     setDir]     = useState(1);
   const [data,    setData]    = useState<HouseholdData>(EMPTY);
+  const navigatingRef = useRef(false);
 
-  // Resume to the correct step based on what's missing
+  // Robust two-stage redirect: router.replace first, window.location fallback after 300ms
+  const robustGoHome = useCallback(() => {
+    if (navigatingRef.current) return;
+    navigatingRef.current = true;
+    console.log('[onboarding-nav] attempting router.replace("/home")');
+    console.log(`[onboarding-nav] current pathname before redirect: ${window.location.pathname}`);
+    router.replace("/home");
+    setTimeout(() => {
+      const current = window.location.pathname;
+      console.log(`[onboarding-nav] current pathname after 300ms: ${current}`);
+      if (current.startsWith("/onboarding") || current === "/") {
+        console.log('[onboarding-nav] fallback window.location.assign("/home")');
+        window.location.assign("/home");
+      }
+    }, 300);
+  }, [router]);
+
+  // As soon as auth confirms the user is set up, redirect immediately
   useEffect(() => {
+    if (authReady) {
+      console.log("[onboarding-nav] authReady=true — calling robustGoHome");
+      robustGoHome();
+    }
+  }, [authReady, robustGoHome]);
+
+  // Resume to the correct step — skipped if user is already authenticated
+  useEffect(() => {
+    if (authReady) return; // redirect already in flight; don't mutate step state
     const resume = searchParams.get("resume");
     if (resume === "household") {
       setStarted(true);
@@ -1062,7 +1091,7 @@ export function HouseholdFlow() {
       setData((d) => ({ ...d, role: "parent", householdId: hid }));
       setStep("child-name");
     }
-  }, [searchParams]);
+  }, [searchParams, authReady]);
 
   function update(patch: Partial<HouseholdData>) { setData((d) => ({ ...d, ...patch })); }
   function advance(to: Step) { setDir(1);  setStep(to); }
@@ -1072,6 +1101,36 @@ export function HouseholdFlow() {
   const dotSteps = seq.slice(1, -1);
   const dotTotal = dotSteps.length;
   const dotIdx   = dotSteps.indexOf(step);
+
+  // Show bypass screen if auth is confirmed — auto-redirect already in flight,
+  // button is the manual escape hatch if router.replace + window.location both fail.
+  if (authReady) {
+    return (
+      <div style={{
+        minHeight: "100dvh", background: "#F4EFE8",
+        display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        padding: "48px 28px", maxWidth: 480, margin: "0 auto",
+      }}>
+        <div style={{ textAlign: "center", maxWidth: 300 }}>
+          <div style={{ fontSize: 52, marginBottom: 20 }}>🌱</div>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: "#261E18", margin: "0 0 10px", lineHeight: 1.2, letterSpacing: "-0.02em" }}>
+            You&apos;re already set up
+          </h2>
+          <p style={{ fontSize: 14, color: "#7A6D62", margin: "0 0 32px", lineHeight: 1.6 }}>
+            Taking you to your home now…
+          </p>
+          <button
+            className="btn-brand"
+            onClick={robustGoHome}
+            style={{ width: "100%" }}
+          >
+            Enter Ankur →
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!started) return (
     <WelcomeSplash

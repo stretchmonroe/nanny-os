@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, CalendarDays, BookImage, ShoppingBasket, Users } from "lucide-react";
+import { Home, CalendarDays, BookImage, ShoppingBasket } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +10,6 @@ const items = [
   { href: "/schedule", icon: CalendarDays,   label: "Schedule" },
   { href: "/memory",   icon: BookImage,      label: "Journal"  },
   { href: "/lists",    icon: ShoppingBasket, label: "Lists"    },
-  { href: "/together", icon: Users,          label: "Together" },
 ];
 
 export default function BottomNav() {
@@ -19,8 +18,9 @@ export default function BottomNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
       <div className="max-w-md mx-auto">
+        {/* Glass bar */}
         <div
-          className="mx-3 mb-3 rounded-[1.6rem] shadow-float"
+          className="mx-3 mb-3 rounded-[1.6rem] overflow-hidden shadow-float"
           style={{ background: "var(--surface-header)" }}
         >
           <div
@@ -30,19 +30,23 @@ export default function BottomNav() {
               WebkitBackdropFilter: "blur(24px) saturate(180%)",
             }}
           />
-          <div className="relative border-soft rounded-[1.6rem] flex items-center px-2 py-2">
+          <div
+            className="relative border-soft rounded-[1.6rem] flex justify-around px-2 py-2"
+          >
             {items.map(({ href, icon: Icon, label }) => {
               const active = pathname === href;
               return (
                 <Link
                   key={href}
                   href={href}
-                  className="flex flex-col items-center gap-[3px] py-1 select-none flex-1"
+                  className="flex flex-col items-center gap-[3px] px-3 py-1 select-none"
                 >
                   <div
                     className={cn(
-                      "flex items-center justify-center w-10 h-8 rounded-2xl transition-all duration-200",
-                      active ? "bg-foreground shadow-card" : "bg-transparent active:bg-border/40"
+                      "flex items-center justify-center w-11 h-8 rounded-2xl transition-all duration-200",
+                      active
+                        ? "bg-foreground shadow-card"
+                        : "bg-transparent active:bg-border/40"
                     )}
                   >
                     <Icon
@@ -50,14 +54,18 @@ export default function BottomNav() {
                       strokeWidth={active ? 2.3 : 1.7}
                       className={cn(
                         "transition-colors duration-200",
-                        active ? "text-background" : "text-muted-foreground"
+                        active
+                          ? "text-background"
+                          : "text-muted-foreground"
                       )}
                     />
                   </div>
                   <span
                     className={cn(
                       "text-[10px] font-semibold tracking-wide transition-colors duration-200",
-                      active ? "text-foreground" : "text-muted-foreground"
+                      active
+                        ? "text-foreground"
+                        : "text-muted-foreground"
                     )}
                   >
                     {label}

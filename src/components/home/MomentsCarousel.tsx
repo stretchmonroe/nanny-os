@@ -9,14 +9,19 @@ export default function MomentsCarousel() {
   return (
     <div>
       <div className="px-5 flex items-center justify-between mb-4">
-        <h2 className="text-[17px] font-bold text-foreground tracking-tight">
-          From today
-        </h2>
+        <div>
+          <h2 className="text-[17px] font-bold text-foreground tracking-tight">
+            Today&rsquo;s Moments
+          </h2>
+          <p className="text-[12px] text-muted-foreground/60 mt-0.5">
+            {moments.length} from today
+          </p>
+        </div>
         <Link
           href="/memory"
-          className="text-[12px] text-muted-foreground/45 font-semibold active:opacity-60 transition-opacity"
+          className="text-[12px] text-violet-500 dark:text-violet-400 font-bold active:opacity-60 transition-opacity"
         >
-          Journal →
+          See all →
         </Link>
       </div>
 
@@ -26,10 +31,8 @@ export default function MomentsCarousel() {
             key={item.id}
             initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
-            whileHover={{ y: -5, scale: 1.015 }}
-            whileTap={{ scale: 0.97 }}
             transition={{ delay: i * 0.07 + 0.1, duration: 0.45, ease: [0.25, 1, 0.5, 1] }}
-            className="w-[78%] max-w-[296px] shrink-0 snap-start last:mr-5 cursor-pointer"
+            className="w-[78%] max-w-[296px] shrink-0 snap-start last:mr-5"
           >
             {item.type === "photo" ? (
               <div className="relative rounded-[1.4rem] overflow-hidden aspect-[3/4] bg-muted shadow-elevated">

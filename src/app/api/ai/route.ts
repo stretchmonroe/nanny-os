@@ -34,39 +34,9 @@ export async function POST(req: Request) {
         "@/lib/ai/prompts/activityPlan"
       );
       prompt = activityPlanPrompt(input);
-    } else if (type === "research") {
-      const { researchPrompt } = await import("@/lib/ai/prompts/research");
-      prompt = researchPrompt(input as { question: string; childAge: string; childName: string; category?: string });
-    } else if (type === "patterns") {
-      const { patternsPrompt } = await import("@/lib/ai/prompts/patterns");
-      prompt = patternsPrompt(input as { childName: string; childAge: string; developmentalFocus: string; journalHighlights: string[] });
-    } else if (type === "profileUpdate") {
-      const { profileUpdatePrompt } = await import("@/lib/ai/prompts/profileUpdate");
-      prompt = profileUpdatePrompt(input as Parameters<typeof profileUpdatePrompt>[0]);
-    } else if (type === "memorySearch") {
-      const { memorySearchPrompt } = await import("@/lib/ai/prompts/memorySearch");
-      prompt = memorySearchPrompt(input as { query: string; childName: string; childAge: string; memoryIndex: string });
-    } else if (type === "weeklyStory") {
-      const { weeklyStoryPrompt } = await import("@/lib/ai/prompts/weeklyStory");
-      prompt = weeklyStoryPrompt(input);
-    } else if (type === "monthlyStory") {
-      const { monthlyStoryPrompt } = await import("@/lib/ai/prompts/monthlyStory");
-      prompt = monthlyStoryPrompt(input);
-    } else if (type === "memoryHighlight") {
-      const { memoryHighlightPrompt } = await import("@/lib/ai/prompts/memoryHighlight");
-      prompt = memoryHighlightPrompt(input);
-    } else if (type === "developmentStory") {
-      const { developmentStoryPrompt } = await import("@/lib/ai/prompts/developmentStory");
-      prompt = developmentStoryPrompt(input);
-    } else if (type === "onThisDay") {
-      const { onThisDayPrompt } = await import("@/lib/ai/prompts/onThisDay");
-      prompt = onThisDayPrompt(input);
     } else {
       return Response.json({ error: "unknown_type" });
     }
-
-    const needsMoreTokens = type === "research" || type === "patterns" || type === "profileUpdate" || type === "memorySearch"
-      || type === "weeklyStory" || type === "monthlyStory" || type === "memoryHighlight" || type === "developmentStory" || type === "onThisDay";
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -77,7 +47,7 @@ export async function POST(req: Request) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: needsMoreTokens ? 1200 : 1024,
+        max_tokens: 1024,
         system: systemPrompt,
         messages: [{ role: "user", content: prompt }],
       }),

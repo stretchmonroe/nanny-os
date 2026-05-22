@@ -5,46 +5,17 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { todayInsights, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
-import { useAppStore } from "@/store/useAppStore";
-import { loadExecution } from "@/lib/execution";
-import type { ExecutionSummary } from "@/lib/ai/prompts/insights";
 
-interface Props {
-  onResearch?(): void;
-}
-
-export default function InsightStrip({ onResearch }: Props) {
+export default function InsightStrip() {
   const [insight, setInsight] = useState(todayInsights[0]);
-  const { activeChild } = useAppStore();
 
   useEffect(() => {
     const done = schedule.filter((s) => s.done).map((s) => s.title);
     const current = schedule.find((s) => s.active)?.title;
 
-    // Enrich with real execution outcomes when available
-    let executionSummary: ExecutionSummary | undefined;
-    try {
-      const exec = loadExecution();
-      const completed = Object.entries(exec)
-        .filter(([, e]) => e.status === "done")
-        .map(([window, e]) => ({
-          title: window.replace(/-/g, " "),
-          outcome: e.outcome,
-          note: e.note,
-        }));
-      const skipped = Object.entries(exec)
-        .filter(([, e]) => e.status === "skipped")
-        .map(([window]) => window.replace(/-/g, " "));
-      if (completed.length + skipped.length > 0) {
-        executionSummary = { completed, skipped };
-      }
-    } catch {
-      // sessionStorage unavailable — skip
-    }
-
     callAI("insights", {
-      childName: activeChild.name,
-      childAge: activeChild.age,
+      childName: "Mateo",
+      childAge: "18 months",
       developmentalFocus: "Fine Motor Skills",
       completedActivities: done,
       currentActivity: current,
@@ -52,7 +23,6 @@ export default function InsightStrip({ onResearch }: Props) {
         hour: "numeric",
         minute: "2-digit",
       }),
-      executionSummary,
     }).then((res) => {
       if (!res) return;
       const parsed = parseAIJson<{ todayInsight?: string }>(res.result, {});
@@ -67,30 +37,10 @@ export default function InsightStrip({ onResearch }: Props) {
       transition={{ delay: 0.8, duration: 0.9 }}
       className="px-7 py-2 text-center"
     >
-      <motion.div
-        className="inline-block mb-2"
-        animate={{ scale: [1, 1.22, 1], opacity: [0.38, 0.6, 0.38] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <Sparkles
-          className="w-3.5 h-3.5"
-          style={{ color: "var(--accent-primary)" }}
-        />
-      </motion.div>
-      <p className="text-[9px] font-medium text-muted-foreground/25 tracking-wide mb-2">
-        Sprout notices
-      </p>
+      <Sparkles className="w-3.5 h-3.5 text-amber-400/50 mx-auto mb-2.5" />
       <p className="text-[13px] text-foreground/45 leading-relaxed italic">
         {insight}
       </p>
-      {onResearch && (
-        <button
-          onClick={onResearch}
-          className="mt-3 text-[11px] font-semibold text-muted-foreground/35 active:opacity-70 transition-opacity"
-        >
-          Explore a topic →
-        </button>
-      )}
     </motion.div>
   );
 }

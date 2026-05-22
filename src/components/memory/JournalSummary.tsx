@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { aiJournalSummary, careNotes, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
-import { useAppStore } from "@/store/useAppStore";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 
 type Summary  = { headline: string; summary: string; highlights: string[] };
@@ -20,14 +19,13 @@ const demoSummary: Summary = {
 export default function JournalSummary() {
   const [summary,  setSummary]  = useState<Summary>(demoSummary);
   const [liveNote, setLiveNote] = useState<string | null>(null);
-  const { activeChild } = useAppStore();
 
   useEffect(() => {
     const done = schedule.filter((s) => s.done);
 
     callAI("insights", {
-      childName:            activeChild.name,
-      childAge:             activeChild.age,
+      childName:            "Mateo",
+      childAge:             "18 months",
       developmentalFocus:   "Language & Communication",
       completedActivities:  done.map((s) => s.title),
       timeOfDay:            new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
@@ -58,15 +56,11 @@ export default function JournalSummary() {
       <div className="px-6 pt-7 pb-8">
         {/* Label */}
         <div className="flex items-center gap-2 mb-5">
-          <motion.div
-            className="w-7 h-7 rounded-full bg-amber-400/15 flex items-center justify-center"
-            animate={{ scale: [1, 1.14, 1], opacity: [0.8, 1, 0.8] }}
-            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", repeatDelay: 2 }}
-          >
+          <div className="w-7 h-7 rounded-full bg-amber-400/15 flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-          </motion.div>
+          </div>
           <span className="text-[10px] font-bold text-amber-300/55 uppercase tracking-widest">
-            Sprout&apos;s read on today
+            Today&rsquo;s Summary
           </span>
         </div>
 

@@ -23,13 +23,13 @@ export interface SpeechRecEvent {
   }
 }
 
-export function createRecognition(opts?: { continuous?: boolean }): SpeechRec | null {
+export function createRecognition(): SpeechRec | null {
   if (typeof window === "undefined") return null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Ctor = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition
   if (!Ctor) return null
   const rec: SpeechRec = new Ctor()
-  rec.continuous = opts?.continuous ?? false
+  rec.continuous = false
   rec.interimResults = true
   rec.lang = "en-US"
   rec.maxAlternatives = 1

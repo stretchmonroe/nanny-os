@@ -2,18 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { useAppStore } from "@/store/useAppStore";
+
+const CHILD_ID = "default";
 
 export default function MemoryFeedPreview() {
   const [items, setItems] = useState<any[]>([]);
-  const { activeChildId } = useAppStore();
 
   useEffect(() => {
     async function load() {
       const { data } = await supabase
         .from("memory_events")
         .select("*")
-        .eq("child_id", activeChildId)
+        .eq("child_id", CHILD_ID)
         .order("created_at", { ascending: false })
         .limit(3);
 
@@ -21,7 +21,7 @@ export default function MemoryFeedPreview() {
     }
 
     load();
-  }, [activeChildId]);
+  }, []);
 
   return (
     <div className="border p-4 rounded-xl">

@@ -1,52 +1,15 @@
 // ── Family ───────────────────────────────────────────────────────────────────
 
-export interface DemoChild {
-  id:         string
-  name:       string
-  fullName:   string
-  age:        string
-  birthDate:  string
-  emoji:      string
-  focus:      string
-  mood:       string
-  moodLabel:  string
-  /** Tailwind gradient "from" color for the avatar */
-  avatarFrom: string
-  /** Tailwind gradient "to" color for the avatar */
-  avatarTo:   string
+export const child = {
+  name: "Mateo",
+  fullName: "Mateo Rivera",
+  age: "18 months",
+  birthDate: "November 14, 2024",
+  emoji: "🧒",
+  focus: "Language & Communication",
+  mood: "😄",
+  moodLabel: "Happy",
 }
-
-export const demoChildren: DemoChild[] = [
-  {
-    id:         "mateo",
-    name:       "Mateo",
-    fullName:   "Mateo Rivera",
-    age:        "18 months",
-    birthDate:  "November 14, 2024",
-    emoji:      "🧒",
-    focus:      "Language & Communication",
-    mood:       "😄",
-    moodLabel:  "Happy",
-    avatarFrom: "#F5D9A8",
-    avatarTo:   "#E8A87C",
-  },
-  {
-    id:         "luna",
-    name:       "Luna",
-    fullName:   "Luna Rivera",
-    age:        "4 months",
-    birthDate:  "January 9, 2026",
-    emoji:      "👶",
-    focus:      "Sensory & Touch",
-    mood:       "😴",
-    moodLabel:  "Sleepy",
-    avatarFrom: "#D4C0E8",
-    avatarTo:   "#B8A0D4",
-  },
-]
-
-/** Single-child alias kept for backwards compatibility */
-export const child = demoChildren[0]
 
 export const family = {
   parents: ["Sofia Rivera", "Marco Rivera"],
@@ -55,43 +18,15 @@ export const family = {
 
 // ── Today's Schedule (May 14, 2026 — Thursday) ──────────────────────────────
 
-export interface ScheduleItem {
-  id: string
-  time: string
-  title: string
-  type: "meal" | "outdoor" | "play" | "nap" | "learning"
-  done?: boolean
-  active?: boolean
-  loggedBy?: "nanny" | "parent"
-  notes?: string
-  completedBy?: "nanny" | "parent"
-  approvedBy?: "nanny" | "parent"
-  reactions?: { emoji: string; count: number }[]
-}
-
-export interface SproutEntry {
-  id: string
-  time: string
-  entryType: "sprout"
-  headline: string
-  body: string
-}
-
-export type TimelineItem = ScheduleItem | SproutEntry
-
-export const schedule: ScheduleItem[] = [
-  { id: "1", time: "07:30", title: "Breakfast",        type: "meal",     done: true,  loggedBy: "nanny", completedBy: "nanny", notes: "Scrambled eggs with cheddar + banana — cleared the plate",         reactions: [{ emoji: "❤️", count: 1 }]                                       },
-  { id: "2", time: "08:45", title: "Morning Park",     type: "outdoor",  done: true,  loggedBy: "nanny", completedBy: "nanny", notes: "45 min — first time down the big slide solo",                      reactions: [{ emoji: "🥹", count: 1 }]                                       },
-  { id: "3", time: "10:00", title: "Morning Snack",    type: "meal",     done: true,  loggedBy: "nanny", completedBy: "nanny", notes: "Rice cakes + mango — said 'more' for the first time! 🌟",          reactions: [{ emoji: "❤️", count: 2 }, { emoji: "🌟", count: 1 }]           },
-  { id: "4", time: "10:30", title: "Sensory Bin Play", type: "play",     done: false, active: true, loggedBy: "nanny", approvedBy: "parent", notes: "Rice bin with cups, scoops, and small safari animals" },
-  { id: "5", time: "12:00", title: "Lunch",            type: "meal",     done: false, notes: "Avocado toast + blueberries + cheese stick"                               },
-  { id: "6", time: "12:45", title: "Nap",              type: "nap",      done: false, notes: "Target 90 min — blackout curtains + white noise on"                       },
-  { id: "7", time: "14:30", title: "Afternoon Snack",  type: "meal",     done: false, notes: "Yogurt with soft berries"                                                 },
-  { id: "8", time: "15:00", title: "Reading Time",     type: "learning", done: false, approvedBy: "parent", notes: "Brown Bear + new Pete the Cat book"                },
-]
-
-export const sproutEntries: SproutEntry[] = [
-  { id: "s1", time: "10:20", entryType: "sprout", headline: "Language is landing", body: "'More' isn't just a word — it's Mateo's first act of asking. That shift from pointing to naming usually happens right in this window." },
+export const schedule = [
+  { id: "1", time: "07:30", title: "Breakfast",       type: "meal"     as const, done: true,  loggedBy: "nanny"  as const, notes: "Scrambled eggs with cheddar + banana — cleared the plate"       },
+  { id: "2", time: "08:45", title: "Morning Park",    type: "outdoor"  as const, done: true,  loggedBy: "nanny"  as const, notes: "45 min — first time down the big slide solo"                     },
+  { id: "3", time: "10:00", title: "Morning Snack",   type: "meal"     as const, done: true,  loggedBy: "nanny"  as const, notes: "Rice cakes + mango — said 'more' for the first time! 🌟"        },
+  { id: "4", time: "10:30", title: "Sensory Bin Play",type: "play"     as const, done: false, active: true, loggedBy: "nanny" as const, notes: "Rice bin with cups, scoops, and small safari animals" },
+  { id: "5", time: "12:00", title: "Lunch",           type: "meal"     as const, done: false, notes: "Avocado toast + blueberries + cheese stick"                      },
+  { id: "6", time: "12:45", title: "Nap",             type: "nap"      as const, done: false, notes: "Target 90 min — blackout curtains + white noise on"              },
+  { id: "7", time: "14:30", title: "Afternoon Snack", type: "meal"     as const, done: false, notes: "Yogurt with soft berries"                                        },
+  { id: "8", time: "15:00", title: "Reading Time",    type: "learning" as const, done: false, notes: "Brown Bear + new Pete the Cat book"                              },
 ]
 
 // ── Moments Carousel (home screen) ──────────────────────────────────────────
@@ -224,50 +159,6 @@ export const dailyActivities: PlannedActivity[] = [
   },
 ]
 
-// ── Pattern Insights ─────────────────────────────────────────────────────────
-
-export type PatternCategory = "sleep" | "mood" | "engagement" | "energy" | "language" | "social"
-export type PatternConfidence = "emerging" | "consistent"
-
-export interface PatternInsight {
-  id: string
-  headline: string
-  detail: string
-  emoji: string
-  category: PatternCategory
-  confidence: PatternConfidence
-  suggestion?: string
-}
-
-export const demoPatterns: PatternInsight[] = [
-  {
-    id: "p1",
-    headline: "Outdoor mornings improve naps",
-    detail: "On days Mateo has outdoor time before lunch, his nap tends to start within minutes and run longer.",
-    emoji: "🌿",
-    category: "sleep",
-    confidence: "consistent",
-    suggestion: "Keep morning outdoor time before nap prep when the schedule allows.",
-  },
-  {
-    id: "p2",
-    headline: "Language blooms after lunch",
-    detail: "Pointing, naming games, and new words almost always surface in the post-lunch quiet window.",
-    emoji: "💬",
-    category: "language",
-    confidence: "emerging",
-    suggestion: "Books and naming walks hit differently right after lunch — that window is golden.",
-  },
-  {
-    id: "p3",
-    headline: "Sensory play steadies afternoon mood",
-    detail: "Afternoons that include sensory activity tend to flow more smoothly toward dinnertime.",
-    emoji: "✨",
-    category: "mood",
-    confidence: "emerging",
-  },
-]
-
 // ── Insights & Patterns ──────────────────────────────────────────────────────
 
 export const todayInsights = [
@@ -311,7 +202,7 @@ export const aiJournalSummary = {
   highlights: ["Said 'more' for the first time 🌟", "Big slide, solo 🛝", "12-min focus record 🧩", "Stairs milestone yesterday 🏔️"],
 }
 
-export type JournalMomentType = "photo" | "note" | "milestone" | "audio"
+export type JournalMomentType = "photo" | "note" | "milestone"
 export type ActivityCategory  = "meal" | "outdoor" | "play" | "nap" | "learning"
 
 export interface MomentReaction {
@@ -332,8 +223,6 @@ export interface JournalMoment {
   content: string
   time: string
   imageUrl?: string
-  audioUrl?: string
-  duration?: number
   category: ActivityCategory
   createdBy?: "nanny" | "parent"
   reactions?: MomentReaction[]
@@ -365,8 +254,6 @@ export const weeklyMoments: JournalDay[] = [
         ],
       },
       { id: "t3", type: "photo",     content: "12 straight minutes on stacking rings — new personal focus record",                  time: "11:20 am", imageUrl: "https://picsum.photos/seed/toddler2/400/500",    category: "play",     createdBy: "nanny"  },
-      { id: "t3b", type: "photo",   content: "Sensory bin discovery — buried his whole forearm and couldn't stop grinning",           time: "11:50 am", imageUrl: "https://picsum.photos/seed/sensory3/400/400",    category: "play",     createdBy: "nanny"  },
-      { id: "t_a1", type: "audio",   content: "He kept saying 'more' on repeat — I had to capture it before the moment passed", duration: 16, time: "10:22 am", category: "learning", createdBy: "nanny" as const },
       { id: "t4", type: "note",      content: "Cuddly and calm before sensory bin. Very sweet mood all morning.",                   time: "10:55 am", category: "play",     createdBy: "nanny",
         reactions: [{ emoji: "❤️", authors: ["parent"] }],
         replies: [
@@ -380,10 +267,8 @@ export const weeklyMoments: JournalDay[] = [
     moments: [
       { id: "w1", type: "photo",     content: "Water table in the backyard — completely soaked and absolutely ecstatic",            time: "10:30 am", imageUrl: "https://picsum.photos/seed/water5/400/500",      category: "outdoor",  createdBy: "nanny"  },
       { id: "w2", type: "milestone", content: "Climbed the full staircase unassisted for the first time — so proud at the top 🏔️", time: "3:45 pm",  category: "learning", createdBy: "nanny"  },
-      { id: "w_a1", type: "audio",  content: "The little triumph sound he made at the top — you could hear it in his whole body", duration: 13, time: "3:51 pm",  category: "learning", createdBy: "nanny" as const, imageUrl: "https://picsum.photos/seed/stairs_top/400/500" },
       { id: "w3", type: "note",      content: "Best nap of the month — 1hr 45min. Woke up glowing.",                               time: "2:15 pm",  category: "nap",      createdBy: "nanny"  },
       { id: "w4", type: "photo",     content: "Brown Bear for the fourth time today — he never gets bored of it 📖",               time: "4:00 pm",  imageUrl: "https://picsum.photos/seed/book7/400/500",       category: "learning", createdBy: "nanny"  },
-      { id: "w4b", type: "photo",   content: "Puddle jumping in wellies after the water table — completely unstoppable",             time: "4:30 pm",  imageUrl: "https://picsum.photos/seed/wellies/400/500",     category: "outdoor",  createdBy: "nanny"  },
     ],
   },
   {
@@ -416,7 +301,6 @@ export const weeklyMoments: JournalDay[] = [
     moments: [
       { id: "sa1", type: "photo",     content: "Saturday library story time — mesmerized by the puppet show for 8 full minutes",  time: "10:00 am", imageUrl: "https://picsum.photos/seed/library15/400/500",   category: "learning", createdBy: "nanny"  },
       { id: "sa2", type: "milestone", content: "Clapped along to the song at library — first time clapping on cue! Elena nearly cried 👏", time: "10:45 am", category: "learning", createdBy: "nanny"  },
-      { id: "sa_a1", type: "audio", content: "The giggle when the puppets appeared — completely uncontrolled, pure joy", duration: 21, time: "10:28 am", category: "learning", createdBy: "nanny" as const },
       { id: "sa3", type: "note",      content: "Post-library energy was high. Great appetite at lunch — ate absolutely everything.", time: "12:00 pm", category: "meal",     createdBy: "nanny"  },
     ],
   },
@@ -448,28 +332,24 @@ export const favoriteMemories = [
 
 export interface MemoryEvent {
   id: string
-  type: "photo" | "note" | "milestone" | "audio"
+  type: "photo" | "note" | "milestone"
   content: string
   category: ActivityCategory
   date: string
   time: string
   imageUrl?: string
-  audioUrl?: string
-  duration?: number
   createdBy: "nanny" | "parent"
   isFavorite?: boolean
 }
 
 export const recentMemories: MemoryEvent[] = [
   // ── May 14 · Thursday (Today) ────────────────────────────────────────────
-  { id: "r_a1", type: "audio",   content: "He kept saying 'more' on repeat — I had to capture it before the moment passed", duration: 16, category: "learning", date: "Today",  time: "10:22 am", createdBy: "nanny" as const },
   { id: "r1",  type: "photo",     content: "First time down the big slide by himself — pure pride on his face",                                                     category: "outdoor",  date: "Today",  time: "9:47 am",  imageUrl: "https://picsum.photos/seed/baby1/400/600",        createdBy: "nanny"  },
   { id: "r2",  type: "milestone", content: "Said 'more' clearly — first functional word! 🌟",                                                                       category: "learning", date: "Today",  time: "10:15 am", createdBy: "nanny",  isFavorite: true  },
   { id: "r3",  type: "photo",     content: "12 minutes on stacking rings — serious focus face the whole time",                                                       category: "play",     date: "Today",  time: "11:20 am", imageUrl: "https://picsum.photos/seed/toddler2/400/600",      createdBy: "nanny"  },
   { id: "r4",  type: "note",      content: "Cuddly and calm before sensory bin. Very sweet mood all morning.",                                                       category: "play",     date: "Today",  time: "10:55 am", createdBy: "nanny"  },
 
   // ── May 13 · Wednesday ───────────────────────────────────────────────────
-  { id: "r_a2", type: "audio",   content: "The triumph sound at the top — you could hear it in his whole body", duration: 13, category: "learning", date: "May 13", time: "3:51 pm",  createdBy: "nanny" as const, imageUrl: "https://picsum.photos/seed/stairs_top/400/500" },
   { id: "r5",  type: "milestone", content: "Climbed the full staircase unassisted for the first time 🏔️",                                                           category: "learning", date: "May 13", time: "3:45 pm",  createdBy: "nanny",  isFavorite: true  },
   { id: "r6",  type: "photo",     content: "Water table in the backyard — completely soaked, zero regrets",                                                          category: "outdoor",  date: "May 13", time: "10:30 am", imageUrl: "https://picsum.photos/seed/water5/400/500",       createdBy: "nanny"  },
   { id: "r7",  type: "note",      content: "1hr 45min nap — best sleep of the month. Woke up glowing and immediately happy.",                                        category: "nap",      date: "May 13", time: "2:15 pm",  createdBy: "nanny"  },
@@ -481,7 +361,6 @@ export const recentMemories: MemoryEvent[] = [
   { id: "r11", type: "milestone", content: "Stacked 6 blocks before the dramatic knockdown — new personal best 🏗️",                                                 category: "play",     date: "May 12", time: "11:00 am", createdBy: "nanny"  },
   { id: "r12", type: "note",      content: "Tried avocado again — 3 bites without making the face. Real progress on texture acceptance.",                            category: "meal",     date: "May 12", time: "12:30 pm", createdBy: "nanny"  },
   { id: "r13", type: "photo",     content: "Oliver playdate — Oliver gave him a truck and he carried it for 20 solid minutes",                                       category: "play",     date: "May 12", time: "3:30 pm",  imageUrl: "https://picsum.photos/seed/playdate17/400/500",   createdBy: "nanny"  },
-  { id: "r13b", type: "photo",   content: "Building towers side by side — same obsession, finally playing next to each other",                                        category: "play",     date: "May 12", time: "3:55 pm",  imageUrl: "https://picsum.photos/seed/blocks2/400/400",      createdBy: "nanny"  },
   { id: "r14", type: "note",      content: "Starting to acknowledge Oliver directly — made eye contact and offered him a block. Not just parallel play anymore.",    category: "play",     date: "May 12", time: "4:15 pm",  createdBy: "nanny"  },
 
   // ── May 11 · Monday ──────────────────────────────────────────────────────
@@ -540,79 +419,6 @@ export const recentMemories: MemoryEvent[] = [
   { id: "r47", type: "photo",     content: "May 1st morning walk — stopped and pointed at birds in a tree for the first time",                                       category: "outdoor",  date: "May 1",  time: "9:00 am",  imageUrl: "https://picsum.photos/seed/birds_walk/400/600",   createdBy: "parent" },
   { id: "r48", type: "note",      content: "Two weeks of consistent outdoor mornings is paying off. Calmer afternoons, more predictable sleep, better appetite.",    category: "outdoor",  date: "May 1",  time: "8:00 pm",  createdBy: "parent" },
   { id: "r49", type: "milestone", content: "First clear head-shake 'no' — deliberate, not just crying. A real communication leap 🙅",                                category: "learning", date: "May 1",  time: "1:30 pm",  createdBy: "nanny"  },
-]
-
-// ── Together: Suggestions & Approvals ────────────────────────────────────────
-
-export type SuggestionType   = "activity" | "food" | "schedule"
-export type SuggestionStatus = "pending"  | "approved" | "rejected"
-
-export interface SuggestionReply {
-  id: string
-  suggestion_id: string
-  author: "nanny" | "parent"
-  content: string
-  created_at: string
-}
-
-export interface Suggestion {
-  id: string
-  type: SuggestionType
-  title: string
-  description: string
-  reason: string
-  created_by: "nanny" | "parent"
-  status: SuggestionStatus
-  response_note?: string
-  child_id: string
-  created_at: string
-  // Workflow trail
-  scheduledDay?:   string                    // "Today" | "Tomorrow" | weekday name
-  outcomeRating?:  "great" | "noted"
-  outcomeNote?:    string
-  researchBacked?: boolean                   // came from Sprout research
-}
-
-export const demoSuggestions: Suggestion[] = [
-  {
-    id: "s1",
-    type: "food",
-    title: "Hummus with veggie sticks",
-    description: "Mateo's been really into dipping things lately. Hummus with cucumber and carrot sticks for afternoon snack could be a lovely new ritual.",
-    reason: "Introduces chickpeas as a protein source and builds fine motor skills through self-directed dipping and grasping.",
-    created_by: "nanny",
-    status: "pending",
-    child_id: "default",
-    created_at: "2026-05-16T10:30:00Z",
-  },
-  {
-    id: "s2",
-    type: "activity",
-    title: "Sensory water play before lunch",
-    description: "A small tub of water with cups and spoons set up in the backyard. About 20 minutes before the 11am nap prep — calm, contained, and he loves it.",
-    reason: "Water play is deeply calming and supports cause-and-effect understanding at 18 months. The scooping motion also builds bilateral hand coordination.",
-    created_by: "nanny",
-    status: "approved",
-    response_note: "Love this! Let's make it a Tuesday ritual. 💛",
-    child_id: "default",
-    created_at: "2026-05-15T09:00:00Z",
-  },
-  {
-    id: "s3",
-    type: "schedule",
-    title: "Shift nap to 12:30",
-    description: "Mateo's been showing tired cues around 12:15 lately instead of 1pm. Moving his nap window 30 minutes earlier might smooth out the fussiness we've been seeing.",
-    reason: "Better alignment with his natural sleep rhythm means a better quality nap and a happier afternoon for both of us.",
-    created_by: "nanny",
-    status: "pending",
-    child_id: "default",
-    created_at: "2026-05-16T08:00:00Z",
-  },
-]
-
-export const demoSuggestionReplies: SuggestionReply[] = [
-  { id: "sr1", suggestion_id: "s2", author: "parent", content: "Can we try it this Thursday?", created_at: "2026-05-15T14:00:00Z" },
-  { id: "sr2", suggestion_id: "s2", author: "nanny",  content: "Absolutely, I'll set everything up after morning snack!", created_at: "2026-05-15T14:15:00Z" },
 ]
 
 // ── Daily Summaries (May 1–13) ────────────────────────────────────────────────

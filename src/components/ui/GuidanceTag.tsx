@@ -8,25 +8,25 @@ import { guidanceFrameworks } from "@/lib/ai/guidance";
 import type { GuidanceSource } from "@/lib/ai/guidance";
 
 const colorMap = {
-  sage: {
-    pill: "bg-sage-light text-sage dark:bg-sage-light/20 dark:text-sage-muted border-sage-light",
-    panel: "bg-sage-light/60 dark:bg-sage-light/10 border-sage-light",
-    icon: "text-sage dark:text-sage-muted",
+  emerald: {
+    pill: "bg-emerald-50 dark:bg-emerald-950/25 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/35",
+    panel: "bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30",
+    icon: "text-emerald-500 dark:text-emerald-400",
   },
   sky: {
-    pill: "bg-trust-light text-trust dark:bg-trust-light/15 dark:text-trust-muted border-trust-light",
-    panel: "bg-trust-light/60 dark:bg-trust-light/10 border-trust-light",
-    icon: "text-trust dark:text-trust-muted",
+    pill: "bg-sky-50 dark:bg-sky-950/25 text-sky-700 dark:text-sky-400 border-sky-100 dark:border-sky-900/35",
+    panel: "bg-sky-50/80 dark:bg-sky-950/20 border-sky-100 dark:border-sky-900/30",
+    icon: "text-sky-500 dark:text-sky-400",
   },
   teal: {
-    pill: "bg-sage-light text-sage dark:bg-sage-light/15 dark:text-sage-muted border-sage-light",
-    panel: "bg-sage-light/60 dark:bg-sage-light/10 border-sage-light",
-    icon: "text-sage dark:text-sage-muted",
+    pill: "bg-teal-50 dark:bg-teal-950/25 text-teal-700 dark:text-teal-400 border-teal-100 dark:border-teal-900/35",
+    panel: "bg-teal-50/80 dark:bg-teal-950/20 border-teal-100 dark:border-teal-900/30",
+    icon: "text-teal-500 dark:text-teal-400",
   },
   stone: {
-    pill: "bg-muted text-muted-foreground border-border",
-    panel: "bg-muted/60 border-border",
-    icon: "text-muted-foreground",
+    pill: "bg-stone-100 dark:bg-stone-800/40 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-700/30",
+    panel: "bg-stone-50/80 dark:bg-stone-900/20 border-stone-200 dark:border-stone-700/30",
+    icon: "text-stone-500 dark:text-stone-400",
   },
 };
 
@@ -79,29 +79,15 @@ export default function GuidanceTag({ source, size = "sm", static: isStatic = fa
             )}
           >
             <div className="flex items-start justify-between gap-3 mb-2">
-              <div>
-                <p className="text-[11px] font-bold text-foreground/80">{fw.label}</p>
-                <p className="text-[9px] font-semibold text-muted-foreground/45 uppercase tracking-widest mt-0.5">
-                  {fw.ageRange}
-                </p>
-              </div>
+              <p className="text-[11px] font-bold text-foreground/80">{fw.label}</p>
               <button onClick={() => setOpen(false)} className="shrink-0 active:opacity-70 mt-0.5">
                 <X size={11} className="text-muted-foreground" />
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground leading-relaxed mb-2.5">
+            <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">
               {fw.description}
             </p>
-            {fw.domains.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2.5">
-                {fw.domains.map(d => (
-                  <span key={d} className="text-[9px] font-semibold text-muted-foreground/50 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full">
-                    {d}
-                  </span>
-                ))}
-              </div>
-            )}
-            <p className="text-[10px] text-muted-foreground/55 leading-relaxed italic">
+            <p className="text-[10px] text-muted-foreground/60 leading-relaxed italic">
               {fw.disclaimer}
             </p>
           </motion.div>

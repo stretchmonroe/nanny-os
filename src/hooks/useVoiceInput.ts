@@ -16,51 +16,23 @@ export interface VoiceInputHook {
   reset(): void
 }
 
-export function useVoiceInput(opts?: { continuous?: boolean }): VoiceInputHook {
-  const continuous = opts?.continuous ?? true
-
+export function useVoiceInput(): VoiceInputHook {
   const [state, setState] = useState<VoiceState>("idle")
   const [transcript, setTranscript] = useState("")
   const [interim, setInterim] = useState("")
   const recRef = useRef<SpeechRec | null>(null)
-  const stoppingRef = useRef(false)
-  const stateRef = useRef<VoiceState>("idle")
-  const continuousRef = useRef(continuous)
 
-  const [supported, setSupported] = useState(false)
-  useEffect(() => { setSupported(isSupported()) }, [])
-
-  // Keep stateRef in sync so closures can read current state without going stale
-  useEffect(() => { stateRef.current = state }, [state])
-  useEffect(() => { continuousRef.current = continuous }, [continuous])
+  const supported = isSupported()
 
   const start = useCallback(() => {
     if (!supported) { setState("unsupported"); return }
 
-    stoppingRef.current = false
-
-    const rec = createRecognition({ continuous: continuousRef.current })
+    const rec = createRecognition()
     if (!rec) { setState("unsupported"); return }
 
     rec.onstart  = () => setState("listening")
-    rec.onend    = () => {
-      setInterim("")
-      // In continuous mode, restart if we haven't been explicitly stopped
-      if (continuousRef.current && !stoppingRef.current && stateRef.current === "listening") {
-        const next = createRecognition({ continuous: true })
-        if (next) {
-          next.onstart  = rec.onstart
-          next.onend    = rec.onend
-          next.onerror  = rec.onerror
-          next.onresult = rec.onresult
-          recRef.current = next
-          next.start()
-          return
-        }
-      }
-      setState("done")
-    }
-    rec.onerror  = () => { setInterim(""); setState("error") }
+    rec.onend    = () => { setInterim(""); setState("done") }
+    rec.onerror  = () => setState("error")
     rec.onresult = (e) => {
       let fin = "", intr = ""
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -75,13 +47,9 @@ export function useVoiceInput(opts?: { continuous?: boolean }): VoiceInputHook {
     rec.start()
   }, [supported])
 
-  const stop = useCallback(() => {
-    stoppingRef.current = true
-    recRef.current?.stop()
-  }, [])
+  const stop  = useCallback(() => recRef.current?.stop(), [])
 
   const reset = useCallback(() => {
-    stoppingRef.current = true
     recRef.current?.abort()
     recRef.current = null
     setTranscript("")
@@ -89,10 +57,7 @@ export function useVoiceInput(opts?: { continuous?: boolean }): VoiceInputHook {
     setState("idle")
   }, [])
 
-  useEffect(() => () => {
-    stoppingRef.current = true
-    recRef.current?.abort()
-  }, [])
+  useEffect(() => () => { recRef.current?.abort() }, [])
 
   return { state, transcript, interim, supported, start, stop, reset }
 }

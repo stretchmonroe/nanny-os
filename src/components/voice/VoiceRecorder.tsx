@@ -8,14 +8,12 @@ import VoiceInputModal from "./VoiceInputModal"
 interface Props {
   context: VoiceContext
   onSave(result: VoiceResult): void
-  variant?: "pill" | "row" | "fab"
-  continuous?: boolean
+  variant?: "pill" | "row"
   className?: string
 }
 
-export default function VoiceRecorder({ context, onSave, variant = "pill", continuous, className }: Props) {
-  const resolvedContinuous = continuous !== undefined ? continuous : context !== "grocery"
-  const voice = useVoiceInput({ continuous: resolvedContinuous })
+export default function VoiceRecorder({ context, onSave, variant = "pill", className }: Props) {
+  const voice = useVoiceInput()
 
   function handlePress() {
     if (!voice.supported) return

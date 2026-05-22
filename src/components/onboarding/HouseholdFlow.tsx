@@ -1127,6 +1127,13 @@ export function HouseholdFlow() {
           >
             Enter Ankur →
           </button>
+          {/* Diagnostic: plain browser navigation — if this works but button doesn't, issue is router.replace */}
+          <a
+            href="/home"
+            style={{ display: "block", marginTop: 16, fontSize: 13, color: "#6A9C80", textDecoration: "underline", textAlign: "center" }}
+          >
+            Enter app directly
+          </a>
         </div>
       </div>
     );

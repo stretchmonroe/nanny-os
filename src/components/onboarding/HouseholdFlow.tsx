@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Eye, EyeOff, Check } from "lucide-react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import SproutMark from "@/components/brand/SproutMark";
 import AnkurWordmark from "@/components/brand/AnkurWordmark";
 import { WelcomeSplash } from "./WelcomeSplash";
@@ -1044,7 +1044,6 @@ function SignInStep({ onBack }: { onBack: () => void }) {
 
 export function HouseholdFlow() {
   const searchParams = useSearchParams();
-  const router       = useRouter();
   const authReady    = useAppStore((s) => s.authReady);
   const [started, setStarted] = useState(false);
   const [step,    setStep]    = useState<Step>("role");
@@ -1052,30 +1051,13 @@ export function HouseholdFlow() {
   const [data,    setData]    = useState<HouseholdData>(EMPTY);
   const navigatingRef = useRef(false);
 
-  // Robust two-stage redirect: router.replace first, window.location fallback after 300ms
+  // Manual navigation only — auto-redirect is owned by useAuthInit.
   const robustGoHome = useCallback(() => {
     if (navigatingRef.current) return;
     navigatingRef.current = true;
-    console.log('[onboarding-nav] attempting router.replace("/home")');
-    console.log(`[onboarding-nav] current pathname before redirect: ${window.location.pathname}`);
-    router.replace("/home");
-    setTimeout(() => {
-      const current = window.location.pathname;
-      console.log(`[onboarding-nav] current pathname after 300ms: ${current}`);
-      if (current.startsWith("/onboarding") || current === "/") {
-        console.log('[onboarding-nav] fallback window.location.assign("/home")');
-        window.location.assign("/home");
-      }
-    }, 300);
-  }, [router]);
-
-  // As soon as auth confirms the user is set up, redirect immediately
-  useEffect(() => {
-    if (authReady) {
-      console.log("[onboarding-nav] authReady=true — calling robustGoHome");
-      robustGoHome();
-    }
-  }, [authReady, robustGoHome]);
+    console.log('[onboarding-nav] manual navigate → /home');
+    window.location.href = "/home";
+  }, []);
 
   // Resume to the correct step — skipped if user is already authenticated
   useEffect(() => {
@@ -1102,8 +1084,6 @@ export function HouseholdFlow() {
   const dotTotal = dotSteps.length;
   const dotIdx   = dotSteps.indexOf(step);
 
-  // Show bypass screen if auth is confirmed — auto-redirect already in flight,
-  // button is the manual escape hatch if router.replace + window.location both fail.
   if (authReady) {
     return (
       <div style={{

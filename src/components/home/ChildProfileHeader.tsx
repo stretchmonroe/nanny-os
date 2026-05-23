@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { FocusArea } from "@/lib/data/demo";
 import { useAppStore } from "@/store/useAppStore";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -54,11 +55,14 @@ export default function ChildProfileHeader({ focus, onFocusChange, onSetupOpen }
       transition={{ duration: 0.55, ease: [0.25, 1, 0.5, 1] }}
       className="px-5 pt-10 pb-7 bg-gradient-to-b from-amber-50/90 via-amber-50/40 to-transparent dark:from-amber-950/30 dark:via-stone-950/10 dark:to-transparent"
     >
-      {/* Top row: date + floating avatar */}
+      {/* Top row: date + theme toggle + floating avatar */}
       <div className="flex items-start justify-between mb-6">
-        <p className="text-[11px] font-semibold text-amber-600/50 dark:text-amber-500/35 tracking-widest uppercase pt-1">
-          {today}
-        </p>
+        <div className="flex items-center gap-1">
+          <p className="text-[11px] font-semibold text-amber-600/50 dark:text-amber-500/35 tracking-widest uppercase pt-1">
+            {today}
+          </p>
+          <ThemeToggle />
+        </div>
 
         {/* Avatar — decorative, top-right */}
         <div className="relative">

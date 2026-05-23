@@ -15,10 +15,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={cn("font-sans", geist.variable)} suppressHydrationWarning>
       <head>
-        {/* Set dark class before paint to prevent flash */}
+        {/* Apply theme before first paint — checks saved preference, then OS. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{if(window.matchMedia('(prefers-color-scheme:dark)').matches)document.documentElement.classList.add('dark')}catch(e){}})()`,
+            __html: `(function(){try{var s=localStorage.getItem('ankur-theme');if(s==='dark'||(s!=='light'&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})()`,
           }}
         />
       </head>

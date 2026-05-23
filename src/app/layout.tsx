@@ -1,5 +1,6 @@
 import "./globals.css";
 import BottomNav from "@/components/layout/BottomNav";
+import AuthProvider from "@/components/layout/AuthProvider";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 
@@ -22,10 +23,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="bg-surface-page text-foreground pb-20">
-        <div className="max-w-md mx-auto min-h-screen bg-surface-page shadow-deep">
-          {children}
-          <BottomNav />
-        </div>
+        <AuthProvider>
+          <div className="max-w-md mx-auto min-h-screen bg-surface-page shadow-deep">
+            {children}
+            <BottomNav />
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

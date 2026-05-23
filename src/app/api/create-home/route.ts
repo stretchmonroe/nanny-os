@@ -15,7 +15,10 @@ export async function POST(req: NextRequest) {
   const db = admin();
 
   const { data: { user }, error: userErr } = await db.auth.getUser(token);
-  if (userErr || !user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  if (userErr || !user) {
+    console.error("[create-home] getUser failed:", userErr?.message ?? "no user");
+    return NextResponse.json({ error: `Auth failed: ${userErr?.message ?? "no user"}` }, { status: 401 });
+  }
 
   // Idempotent — if user already has a household, return their child.
   const { data: existing } = await db

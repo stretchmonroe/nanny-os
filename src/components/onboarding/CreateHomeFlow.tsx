@@ -38,9 +38,11 @@ export default function CreateHomeFlow({ open, onClose }: Props) {
     setSaving(true);
     setError("");
 
+    // getUser() forces a network validation and refreshes the token if expired.
+    const { data: { user: authUser } } = await supabase.auth.getUser();
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      setError("Not signed in");
+    if (!authUser || !session) {
+      setError("Session expired — please sign out and sign back in");
       setSaving(false);
       setStep(2);
       return;

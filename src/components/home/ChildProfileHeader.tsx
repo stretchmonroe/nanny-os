@@ -28,9 +28,10 @@ interface Props {
   focus: FocusArea;
   onFocusChange: (f: FocusArea) => void;
   onSetupOpen?: () => void;
+  showFocusSelector?: boolean;
 }
 
-export default function ChildProfileHeader({ focus, onFocusChange, onSetupOpen }: Props) {
+export default function ChildProfileHeader({ focus, onFocusChange, onSetupOpen, showFocusSelector = true }: Props) {
   const [greeting, setGreeting] = useState("Good morning");
   const [today, setToday] = useState("");
   const [focusOpen, setFocusOpen] = useState(false);
@@ -104,49 +105,53 @@ export default function ChildProfileHeader({ focus, onFocusChange, onSetupOpen }
 
       {/* Focus + weather badges */}
       <div className="flex gap-1.5 flex-wrap mb-1">
-        <button
-          onClick={() => setFocusOpen((v) => !v)}
-          className="active:scale-[0.96] transition-transform"
-        >
-          <Badge className="bg-amber-100/80 text-amber-800 border-amber-200/60 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/40 text-[11px] font-semibold h-6 rounded-full cursor-pointer">
-            {selectedArea.emoji} {selectedArea.label}
-          </Badge>
-        </button>
+        {showFocusSelector && (
+          <button
+            onClick={() => setFocusOpen((v) => !v)}
+            className="active:scale-[0.96] transition-transform"
+          >
+            <Badge className="bg-amber-100/80 text-amber-800 border-amber-200/60 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/40 text-[11px] font-semibold h-6 rounded-full cursor-pointer">
+              {selectedArea.emoji} {selectedArea.label}
+            </Badge>
+          </button>
+        )}
         <Badge className="bg-sky-100/80 text-sky-700 border-sky-200/60 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-900/40 text-[11px] font-semibold h-6 rounded-full">
           ☀️ Sunny · 72°
         </Badge>
       </div>
 
       {/* Focus selector */}
-      <AnimatePresence>
-        {focusOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
-            className="overflow-hidden"
-          >
-            <div className="flex gap-1.5 flex-wrap mt-3 pt-3 border-t border-black/5 dark:border-white/8">
-              {focusAreas.map((area) => (
-                <button
-                  key={area.id}
-                  onClick={() => { onFocusChange(area.id); setFocusOpen(false); }}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all active:scale-[0.96]",
-                    area.id === focus
-                      ? "bg-foreground text-background"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  <span>{area.emoji}</span>
-                  {area.label}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showFocusSelector && (
+        <AnimatePresence>
+          {focusOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="flex gap-1.5 flex-wrap mt-3 pt-3 border-t border-black/5 dark:border-white/8">
+                {focusAreas.map((area) => (
+                  <button
+                    key={area.id}
+                    onClick={() => { onFocusChange(area.id); setFocusOpen(false); }}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all active:scale-[0.96]",
+                      area.id === focus
+                        ? "bg-foreground text-background"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    <span>{area.emoji}</span>
+                    {area.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* Progress bar — silent, editorial */}
       <div className="mt-6">

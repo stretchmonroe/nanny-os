@@ -17,9 +17,9 @@ export default function HomePage() {
   const [focus,     setFocus]     = useState<FocusArea>("language");
   const [setupOpen, setSetupOpen] = useState(false);
 
-  const { authReady, activeChild } = useAppStore();
+  const { authReady, activeChild, currentUserRole } = useAppStore();
+  const isNanny = currentUserRole === "nanny";
 
-  // Auto-open setup card once auth is confirmed and there's no child data.
   useEffect(() => {
     if (authReady && !activeChild) setSetupOpen(true);
   }, [authReady, activeChild]);
@@ -27,6 +27,32 @@ export default function HomePage() {
   async function signOut() {
     await supabase.auth.signOut();
     window.location.href = "/onboarding";
+  }
+
+  if (isNanny) {
+    return (
+      <div className="min-h-screen bg-[#FDFBF7] dark:bg-[#1A1714]">
+        <ChildProfileHeader
+          focus={focus}
+          onFocusChange={setFocus}
+          showFocusSelector={false}
+        />
+
+        <div className="pt-2 pb-12 space-y-6">
+          <QuickActions />
+          <TimelineFeed />
+
+          <div className="flex justify-center pb-4">
+            <button
+              onClick={signOut}
+              style={{ fontSize: 13, color: "#B4A99E", background: "none", border: "none", cursor: "pointer", padding: "8px 16px" }}
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -38,7 +64,6 @@ export default function HomePage() {
       />
 
       <div className="pt-2 pb-12">
-        {/* Setup card — shown when no child data, auto-dismissed once setup completes */}
         {setupOpen && !activeChild && (
           <div className="mb-5">
             <ProfileSetupCard onDismiss={() => setSetupOpen(false)} />
@@ -67,7 +92,6 @@ export default function HomePage() {
           <InsightStrip />
         </div>
 
-        {/* Temporary sign-out — remove once profile/settings is wired up */}
         <div className="flex justify-center pb-4">
           <button
             onClick={signOut}

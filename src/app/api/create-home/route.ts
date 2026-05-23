@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 
 function admin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
   // Create child (reached from both the fresh path and the partial-retry path).
   const { data: child, error: childErr } = await db
     .from("children")
-    .insert({ name: childName.trim(), birth_date: birthDate, household_id: householdId })
+    .insert({ id: randomUUID(), name: childName.trim(), birth_date: birthDate, household_id: householdId })
     .select("id, name, birth_date")
     .single();
 

@@ -102,7 +102,7 @@ export default function MemoryPage() {
           {tab === "today" && (
             <div>
               <div className="pt-3">
-                <JournalSummary />
+                <JournalSummary childId={childId} />
               </div>
               <TodayJournal childId={childId} />
             </div>

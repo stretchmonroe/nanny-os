@@ -16,7 +16,36 @@ const demoSummary: Summary = {
   highlights: aiJournalSummary.highlights,
 };
 
-export default function JournalSummary() {
+export default function JournalSummary({ childId }: { childId?: string | null }) {
+  if (childId) {
+    return (
+      <div
+        className="overflow-hidden shadow-deep px-6 pt-7 pb-8"
+        style={{ background: "linear-gradient(160deg, #1A1714 0%, #221F1A 55%, #1C1916 100%)" }}
+      >
+        <div className="flex items-center gap-2 mb-5">
+          <div className="w-7 h-7 rounded-full bg-amber-400/15 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+          </div>
+          <span className="text-[10px] font-bold text-amber-300/55 uppercase tracking-widest">
+            Today&rsquo;s Summary
+          </span>
+        </div>
+        <p className="text-[22px] font-extrabold text-white/80 leading-tight tracking-tight mb-3">
+          Your day is just beginning
+        </p>
+        <p className="text-[13px] text-white/45 leading-[1.7]">
+          Log moments with the mic or camera above. A summary will appear here as your day takes shape.
+        </p>
+      </div>
+    );
+  }
+
+  // Demo mode — full AI summary
+  return <JournalSummaryDemo />;
+}
+
+function JournalSummaryDemo() {
   const [summary,  setSummary]  = useState<Summary>(demoSummary);
   const [liveNote, setLiveNote] = useState<string | null>(null);
 

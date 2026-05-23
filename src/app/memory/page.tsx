@@ -29,6 +29,7 @@ const dateStr = new Date().toLocaleDateString("en-US", {
 
 export default function MemoryPage() {
   const [tab, setTab] = useState<Tab>("today");
+  const [refreshKey, setRefreshKey] = useState(0);
   const activeChild = useAppStore((s) => s.activeChild);
 
   const childId   = activeChild?.id ?? null;
@@ -67,7 +68,7 @@ export default function MemoryPage() {
           </div>
           <div className="flex items-center gap-2 mb-0.5">
             <VoiceRecorder context="memory" onSave={handleVoiceSave} className="w-9 h-9" />
-            <PhotoUploader childId={childId} />
+            <PhotoUploader childId={childId} onUpload={() => { setTab("today"); setRefreshKey((k) => k + 1); }} />
           </div>
         </div>
 
@@ -104,7 +105,7 @@ export default function MemoryPage() {
               <div className="pt-3">
                 <JournalSummary childId={childId} />
               </div>
-              <TodayJournal childId={childId} />
+              <TodayJournal childId={childId} refreshKey={refreshKey} />
             </div>
           )}
           {tab === "week"      && <div className="pt-4"><WeekView childId={childId} /></div>}

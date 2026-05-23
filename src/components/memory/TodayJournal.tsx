@@ -176,7 +176,7 @@ function NoteCard({ moment }: { moment: JournalMoment }) {
   );
 }
 
-export default function TodayJournal({ childId }: { childId?: string | null }) {
+export default function TodayJournal({ childId, refreshKey }: { childId?: string | null; refreshKey?: number }) {
   const [realMoments, setRealMoments] = useState<JournalMoment[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
 
@@ -198,7 +198,7 @@ export default function TodayJournal({ childId }: { childId?: string | null }) {
         setRealMoments((data ?? []).map(normalizeMoment));
         setStatus("done");
       });
-  }, [childId]);
+  }, [childId, refreshKey]);
 
   // Demo mode
   if (!childId) {

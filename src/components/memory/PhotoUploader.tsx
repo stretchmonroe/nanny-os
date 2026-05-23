@@ -1,11 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase/client";
 import { Camera, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
+import { useAppStore } from "@/store/useAppStore";
 
-export default function PhotoUploader({ childId }: { childId?: string | null }) {
+interface Props {
+  childId?: string | null;
+  onUpload?: () => void;
+}
+
+export default function PhotoUploader({ childId, onUpload }: Props) {
   const [uploading, setUploading] = useState(false);
+  const currentUserRole = useAppStore((s) => s.currentUserRole);
 
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -13,18 +20,30 @@ export default function PhotoUploader({ childId }: { childId?: string | null }) 
 
     setUploading(true);
     try {
-      const fileName = `${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("photos").upload(fileName, file);
-      if (error) throw error;
+      const ext      = file.name.split(".").pop() ?? "jpg";
+      const folder   = childId ?? "shared";
+      const fileName = `${folder}/${Date.now()}.${ext}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from("photos")
+        .upload(fileName, file, { upsert: false });
+      if (uploadErr) throw uploadErr;
 
       const { data } = supabase.storage.from("photos").getPublicUrl(fileName);
+
       await supabase.from("memory_events").insert({
-        type: "photo",
-        content: "Photo",
-        image_url: data.publicUrl,
-        child_id: childId ?? "default",
-        created_by: "nanny",
+        type:       "photo",
+        content:    "Photo",
+        image_url:  data.publicUrl,
+        child_id:   childId ?? "default",
+        created_by: currentUserRole ?? "nanny",
       });
+
+      // reset input so the same file can be re-selected
+      e.target.value = "";
+      onUpload?.();
+    } catch (err) {
+      console.error("[PhotoUploader]", err);
     } finally {
       setUploading(false);
     }
@@ -33,18 +52,18 @@ export default function PhotoUploader({ childId }: { childId?: string | null }) 
   return (
     <label
       htmlFor="photo-upload"
-      className="inline-flex items-center gap-2 bg-zinc-900 dark:bg-stone-100 text-white dark:text-zinc-900 font-semibold text-sm px-4 py-2.5 rounded-full shadow-lg cursor-pointer active:scale-95 transition-all duration-150"
+      className="w-9 h-9 rounded-full bg-surface-raised flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
     >
       {uploading ? (
-        <Loader2 size={15} className="animate-spin" />
+        <Loader2 size={15} className="animate-spin text-muted-foreground" />
       ) : (
-        <Camera size={15} />
+        <Camera size={15} className="text-muted-foreground" />
       )}
-      {uploading ? "Uploading…" : "Add Photo"}
       <input
         id="photo-upload"
         type="file"
         accept="image/*"
+        capture="environment"
         className="hidden"
         onChange={upload}
         disabled={uploading}

@@ -1,13 +1,52 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { weeklyMoments } from "@/lib/data/demo";
+import type { JournalMoment, JournalDay, JournalMomentType, ActivityCategory } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
 import WeeklyRecap from "./WeeklyRecap";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 import ReactionBar from "@/components/memory/ReactionBar";
-import type { JournalMoment } from "@/lib/data/demo";
+import { supabase } from "@/lib/supabase/client";
+
+function normalizeMoment(raw: Record<string, unknown>): JournalMoment {
+  const ts = raw.created_at as string | undefined;
+  return {
+    id:        String(raw.id),
+    type:      (["photo", "note", "milestone"].includes(raw.type as string) ? raw.type : "note") as JournalMomentType,
+    content:   String(raw.content ?? ""),
+    time:      ts ? new Date(ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "",
+    imageUrl:  raw.image_url as string | undefined,
+    category:  (raw.category ?? "play") as ActivityCategory,
+    createdBy: raw.created_by === "parent" ? "parent" : "nanny",
+  };
+}
+
+function groupByDay(events: Record<string, unknown>[]): JournalDay[] {
+  const todayStr = new Date().toDateString();
+  const map = new Map<string, JournalDay>();
+
+  events.forEach((raw) => {
+    const d    = new Date(raw.created_at as string);
+    const key  = d.toDateString();
+    const isToday = key === todayStr;
+    if (!map.has(key)) {
+      const label = d.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+      map.set(key, {
+        day:     d.toLocaleDateString("en-US", { weekday: "long" }),
+        date:    isToday ? `Today · ${label}` : label,
+        isToday,
+        moments: [],
+      });
+    }
+    map.get(key)!.moments.push(normalizeMoment(raw));
+  });
+
+  map.forEach((day) => day.moments.reverse());
+  return Array.from(map.values());
+}
 
 function PhotoMoment({ moment, isFirst }: { moment: JournalMoment; isFirst: boolean }) {
   return (
@@ -76,8 +115,88 @@ function NoteMoment({ moment }: { moment: JournalMoment }) {
   );
 }
 
+function DaySection({ dayData, dayIndex }: { dayData: JournalDay; dayIndex: number }) {
+  const firstPhotoId = dayData.moments.find((m) => m.type === "photo")?.id;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: dayIndex * 0.06, duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
+    >
+      <div className="flex items-end justify-between mb-4 px-5">
+        <div>
+          <p className={cn(
+            "text-[11px] font-bold uppercase tracking-widest mb-1",
+            dayData.isToday ? "text-amber-500" : "text-muted-foreground/50"
+          )}>
+            {dayData.day}
+          </p>
+          <p className="text-[28px] font-extrabold text-foreground tracking-tight leading-none">
+            {dayData.date.replace("Today · ", "")}
+          </p>
+        </div>
+        {dayData.isToday && (
+          <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/30 px-3 py-1.5 rounded-full uppercase tracking-widest">
+            Today
+          </span>
+        )}
+      </div>
+      <div>
+        {dayData.moments.map((moment) => (
+          <div key={moment.id}>
+            {moment.type === "photo"     && <PhotoMoment moment={moment} isFirst={moment.id === firstPhotoId} />}
+            {moment.type === "milestone" && <MilestoneMoment moment={moment} />}
+            {moment.type === "note"      && <NoteMoment moment={moment} />}
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 export default function WeekView({ childId }: { childId?: string | null }) {
-  if (childId) {
+  const [realDays, setRealDays] = useState<JournalDay[]>([]);
+  const [status, setStatus]     = useState<"idle" | "loading" | "done">("idle");
+
+  useEffect(() => {
+    if (!childId) { setStatus("idle"); return; }
+
+    setStatus("loading");
+    const sevenAgo = new Date();
+    sevenAgo.setDate(sevenAgo.getDate() - 7);
+    sevenAgo.setHours(0, 0, 0, 0);
+
+    supabase
+      .from("memory_events")
+      .select("*")
+      .eq("child_id", childId)
+      .in("type", ["note", "photo", "milestone"])
+      .gte("created_at", sevenAgo.toISOString())
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        setRealDays(groupByDay(data ?? []));
+        setStatus("done");
+      });
+  }, [childId]);
+
+  // Demo mode
+  if (!childId) {
+    return (
+      <div className="pb-8">
+        <div className="px-4 mb-8"><WeeklyRecap /></div>
+        <div className="space-y-12">
+          {weeklyMoments.map((dayData, i) => (
+            <DaySection key={dayData.date} dayData={dayData} dayIndex={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (status !== "done") return null;
+
+  // Real — empty
+  if (realDays.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 text-center pt-14 pb-8 px-6">
         <span className="text-4xl">🗓️</span>
@@ -89,60 +208,13 @@ export default function WeekView({ childId }: { childId?: string | null }) {
     );
   }
 
+  // Real — has moments
   return (
     <div className="pb-8">
-      <div className="px-4 mb-8">
-        <WeeklyRecap />
-      </div>
-
       <div className="space-y-12">
-        {weeklyMoments.map((dayData, dayIndex) => {
-          const firstPhotoId = dayData.moments.find((m) => m.type === "photo")?.id;
-
-          return (
-            <motion.div
-              key={dayData.date}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: dayIndex * 0.06, duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
-            >
-              {/* Day header */}
-              <div className="flex items-end justify-between mb-4 px-5">
-                <div>
-                  <p
-                    className={cn(
-                      "text-[11px] font-bold uppercase tracking-widest mb-1",
-                      dayData.isToday ? "text-amber-500" : "text-muted-foreground/50"
-                    )}
-                  >
-                    {dayData.day}
-                  </p>
-                  <p className="text-[28px] font-extrabold text-foreground tracking-tight leading-none">
-                    {dayData.date.replace("Today · ", "")}
-                  </p>
-                </div>
-                {dayData.isToday && (
-                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/30 px-3 py-1.5 rounded-full uppercase tracking-widest">
-                    Today
-                  </span>
-                )}
-              </div>
-
-              {/* Moments */}
-              <div>
-                {dayData.moments.map((moment) => (
-                  <div key={moment.id}>
-                    {moment.type === "photo" && (
-                      <PhotoMoment moment={moment} isFirst={moment.id === firstPhotoId} />
-                    )}
-                    {moment.type === "milestone" && <MilestoneMoment moment={moment} />}
-                    {moment.type === "note" && <NoteMoment moment={moment} />}
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          );
-        })}
+        {realDays.map((dayData, i) => (
+          <DaySection key={dayData.date} dayData={dayData} dayIndex={i} />
+        ))}
       </div>
     </div>
   );

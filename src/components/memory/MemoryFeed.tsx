@@ -31,22 +31,29 @@ function normalize(raw: any): Moment {
   };
 }
 
-export default function MemoryFeed({ filter = "all" }: { filter?: "all" | "photos" | "notes" }) {
+export default function MemoryFeed({
+  filter = "all",
+  childId,
+}: {
+  filter?: "all" | "photos" | "notes";
+  childId?: string | null;
+}) {
   const [items, setItems] = useState<Moment[]>([]);
 
   useEffect(() => {
     async function load() {
+      const id = childId ?? "default";
       const { data } = await supabase
         .from("memory_events")
         .select("*")
-        .eq("child_id", "default")
+        .eq("child_id", id)
         .order("created_at", { ascending: false });
 
-      const raw = data && data.length > 0 ? data : demoMoments;
+      const raw = data && data.length > 0 ? data : (childId ? [] : demoMoments);
       setItems(raw.map(normalize));
     }
     load();
-  }, []);
+  }, [childId]);
 
   const filtered = items.filter((i) => {
     if (filter === "photos") return i.type === "photo";

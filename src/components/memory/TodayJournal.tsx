@@ -1,15 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { weeklyMoments } from "@/lib/data/demo";
-import type { JournalMoment } from "@/lib/data/demo";
+import type { JournalMoment, JournalMomentType, ActivityCategory } from "@/lib/data/demo";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 import ReactionBar from "@/components/memory/ReactionBar";
 import ReplyThread from "@/components/memory/ReplyThread";
+import { supabase } from "@/lib/supabase/client";
 
 const today = weeklyMoments[0];
+
+function normalizeMoment(raw: Record<string, unknown>): JournalMoment {
+  const ts = raw.created_at as string | undefined;
+  return {
+    id:         String(raw.id),
+    type:       (["photo", "note", "milestone"].includes(raw.type as string) ? raw.type : "note") as JournalMomentType,
+    content:    String(raw.content ?? ""),
+    time:       ts ? new Date(ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "",
+    imageUrl:   raw.image_url as string | undefined,
+    category:   (raw.category ?? "play") as ActivityCategory,
+    createdBy:  raw.created_by === "parent" ? "parent" : "nanny",
+  };
+}
 
 /** Small heart button for photo overlays */
 function PhotoHeart() {
@@ -163,7 +177,56 @@ function NoteCard({ moment }: { moment: JournalMoment }) {
 }
 
 export default function TodayJournal({ childId }: { childId?: string | null }) {
-  if (childId) {
+  const [realMoments, setRealMoments] = useState<JournalMoment[]>([]);
+  const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
+
+  useEffect(() => {
+    if (!childId) { setStatus("idle"); return; }
+
+    setStatus("loading");
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    supabase
+      .from("memory_events")
+      .select("*")
+      .eq("child_id", childId)
+      .in("type", ["note", "photo", "milestone"])
+      .gte("created_at", startOfDay.toISOString())
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        setRealMoments((data ?? []).map(normalizeMoment));
+        setStatus("done");
+      });
+  }, [childId]);
+
+  // Demo mode
+  if (!childId) {
+    const firstPhotoId = today.moments.find((m) => m.type === "photo")?.id;
+    return (
+      <div className="pb-8">
+        {today.moments.map((moment, i) => (
+          <motion.div
+            key={moment.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.04 + i * 0.09, duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
+          >
+            {moment.type === "photo" && moment.id === firstPhotoId && <HeroPhoto moment={moment} />}
+            {moment.type === "photo" && moment.id !== firstPhotoId && <InsetPhoto moment={moment} />}
+            {moment.type === "milestone" && <MilestonePanel moment={moment} />}
+            {moment.type === "note" && <NoteCard moment={moment} />}
+          </motion.div>
+        ))}
+      </div>
+    );
+  }
+
+  // Loading
+  if (status !== "done") return null;
+
+  // Real — empty
+  if (realMoments.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 text-center pt-14 pb-8 px-6">
         <span className="text-4xl">📖</span>
@@ -175,11 +238,11 @@ export default function TodayJournal({ childId }: { childId?: string | null }) {
     );
   }
 
-  const firstPhotoId = today.moments.find((m) => m.type === "photo")?.id;
-
+  // Real — has moments
+  const firstPhotoId = realMoments.find((m) => m.type === "photo")?.id;
   return (
     <div className="pb-8">
-      {today.moments.map((moment, i) => (
+      {realMoments.map((moment, i) => (
         <motion.div
           key={moment.id}
           initial={{ opacity: 0, y: 20 }}

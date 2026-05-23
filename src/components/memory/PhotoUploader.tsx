@@ -40,6 +40,7 @@ export default function PhotoUploader({ childId, onUpload }: Props) {
         image_url:  data.publicUrl,
         child_id:   childId ?? "default",
         created_by: currentUserRole ?? "nanny",
+        created_at: new Date().toISOString(),
       });
       if (insertErr) throw new Error(`DB: ${insertErr.message}`);
 

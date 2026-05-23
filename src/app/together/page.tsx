@@ -161,7 +161,7 @@ export default function TogetherPage() {
               <button
                 type="submit"
                 disabled={sending || !draft.trim()}
-                className="w-full bg-foreground text-background font-bold text-[14px] py-3 rounded-xl disabled:opacity-40 transition-opacity"
+                className="w-full bg-foreground text-white font-bold text-[14px] py-3 rounded-xl disabled:opacity-40 transition-opacity"
               >
                 {sending ? "Saving…" : "Post note"}
               </button>

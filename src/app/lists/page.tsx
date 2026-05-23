@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { groceryItems as demoItems } from "@/lib/data/demo";
+import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
 import { ArrowUp } from "lucide-react";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
@@ -11,20 +12,30 @@ import type { VoiceResult } from "@/lib/voice/transcriptParser";
 type Item = { id: string; name: string; completed: boolean };
 
 export default function ListsPage() {
+  const activeChild = useAppStore((s) => s.activeChild);
   const [items, setItems] = useState<Item[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     load();
-  }, []);
+  // Re-load when the active child changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeChild?.id]);
 
   async function load() {
+    setLoading(true);
+    if (!activeChild) {
+      setItems(demoItems);
+      setLoading(false);
+      return;
+    }
     const { data } = await supabase
       .from("grocery_items")
       .select("*")
+      .eq("child_id", activeChild.id)
       .order("created_at", { ascending: true });
-    setItems(data && data.length > 0 ? data : demoItems);
+    setItems(data ?? []);
     setLoading(false);
   }
 
@@ -34,9 +45,11 @@ export default function ListsPage() {
     const newItem: Item = { id: Date.now().toString() + Math.random(), name: n, completed: false };
     setItems((prev) => [...prev, newItem]);
     if (!name) setInput("");
-    await supabase
-      .from("grocery_items")
-      .insert({ name: n, child_id: "default", created_by: "parent" });
+    if (activeChild) {
+      await supabase
+        .from("grocery_items")
+        .insert({ name: n, child_id: activeChild.id, created_by: "parent" });
+    }
   }
 
   function handleVoiceSave(result: VoiceResult) {
@@ -48,11 +61,12 @@ export default function ListsPage() {
   }
 
   async function toggle(id: string) {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
     setItems((prev) =>
       prev.map((i) => (i.id === id ? { ...i, completed: !i.completed } : i))
     );
-    const item = items.find((i) => i.id === id);
-    if (item) {
+    if (activeChild) {
       await supabase
         .from("grocery_items")
         .update({ completed: !item.completed })
@@ -81,6 +95,13 @@ export default function ListsPage() {
 
       {/* List */}
       <div className="flex-1 px-4 pt-4 pb-4 space-y-1.5">
+        {!loading && activeChild && items.length === 0 && (
+          <div className="pt-12 flex flex-col items-center gap-2 text-center">
+            <span className="text-4xl">🛒</span>
+            <p className="text-[15px] font-semibold text-foreground mt-2">List is empty</p>
+            <p className="text-[13px] text-muted-foreground">Add your first item below.</p>
+          </div>
+        )}
         {!loading && (
           <>
             {pending.map((item) => (

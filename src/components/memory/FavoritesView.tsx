@@ -6,7 +6,19 @@ import { Heart } from "lucide-react";
 import { favoriteMemories } from "@/lib/data/demo";
 import AuthorBadge from "@/components/ui/AuthorBadge";
 
-export default function FavoritesView() {
+export default function FavoritesView({ childId }: { childId?: string | null }) {
+  if (childId) {
+    return (
+      <div className="flex flex-col items-center gap-2 text-center pt-14 pb-8 px-6">
+        <span className="text-4xl">⭐️</span>
+        <p className="text-[15px] font-semibold text-foreground mt-2">No favourites yet</p>
+        <p className="text-[13px] text-muted-foreground max-w-[230px] leading-relaxed">
+          Star moments from Today or This Week to save them here.
+        </p>
+      </div>
+    );
+  }
+
   const [featured, ...rest] = favoriteMemories;
   const photos    = rest.filter((m) => m.type === "photo");
   const milestones = rest.filter((m) => m.type === "milestone");

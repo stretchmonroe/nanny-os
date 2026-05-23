@@ -162,7 +162,19 @@ function NoteCard({ moment }: { moment: JournalMoment }) {
   );
 }
 
-export default function TodayJournal() {
+export default function TodayJournal({ childId }: { childId?: string | null }) {
+  if (childId) {
+    return (
+      <div className="flex flex-col items-center gap-2 text-center pt-14 pb-8 px-6">
+        <span className="text-4xl">📖</span>
+        <p className="text-[15px] font-semibold text-foreground mt-2">No moments yet today</p>
+        <p className="text-[13px] text-muted-foreground max-w-[230px] leading-relaxed">
+          Use the mic or camera above to log the first moment of the day.
+        </p>
+      </div>
+    );
+  }
+
   const firstPhotoId = today.moments.find((m) => m.type === "photo")?.id;
 
   return (

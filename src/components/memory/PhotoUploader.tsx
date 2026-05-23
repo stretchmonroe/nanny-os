@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Camera, Loader2 } from "lucide-react";
 
-export default function PhotoUploader() {
+export default function PhotoUploader({ childId }: { childId?: string | null }) {
   const [uploading, setUploading] = useState(false);
 
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -22,7 +22,7 @@ export default function PhotoUploader() {
         type: "photo",
         content: "Photo",
         image_url: data.publicUrl,
-        child_id: "default",
+        child_id: childId ?? "default",
         created_by: "nanny",
       });
     } finally {

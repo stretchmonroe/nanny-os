@@ -76,7 +76,19 @@ function NoteMoment({ moment }: { moment: JournalMoment }) {
   );
 }
 
-export default function WeekView() {
+export default function WeekView({ childId }: { childId?: string | null }) {
+  if (childId) {
+    return (
+      <div className="flex flex-col items-center gap-2 text-center pt-14 pb-8 px-6">
+        <span className="text-4xl">🗓️</span>
+        <p className="text-[15px] font-semibold text-foreground mt-2">Nothing logged this week yet</p>
+        <p className="text-[13px] text-muted-foreground max-w-[230px] leading-relaxed">
+          Moments you log will appear here as a weekly story.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="pb-8">
       <div className="px-4 mb-8">

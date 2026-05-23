@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
 import JournalSummary from "@/components/memory/JournalSummary";
 import TodayJournal from "@/components/memory/TodayJournal";
 import WeekView from "@/components/memory/WeekView";
@@ -28,6 +29,12 @@ const dateStr = new Date().toLocaleDateString("en-US", {
 
 export default function MemoryPage() {
   const [tab, setTab] = useState<Tab>("today");
+  const activeChild = useAppStore((s) => s.activeChild);
+
+  const childId   = activeChild?.id ?? null;
+  const childLabel = activeChild
+    ? activeChild.name
+    : "Mateo · 18 months"; // demo fallback
 
   async function handleVoiceSave(result: VoiceResult) {
     if (result.type !== "memory") return;
@@ -35,7 +42,7 @@ export default function MemoryPage() {
       type:       "note",
       content:    result.content,
       category:   result.category,
-      child_id:   "default",
+      child_id:   childId ?? "default",
       created_by: "nanny",
       created_at: new Date().toISOString(),
     });
@@ -55,12 +62,12 @@ export default function MemoryPage() {
               {dateStr}
             </h1>
             <p className="text-[11px] font-semibold text-muted-foreground/45 uppercase tracking-widest">
-              Mateo · 18 months
+              {childLabel}
             </p>
           </div>
           <div className="flex items-center gap-2 mb-0.5">
             <VoiceRecorder context="memory" onSave={handleVoiceSave} className="w-9 h-9" />
-            <PhotoUploader />
+            <PhotoUploader childId={childId} />
           </div>
         </div>
 
@@ -97,11 +104,11 @@ export default function MemoryPage() {
               <div className="pt-3">
                 <JournalSummary />
               </div>
-              <TodayJournal />
+              <TodayJournal childId={childId} />
             </div>
           )}
-          {tab === "week"      && <div className="pt-4"><WeekView /></div>}
-          {tab === "favorites" && <FavoritesView />}
+          {tab === "week"      && <div className="pt-4"><WeekView childId={childId} /></div>}
+          {tab === "favorites" && <FavoritesView childId={childId} />}
         </motion.div>
       </AnimatePresence>
     </div>

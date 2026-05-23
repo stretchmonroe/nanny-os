@@ -150,3 +150,20 @@ CREATE POLICY "ai:insert" ON ai_summaries FOR INSERT
 
 CREATE POLICY "ai:delete" ON ai_summaries FOR DELETE
   USING (in_my_household(child_id) AND my_role() = 'parent');
+
+-- ── storage: photos bucket ────────────────────────────────────────────────────
+
+-- Any signed-in user can upload photos
+CREATE POLICY "photos:insert" ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'photos');
+
+-- Anyone can view photos (bucket is public)
+CREATE POLICY "photos:select" ON storage.objects FOR SELECT
+  TO public
+  USING (bucket_id = 'photos');
+
+-- Users can delete their own uploads
+CREATE POLICY "photos:delete" ON storage.objects FOR DELETE
+  TO authenticated
+  USING (bucket_id = 'photos' AND auth.uid() = owner);

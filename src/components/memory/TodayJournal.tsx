@@ -9,6 +9,7 @@ import AuthorBadge from "@/components/ui/AuthorBadge";
 import ReactionBar from "@/components/memory/ReactionBar";
 import ReplyThread from "@/components/memory/ReplyThread";
 import { supabase } from "@/lib/supabase/client";
+import { useAppStore } from "@/store/useAppStore";
 
 const today = weeklyMoments[0];
 
@@ -62,7 +63,7 @@ function PhotoHeart() {
   );
 }
 
-function HeroPhoto({ moment }: { moment: JournalMoment }) {
+function HeroPhoto({ moment, authorName }: { moment: JournalMoment; authorName?: string }) {
   return (
     <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: "3/4" }}>
       {moment.imageUrl && (
@@ -87,14 +88,14 @@ function HeroPhoto({ moment }: { moment: JournalMoment }) {
           {moment.content}
         </p>
         {moment.createdBy && (
-          <AuthorBadge author={moment.createdBy} time={moment.time} light />
+          <AuthorBadge author={moment.createdBy} name={authorName} time={moment.time} light />
         )}
       </div>
     </div>
   );
 }
 
-function InsetPhoto({ moment }: { moment: JournalMoment }) {
+function InsetPhoto({ moment, authorName }: { moment: JournalMoment; authorName?: string }) {
   return (
     <div className="px-5 py-5">
       <div
@@ -122,7 +123,7 @@ function InsetPhoto({ moment }: { moment: JournalMoment }) {
             {moment.content}
           </p>
           {moment.createdBy && (
-            <AuthorBadge author={moment.createdBy} time={moment.time} light />
+            <AuthorBadge author={moment.createdBy} name={authorName} time={moment.time} light />
           )}
         </div>
       </div>
@@ -130,7 +131,7 @@ function InsetPhoto({ moment }: { moment: JournalMoment }) {
   );
 }
 
-function MilestonePanel({ moment }: { moment: JournalMoment }) {
+function MilestonePanel({ moment, authorName }: { moment: JournalMoment; authorName?: string }) {
   return (
     <div className="px-8 py-16 text-center">
       <div className="text-[42px] text-amber-400 dark:text-amber-500 mb-5 leading-none select-none">✦</div>
@@ -138,7 +139,7 @@ function MilestonePanel({ moment }: { moment: JournalMoment }) {
         {moment.content}
       </p>
       {moment.createdBy ? (
-        <AuthorBadge author={moment.createdBy} time={moment.time} className="justify-center mb-6" />
+        <AuthorBadge author={moment.createdBy} name={authorName} time={moment.time} className="justify-center mb-6" />
       ) : (
         <p className="text-[11px] font-bold text-muted-foreground/55 uppercase tracking-widest mb-6">
           {moment.time}
@@ -154,7 +155,7 @@ function MilestonePanel({ moment }: { moment: JournalMoment }) {
   );
 }
 
-function NoteCard({ moment }: { moment: JournalMoment }) {
+function NoteCard({ moment, authorName }: { moment: JournalMoment; authorName?: string }) {
   return (
     <div className="px-8 py-10">
       <p className="text-[64px] leading-[0.65] text-amber-300 dark:text-amber-700 font-serif mb-4 select-none">&ldquo;</p>
@@ -162,7 +163,7 @@ function NoteCard({ moment }: { moment: JournalMoment }) {
         {moment.content}
       </p>
       {moment.createdBy ? (
-        <AuthorBadge author={moment.createdBy} time={moment.time} className="mb-5" />
+        <AuthorBadge author={moment.createdBy} name={authorName} time={moment.time} className="mb-5" />
       ) : (
         <p className="text-[12px] text-muted-foreground font-semibold mb-5">{moment.time}</p>
       )}
@@ -179,6 +180,7 @@ function NoteCard({ moment }: { moment: JournalMoment }) {
 export default function TodayJournal({ childId, refreshKey }: { childId?: string | null; refreshKey?: number }) {
   const [realMoments, setRealMoments] = useState<JournalMoment[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
+  const { profileFullName, currentUserRole } = useAppStore();
 
   useEffect(() => {
     if (!childId) { setStatus("idle"); return; }
@@ -242,19 +244,25 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
   const firstPhotoId = realMoments.find((m) => m.type === "photo")?.id;
   return (
     <div className="pb-8">
-      {realMoments.map((moment, i) => (
-        <motion.div
-          key={moment.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.04 + i * 0.09, duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
-        >
-          {moment.type === "photo" && moment.id === firstPhotoId && <HeroPhoto moment={moment} />}
-          {moment.type === "photo" && moment.id !== firstPhotoId && <InsetPhoto moment={moment} />}
-          {moment.type === "milestone" && <MilestonePanel moment={moment} />}
-          {moment.type === "note" && <NoteCard moment={moment} />}
-        </motion.div>
-      ))}
+      {realMoments.map((moment, i) => {
+        // Show the real name only for entries written by the current user
+        const authorName = moment.createdBy === currentUserRole
+          ? (profileFullName ?? undefined)
+          : undefined;
+        return (
+          <motion.div
+            key={moment.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.04 + i * 0.09, duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
+          >
+            {moment.type === "photo" && moment.id === firstPhotoId && <HeroPhoto moment={moment} authorName={authorName} />}
+            {moment.type === "photo" && moment.id !== firstPhotoId && <InsetPhoto moment={moment} authorName={authorName} />}
+            {moment.type === "milestone" && <MilestonePanel moment={moment} authorName={authorName} />}
+            {moment.type === "note" && <NoteCard moment={moment} authorName={authorName} />}
+          </motion.div>
+        );
+      })}
     </div>
   );
 }

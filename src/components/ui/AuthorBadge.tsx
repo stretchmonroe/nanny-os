@@ -6,25 +6,28 @@ import { cn } from "@/lib/utils";
 export type AuthorType = "nanny" | "parent" | "ai";
 
 const cfg = {
-  nanny:  { name: "Elena",  role: "Nanny",  initial: "E", circleBg: "bg-amber-100 dark:bg-amber-900/50",   circleText: "text-amber-700 dark:text-amber-300"  },
-  parent: { name: "Sofia",  role: "Parent", initial: "S", circleBg: "bg-rose-100 dark:bg-rose-900/40",     circleText: "text-rose-600 dark:text-rose-300"    },
-  ai:     { name: "Claude", role: "AI",     initial: null, circleBg: "bg-lavender-light",                   circleText: "text-lavender"                       },
+  nanny:  { role: "Nanny",  initial: "N", circleBg: "bg-amber-100 dark:bg-amber-900/50",   circleText: "text-amber-700 dark:text-amber-300"  },
+  parent: { role: "Parent", initial: "P", circleBg: "bg-rose-100 dark:bg-rose-900/40",     circleText: "text-rose-600 dark:text-rose-300"    },
+  ai:     { role: "AI",     initial: null, circleBg: "bg-lavender-light",                   circleText: "text-lavender"                       },
 } as const;
 
 interface Props {
   author: AuthorType;
+  /** Real display name — overrides generic role label */
+  name?: string;
   time?: string;
-  /** "inline" = circle + name + time. "dot" = circle only. */
   variant?: "inline" | "dot";
-  /** Use on dark/photo backgrounds */
   light?: boolean;
-  /** Show "Name · Role" — defaults true for inline */
   showRole?: boolean;
   className?: string;
 }
 
-export default function AuthorBadge({ author, time, variant = "inline", light = false, showRole = true, className }: Props) {
+export default function AuthorBadge({ author, name, time, variant = "inline", light = false, showRole = true, className }: Props) {
   const c = cfg[author];
+
+  const initial = name
+    ? name.trim()[0].toUpperCase()
+    : c.initial;
 
   const circle = (
     <div className={cn(
@@ -38,7 +41,7 @@ export default function AuthorBadge({ author, time, variant = "inline", light = 
         <Sparkles className={cn("w-3 h-3", light ? "text-white/80" : c.circleText)} strokeWidth={2} />
       ) : (
         <span className={cn("text-[10px] font-bold leading-none", light ? "text-white/90" : c.circleText)}>
-          {c.initial}
+          {initial}
         </span>
       )}
     </div>
@@ -46,9 +49,10 @@ export default function AuthorBadge({ author, time, variant = "inline", light = 
 
   if (variant === "dot") return circle;
 
-  const nameLabel = showRole && author !== "ai"
-    ? `${c.name} · ${c.role}`
-    : c.name;
+  const displayName = name ?? c.role;
+  const nameLabel = showRole && author !== "ai" && name
+    ? `${name} · ${c.role}`
+    : displayName;
 
   return (
     <div className={cn("flex items-center gap-2", className)}>

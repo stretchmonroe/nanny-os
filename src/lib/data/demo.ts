@@ -186,11 +186,11 @@ export const careNotes = [
 // ── Type Config ──────────────────────────────────────────────────────────────
 
 export const typeConfig = {
-  meal:     { label: "Meal",     color: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300",     dot: "bg-orange-400"  },
-  outdoor:  { label: "Outdoor",  color: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",                 dot: "bg-sky-400"     },
-  play:     { label: "Play",     color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300", dot: "bg-emerald-400" },
-  nap:      { label: "Nap",      color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",     dot: "bg-indigo-400"  },
-  learning: { label: "Learning", color: "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300",     dot: "bg-violet-400"  },
+  meal:     { label: "Meal",     color: "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",       dot: "bg-amber-400"   },
+  outdoor:  { label: "Outdoor",  color: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",                  dot: "bg-sky-400"     },
+  play:     { label: "Play",     color: "bg-sage-light text-sage dark:bg-sage/15 dark:text-sage-muted",               dot: "bg-sage"        },
+  nap:      { label: "Nap",      color: "bg-trust-light text-trust dark:bg-trust/15 dark:text-trust-muted",           dot: "bg-trust"       },
+  learning: { label: "Learning", color: "bg-lavender-light text-lavender dark:bg-lavender/15 dark:text-lavender",     dot: "bg-lavender"    },
 }
 
 // ── Memory / Journal page data ───────────────────────────────────────────────

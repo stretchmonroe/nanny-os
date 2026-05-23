@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "@/lib/supabase/client";
 import ChildProfileHeader from "@/components/home/ChildProfileHeader";
 import RecommendationCard from "@/components/home/RecommendationCard";
 import ActivityPlan from "@/components/home/ActivityPlan";
@@ -12,6 +13,11 @@ import type { FocusArea } from "@/lib/data/demo";
 
 export default function HomePage() {
   const [focus, setFocus] = useState<FocusArea>("language");
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    window.location.href = "/onboarding";
+  }
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] dark:bg-[#1A1714]">
@@ -39,6 +45,16 @@ export default function HomePage() {
 
         <div className="mt-6">
           <InsightStrip />
+        </div>
+
+        {/* Temporary sign-out — remove once profile/settings is wired up */}
+        <div className="flex justify-center pb-4">
+          <button
+            onClick={signOut}
+            style={{ fontSize: 13, color: "#B4A99E", background: "none", border: "none", cursor: "pointer", padding: "8px 16px" }}
+          >
+            Sign out
+          </button>
         </div>
       </div>
     </div>

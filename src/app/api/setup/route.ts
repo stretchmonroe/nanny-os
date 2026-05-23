@@ -54,14 +54,17 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // children.id is TEXT PRIMARY KEY with no default — must be provided explicitly.
+  const childId = crypto.randomUUID();
   const { data: child, error: cErr } = await db
     .from("children")
-    .insert({ household_id: householdId, name: childName, birth_date: birthDate })
+    .insert({ id: childId, household_id: householdId, name: childName, birth_date: birthDate })
     .select("id, name, birth_date")
     .single();
 
   if (cErr || !child) {
-    return NextResponse.json({ error: "Could not create child" }, { status: 500 });
+    console.error("[setup] child insert error:", cErr);
+    return NextResponse.json({ error: "Could not create child", detail: cErr?.message }, { status: 500 });
   }
 
   return NextResponse.json({ child });

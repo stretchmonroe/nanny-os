@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export type UserRole = "parent" | "nanny"
 
@@ -20,14 +21,26 @@ type AppStore = {
   setActiveChild:     (v: ActiveChild | null) => void
 }
 
-export const useAppStore = create<AppStore>((set) => ({
-  authReady:       false,
-  profileFullName: null,
-  currentUserRole: null,
-  activeChild:     null,
+export const useAppStore = create<AppStore>()(
+  persist(
+    (set) => ({
+      authReady:       false,
+      profileFullName: null,
+      currentUserRole: null,
+      activeChild:     null,
 
-  setAuthReady:       (v) => set({ authReady: v }),
-  setProfileFullName: (v) => set({ profileFullName: v }),
-  setCurrentUserRole: (v) => set({ currentUserRole: v }),
-  setActiveChild:     (v) => set({ activeChild: v }),
-}))
+      setAuthReady:       (v) => set({ authReady: v }),
+      setProfileFullName: (v) => set({ profileFullName: v }),
+      setCurrentUserRole: (v) => set({ currentUserRole: v }),
+      setActiveChild:     (v) => set({ activeChild: v }),
+    }),
+    {
+      name: 'ankur-app-store',
+      // Only persist child/role — authReady and profileFullName are always re-fetched.
+      partialize: (state) => ({
+        activeChild:     state.activeChild,
+        currentUserRole: state.currentUserRole,
+      }),
+    }
+  )
+)

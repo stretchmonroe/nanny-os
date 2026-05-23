@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Home, CalendarDays, BookImage, ShoppingBasket, Users } from "lucide-react";
+import { Home, CalendarDays, BookImage, ShoppingBasket, Heart } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const items = [
-  { href: "/home",         icon: Home,           label: "Home"    },
-  { href: "/schedule",     icon: CalendarDays,   label: "Schedule"},
-  { href: "/memory",       icon: BookImage,      label: "Journal" },
-  { href: "/lists",        icon: ShoppingBasket, label: "Lists"   },
-  { href: "/care-circle",  icon: Users,          label: "Circle"  },
+  { href: "/home",      icon: Home,           label: "Home"     },
+  { href: "/schedule",  icon: CalendarDays,   label: "Schedule" },
+  { href: "/memory",    icon: BookImage,      label: "Journal"  },
+  { href: "/lists",     icon: ShoppingBasket, label: "Lists"    },
+  { href: "/together",  icon: Heart,          label: "Together" },
 ];
 
 export default function BottomNav() {

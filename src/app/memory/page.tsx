@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 import JournalSummary from "@/components/memory/JournalSummary";
@@ -9,8 +10,10 @@ import TodayJournal from "@/components/memory/TodayJournal";
 import WeekView from "@/components/memory/WeekView";
 import FavoritesView from "@/components/memory/FavoritesView";
 import PhotoUploader from "@/components/memory/PhotoUploader";
+import NoteComposeSheet from "@/components/memory/NoteComposeSheet";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import { supabase } from "@/lib/supabase/client";
+import { useAppStore as useStore } from "@/store/useAppStore";
 import type { VoiceResult } from "@/lib/voice/transcriptParser";
 
 type Tab = "today" | "week" | "favorites";
@@ -28,14 +31,19 @@ const dateStr = new Date().toLocaleDateString("en-US", {
 });
 
 export default function MemoryPage() {
-  const [tab, setTab] = useState<Tab>("today");
+  const [tab,        setTab]        = useState<Tab>("today");
   const [refreshKey, setRefreshKey] = useState(0);
-  const activeChild = useAppStore((s) => s.activeChild);
+  const [composing,  setComposing]  = useState(false);
+  const activeChild    = useAppStore((s) => s.activeChild);
+  const currentUserRole = useStore((s) => s.currentUserRole);
 
-  const childId   = activeChild?.id ?? null;
-  const childLabel = activeChild
-    ? activeChild.name
-    : "Mateo · 18 months"; // demo fallback
+  const childId    = activeChild?.id ?? null;
+  const childLabel = activeChild ? activeChild.name : "Mateo · 18 months";
+
+  function refresh() {
+    setTab("today");
+    setRefreshKey((k) => k + 1);
+  }
 
   async function handleVoiceSave(result: VoiceResult) {
     if (result.type !== "memory") return;
@@ -44,9 +52,10 @@ export default function MemoryPage() {
       content:    result.content,
       category:   result.category,
       child_id:   childId ?? "default",
-      created_by: "nanny",
+      created_by: currentUserRole ?? "nanny",
       created_at: new Date().toISOString(),
     });
+    refresh();
   }
 
   return (
@@ -68,7 +77,14 @@ export default function MemoryPage() {
           </div>
           <div className="flex items-center gap-2 mb-0.5">
             <VoiceRecorder context="memory" onSave={handleVoiceSave} className="w-9 h-9" />
-            <PhotoUploader childId={childId} onUpload={() => { setTab("today"); setRefreshKey((k) => k + 1); }} />
+            {/* Note compose */}
+            <button
+              onClick={() => setComposing(true)}
+              className="w-9 h-9 rounded-full bg-surface-raised flex items-center justify-center active:scale-90 transition-transform"
+            >
+              <PenLine size={15} className="text-muted-foreground" />
+            </button>
+            <PhotoUploader childId={childId} onUpload={refresh} />
           </div>
         </div>
 
@@ -112,6 +128,14 @@ export default function MemoryPage() {
           {tab === "favorites" && <FavoritesView childId={childId} />}
         </motion.div>
       </AnimatePresence>
+
+      {/* Note compose sheet */}
+      <NoteComposeSheet
+        open={composing}
+        childId={childId}
+        onClose={() => setComposing(false)}
+        onSaved={refresh}
+      />
     </div>
   );
 }

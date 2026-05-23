@@ -2,17 +2,24 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 function admin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error(`Missing env: ${!url ? "NEXT_PUBLIC_SUPABASE_URL" : "SUPABASE_SERVICE_ROLE_KEY"}`);
+  return createClient(url, key);
 }
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const db = admin();
+  let db;
+  try {
+    db = admin();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Server config error";
+    console.error("[create-home]", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 
   const { data: { user }, error: userErr } = await db.auth.getUser(token);
   if (userErr || !user) {

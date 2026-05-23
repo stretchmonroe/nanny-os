@@ -58,8 +58,8 @@ export default function CreateHomeFlow({ open, onClose }: Props) {
         body: JSON.stringify({ childName, birthYear, birthMonth, role }),
       });
 
-      const json = await res.json();
-      if (!res.ok || !json.child) throw new Error(json.error ?? "Something went wrong");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.child) throw new Error(json.error ?? `Request failed (${res.status})`);
 
       setCurrentUserRole(role);
       setActiveChild({

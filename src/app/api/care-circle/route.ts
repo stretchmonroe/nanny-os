@@ -16,24 +16,23 @@ export async function GET(req: NextRequest) {
   const { data: { user }, error } = await db.auth.getUser(token);
   if (error || !user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-  // Get the user's active household membership.
+  // Get the user's household membership (no status filter — create-home inserts without status).
   const { data: myMembership } = await db
     .from("household_members")
     .select("household_id, role")
     .eq("user_id", user.id)
-    .eq("status", "active")
     .maybeSingle();
 
-  if (!myMembership) return NextResponse.json({ members: [] });
+  if (!myMembership) return NextResponse.json({ members: [], householdId: null });
 
   const householdId = myMembership.household_id as string;
 
-  // All non-removed members of this household.
+  // All members who have actually joined (user_id is set).
   const { data: rows } = await db
     .from("household_members")
-    .select("id, user_id, role, status, invited_email, created_at")
+    .select("user_id, role, invited_email, created_at")
     .eq("household_id", householdId)
-    .neq("status", "removed")
+    .not("user_id", "is", null)
     .order("created_at", { ascending: true });
 
   // Fetch profiles for members who have signed up.
@@ -51,14 +50,11 @@ export async function GET(req: NextRequest) {
   }
 
   const members = (rows ?? []).map((r) => ({
-    id:            r.id,
-    role:          r.role as string,
-    status:        r.status as string,
-    invited_email: r.invited_email as string | null,
-    display_name:  r.user_id ? (profileMap[r.user_id]?.full_name ?? null) : null,
-    email:         r.user_id ? (profileMap[r.user_id]?.email ?? r.invited_email) : r.invited_email,
-    is_me:         r.user_id === user.id,
+    role:         r.role as string,
+    display_name: profileMap[r.user_id]?.full_name ?? null,
+    email:        profileMap[r.user_id]?.email ?? r.invited_email ?? null,
+    is_me:        r.user_id === user.id,
   }));
 
-  return NextResponse.json({ members });
+  return NextResponse.json({ members, householdId });
 }

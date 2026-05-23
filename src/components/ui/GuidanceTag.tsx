@@ -9,9 +9,9 @@ import type { GuidanceSource } from "@/lib/ai/guidance";
 
 const colorMap = {
   emerald: {
-    pill: "bg-emerald-50 dark:bg-emerald-950/25 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/35",
-    panel: "bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30",
-    icon: "text-emerald-500 dark:text-emerald-400",
+    pill:  "bg-sage-light text-sage border-sage-light",
+    panel: "bg-sage-light border-sage-light",
+    icon:  "text-sage",
   },
   sky: {
     pill: "bg-sky-50 dark:bg-sky-950/25 text-sky-700 dark:text-sky-400 border-sky-100 dark:border-sky-900/35",

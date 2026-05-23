@@ -7,11 +7,11 @@
 /* ── Surface & shadow custom properties ──────────────────────────── */
 
 :root {
-  /* Surface hierarchy */
-  --surface-page:   #F5F1EB;
-  --surface-card:   #FFFFFF;
-  --surface-raised: #FFFFFF;
-  --surface-header: rgba(252, 249, 244, 0.94);
+  /* Surface hierarchy — warm linen canvas */
+  --surface-page:   #F4EFE8;
+  --surface-card:   #FEFCF8;
+  --surface-raised: #EDE8DF;
+  --surface-header: rgba(247, 243, 238, 0.95);
 
   /* Borders */
   --border-soft:   rgba(26, 20, 10, 0.07);
@@ -23,24 +23,36 @@
   --shadow-float:    0 8px 32px rgba(26, 20, 10, 0.11), 0 3px 8px rgba(26, 20, 10, 0.05);
   --shadow-deep:     0 24px 64px rgba(26, 20, 10, 0.16), 0 6px 20px rgba(26, 20, 10, 0.08);
 
-  /* ShadCN / Tailwind color tokens */
-  --background:          oklch(0.965 0.009 80);
-  --foreground:          oklch(0.128 0.009 55);
-  --card:                oklch(1.000 0.001 80);
-  --card-foreground:     oklch(0.128 0.009 55);
-  --popover:             oklch(1.000 0.001 80);
-  --popover-foreground:  oklch(0.128 0.009 55);
+  /* Parenting palette — sage / trust / lavender */
+  --sage:           #6A9C80;
+  --sage-light:     #EAF2EC;
+  --sage-muted:     #A4C2B0;
+  --trust:          #5B7FA0;
+  --trust-light:    #E8EFF6;
+  --trust-muted:    #8BAAC6;
+  --lavender:       #8A7AB8;
+  --lavender-light: #EDEBF6;
+  --coral:          #D4694A;
+  --coral-light:    #FAEDE6;
+
+  /* ShadCN / Tailwind color tokens — shifted warmer */
+  --background:          oklch(0.958 0.016 76);
+  --foreground:          oklch(0.140 0.020 50);
+  --card:                oklch(0.987 0.008 76);
+  --card-foreground:     oklch(0.140 0.020 50);
+  --popover:             oklch(0.987 0.008 76);
+  --popover-foreground:  oklch(0.140 0.020 50);
   --primary:             oklch(0.182 0.008 55);
   --primary-foreground:  oklch(0.990 0 0);
-  --secondary:           oklch(0.958 0.007 80);
+  --secondary:           oklch(0.932 0.018 76);
   --secondary-foreground:oklch(0.182 0.008 55);
-  --muted:               oklch(0.958 0.007 80);
-  --muted-foreground:    oklch(0.505 0.015 75);
-  --accent:              oklch(0.958 0.007 80);
+  --muted:               oklch(0.932 0.018 76);
+  --muted-foreground:    oklch(0.508 0.022 68);
+  --accent:              oklch(0.932 0.018 76);
   --accent-foreground:   oklch(0.182 0.008 55);
   --destructive:         oklch(0.577 0.245 27.325);
-  --border:              oklch(0.910 0.011 80);
-  --input:               oklch(0.910 0.011 80);
+  --border:              oklch(0.902 0.016 76);
+  --input:               oklch(0.902 0.016 76);
   --ring:                oklch(0.675 0.012 80);
   --radius:              1.05rem;
   --sidebar:             oklch(0.983 0.006 80);
@@ -54,11 +66,11 @@
 }
 
 .dark {
-  /* Surface hierarchy — deep warm charcoal */
-  --surface-page:   #0D0B09;
-  --surface-card:   #181512;
-  --surface-raised: #1E1B17;
-  --surface-header: rgba(13, 11, 9, 0.93);
+  /* Surface hierarchy — deep warm charcoal, green-brown undertones */
+  --surface-page:   #0E0B08;
+  --surface-card:   #1C1814;
+  --surface-raised: #27211A;
+  --surface-header: rgba(14, 11, 8, 0.93);
 
   /* Borders */
   --border-soft:   rgba(255, 245, 230, 0.07);
@@ -70,21 +82,26 @@
   --shadow-float:    0 8px 30px rgba(0, 0, 0, 0.50), 0 3px 8px rgba(0, 0, 0, 0.28);
   --shadow-deep:     0 20px 60px rgba(0, 0, 0, 0.65), 0 6px 16px rgba(0, 0, 0, 0.38);
 
-  /* ShadCN / Tailwind color tokens */
-  --background:          oklch(0.105 0.013 55);
-  --foreground:          oklch(0.958 0.007 82);
-  --card:                oklch(0.160 0.013 57);
-  --card-foreground:     oklch(0.958 0.007 82);
-  --popover:             oklch(0.160 0.013 57);
-  --popover-foreground:  oklch(0.958 0.007 82);
+  /* Palette dark overrides — tinted deep backgrounds */
+  --sage-light:     #1C2E24;
+  --trust-light:    #1A2430;
+  --lavender-light: #241D3A;
+
+  /* ShadCN / Tailwind color tokens — warmer chroma */
+  --background:          oklch(0.108 0.018 52);
+  --foreground:          oklch(0.950 0.010 80);
+  --card:                oklch(0.152 0.020 54);
+  --card-foreground:     oklch(0.950 0.010 80);
+  --popover:             oklch(0.152 0.020 54);
+  --popover-foreground:  oklch(0.950 0.010 80);
   --primary:             oklch(0.932 0.007 82);
-  --primary-foreground:  oklch(0.160 0.013 57);
-  --secondary:           oklch(0.238 0.012 57);
-  --secondary-foreground:oklch(0.958 0.007 82);
-  --muted:               oklch(0.238 0.012 57);
-  --muted-foreground:    oklch(0.578 0.014 75);
-  --accent:              oklch(0.238 0.012 57);
-  --accent-foreground:   oklch(0.958 0.007 82);
+  --primary-foreground:  oklch(0.152 0.020 54);
+  --secondary:           oklch(0.228 0.018 54);
+  --secondary-foreground:oklch(0.950 0.010 80);
+  --muted:               oklch(0.228 0.018 54);
+  --muted-foreground:    oklch(0.562 0.020 70);
+  --accent:              oklch(0.228 0.018 54);
+  --accent-foreground:   oklch(0.950 0.010 80);
   --destructive:         oklch(0.704 0.191 22.216);
   --border:              oklch(0.255 0.012 57);
   --input:               oklch(0.255 0.012 57);
@@ -143,6 +160,18 @@
   --color-surface-page:   var(--surface-page);
   --color-surface-card:   var(--surface-card);
   --color-surface-raised: var(--surface-raised);
+
+  /* Parenting palette */
+  --color-sage:           var(--sage);
+  --color-sage-light:     var(--sage-light);
+  --color-sage-muted:     var(--sage-muted);
+  --color-trust:          var(--trust);
+  --color-trust-light:    var(--trust-light);
+  --color-trust-muted:    var(--trust-muted);
+  --color-lavender:       var(--lavender);
+  --color-lavender-light: var(--lavender-light);
+  --color-coral:          var(--coral);
+  --color-coral-light:    var(--coral-light);
 }
 
 /* ── Shadow & border utilities ───────────────────────────────────── */

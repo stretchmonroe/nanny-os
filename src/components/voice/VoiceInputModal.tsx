@@ -180,9 +180,9 @@ export default function VoiceInputModal({ state, transcript, interim, context, o
                 <motion.div
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center justify-center py-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30"
+                  className="flex items-center justify-center py-3.5 rounded-2xl bg-sage-light"
                 >
-                  <span className="text-[14px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="text-[14px] font-bold text-sage">
                     Saved ✓
                   </span>
                 </motion.div>

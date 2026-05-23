@@ -10,7 +10,7 @@ import type { PlannedActivity, MontessoriArea } from "@/lib/data/demo";
 const areaConfig: Record<MontessoriArea, {
   emoji: string; label: string; goal: string; bg: string; border: string;
 }> = {
-  "language":       { emoji: "🗣️", label: "Language",       goal: "Vocabulary and intentional communication",        bg: "bg-violet-50/60 dark:bg-violet-950/15", border: "border border-violet-100/80 dark:border-violet-900/20" },
+  "language":       { emoji: "🗣️", label: "Language",       goal: "Vocabulary and intentional communication",        bg: "bg-lavender-light/60 dark:bg-lavender/8", border: "border border-lavender-light dark:border-lavender/15" },
   "sensory":        { emoji: "🫧", label: "Sensory",         goal: "Sensory integration and cause-effect thinking",   bg: "bg-amber-50/60 dark:bg-amber-950/15",   border: "border border-amber-100/80 dark:border-amber-900/20"  },
   "movement":       { emoji: "🏃", label: "Movement",        goal: "Gross motor coordination and body awareness",     bg: "bg-sky-50/60 dark:bg-sky-950/15",       border: "border border-sky-100/80 dark:border-sky-900/20"      },
   "practical-life": { emoji: "🏠", label: "Practical Life",  goal: "Independence, concentration, and fine motor",     bg: "bg-orange-50/60 dark:bg-orange-950/15", border: "border border-orange-100/80 dark:border-orange-900/20" },
@@ -51,7 +51,7 @@ export default function ActivityBlock({ activity }: { activity: PlannedActivity 
         <span className={cn(
           "text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0",
           repSaved                     && "text-amber-700 dark:text-amber-400",
-          status === "done" && !repSaved && "text-emerald-700 dark:text-emerald-400",
+          status === "done" && !repSaved && "text-sage",
           status === "skipped"         && "text-muted-foreground",
         )}>
           {repSaved ? "Replaced" : status === "done" ? "Done" : "Skipped"}
@@ -163,7 +163,7 @@ export default function ActivityBlock({ activity }: { activity: PlannedActivity 
           <div className="flex items-center gap-2 pt-0.5 flex-wrap">
             <button
               onClick={() => setStatus("done")}
-              className="flex items-center gap-1.5 text-[12px] font-semibold text-emerald-700 dark:text-emerald-300 bg-white/70 dark:bg-black/20 border border-white/50 dark:border-white/8 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform"
+              className="flex items-center gap-1.5 text-[12px] font-semibold text-sage bg-white/70 dark:bg-black/20 border border-white/50 dark:border-white/8 px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform"
             >
               <Check size={11} strokeWidth={2.5} />
               Done

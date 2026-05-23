@@ -43,6 +43,7 @@ const DEMO_NOTES: Note[] = [
 
 const ROLE_CONFIG: Record<string, { label: string; emoji: string }> = {
   parent:      { label: "Parent",      emoji: "🏡" },
+  nanny:       { label: "Caregiver",   emoji: "🌱" },
   caregiver:   { label: "Caregiver",   emoji: "🤲" },
   grandparent: { label: "Grandparent", emoji: "👴" },
 };

@@ -26,9 +26,10 @@ function formatToday() {
 interface Props {
   focus: FocusArea;
   onFocusChange: (f: FocusArea) => void;
+  onSetupOpen?: () => void;
 }
 
-export default function ChildProfileHeader({ focus, onFocusChange }: Props) {
+export default function ChildProfileHeader({ focus, onFocusChange, onSetupOpen }: Props) {
   const [greeting, setGreeting] = useState("Good morning");
   const [today, setToday] = useState("");
   const [focusOpen, setFocusOpen] = useState(false);
@@ -81,6 +82,20 @@ export default function ChildProfileHeader({ focus, onFocusChange }: Props) {
         <p className="text-[13px] text-muted-foreground mt-2 font-medium">
           {child.age} · {child.moodLabel}
         </p>
+        {/* Re-entry chip — visible when no real child data has been set up yet */}
+        {!activeChild && onSetupOpen && (
+          <button
+            onClick={onSetupOpen}
+            style={{
+              marginTop: 10, display: "inline-flex", alignItems: "center", gap: 5,
+              padding: "5px 12px", borderRadius: 99, border: "none",
+              background: "rgba(106,156,128,0.12)", color: "#6A9C80",
+              fontSize: 12, fontWeight: 700, cursor: "pointer", letterSpacing: "0.01em",
+            }}
+          >
+            🌱 Set up your home →
+          </button>
+        )}
       </div>
 
       {/* Focus + weather badges */}

@@ -23,32 +23,50 @@ interface Props {
   childId: string | null;
   onClose: () => void;
   onSaved: () => void;
+  // Edit mode — pass these to pre-fill and UPDATE instead of INSERT
+  momentId?: string;
+  initialText?: string;
+  initialCategory?: Category;
 }
 
-export default function NoteComposeSheet({ open, childId, onClose, onSaved }: Props) {
-  const [text,     setText]     = useState("");
-  const [category, setCategory] = useState<Category>("play");
+export default function NoteComposeSheet({ open, childId, onClose, onSaved, momentId, initialText, initialCategory }: Props) {
+  const [text,     setText]     = useState(initialText ?? "");
+  const [category, setCategory] = useState<Category>(initialCategory ?? "play");
   const [saving,   setSaving]   = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const currentUserRole = useAppStore((s) => s.currentUserRole);
+  const isEdit = !!momentId;
 
   useEffect(() => {
-    if (open) setTimeout(() => textareaRef.current?.focus(), 120);
-    else { setText(""); setCategory("play"); }
-  }, [open]);
+    if (open) {
+      setText(initialText ?? "");
+      setCategory(initialCategory ?? "play");
+      setTimeout(() => textareaRef.current?.focus(), 120);
+    }
+  }, [open, initialText, initialCategory]);
 
   async function save() {
     if (!text.trim()) return;
     setSaving(true);
+
     const type = category === "milestone" ? "milestone" : "note";
-    await supabase.from("memory_events").insert({
+    const payload = {
       type,
-      content:    text.trim(),
-      category:   category === "milestone" ? "play" : category,
-      child_id:   childId ?? "default",
-      created_by: currentUserRole ?? "nanny",
-      created_at: new Date().toISOString(),
-    });
+      content:  text.trim(),
+      category: category === "milestone" ? "play" : category,
+    };
+
+    if (isEdit) {
+      await supabase.from("memory_events").update(payload).eq("id", momentId);
+    } else {
+      await supabase.from("memory_events").insert({
+        ...payload,
+        child_id:   childId ?? "default",
+        created_by: currentUserRole ?? "nanny",
+        created_at: new Date().toISOString(),
+      });
+    }
+
     setSaving(false);
     onClose();
     onSaved();
@@ -58,7 +76,6 @@ export default function NoteComposeSheet({ open, childId, onClose, onSaved }: Pr
     <AnimatePresence>
       {open && (
         <>
-          {/* Backdrop */}
           <motion.div
             key="backdrop"
             initial={{ opacity: 0 }}
@@ -69,7 +86,6 @@ export default function NoteComposeSheet({ open, childId, onClose, onSaved }: Pr
             onClick={onClose}
           />
 
-          {/* Sheet */}
           <motion.div
             key="sheet"
             initial={{ y: "100%" }}
@@ -78,12 +94,12 @@ export default function NoteComposeSheet({ open, childId, onClose, onSaved }: Pr
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className="fixed bottom-0 left-0 right-0 z-[61] max-w-md mx-auto bg-surface-card rounded-t-[2rem] px-5 pt-5 pb-10 shadow-elevated"
           >
-            {/* Handle */}
             <div className="w-10 h-1 rounded-full bg-border mx-auto mb-5" />
 
-            {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <p className="text-[17px] font-bold text-foreground">Add a moment</p>
+              <p className="text-[17px] font-bold text-foreground">
+                {isEdit ? "Edit moment" : "Add a moment"}
+              </p>
               <button
                 onClick={onClose}
                 className="w-8 h-8 rounded-full bg-surface-raised flex items-center justify-center active:scale-90 transition-transform"
@@ -92,7 +108,6 @@ export default function NoteComposeSheet({ open, childId, onClose, onSaved }: Pr
               </button>
             </div>
 
-            {/* Category chips */}
             <div className="flex gap-1.5 flex-wrap mb-4">
               {CATEGORIES.map((c) => (
                 <button
@@ -111,7 +126,6 @@ export default function NoteComposeSheet({ open, childId, onClose, onSaved }: Pr
               ))}
             </div>
 
-            {/* Textarea */}
             <textarea
               ref={textareaRef}
               value={text}
@@ -121,13 +135,12 @@ export default function NoteComposeSheet({ open, childId, onClose, onSaved }: Pr
               className="w-full bg-surface-raised rounded-2xl px-4 py-3.5 text-[15px] text-foreground placeholder:text-muted-foreground/40 outline-none resize-none leading-relaxed"
             />
 
-            {/* Save */}
             <button
               onClick={save}
               disabled={!text.trim() || saving}
               className="mt-3 w-full bg-foreground text-white font-bold text-[15px] py-4 rounded-2xl disabled:opacity-30 active:scale-[0.98] transition-all"
             >
-              {saving ? "Saving…" : "Save moment"}
+              {saving ? "Saving…" : isEdit ? "Save changes" : "Save moment"}
             </button>
           </motion.div>
         </>

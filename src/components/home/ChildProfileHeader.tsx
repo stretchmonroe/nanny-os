@@ -6,6 +6,7 @@ import { child, schedule, focusAreas } from "@/lib/data/demo";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { FocusArea } from "@/lib/data/demo";
+import { useAppStore } from "@/store/useAppStore";
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -31,6 +32,10 @@ export default function ChildProfileHeader({ focus, onFocusChange }: Props) {
   const [greeting, setGreeting] = useState("Good morning");
   const [today, setToday] = useState("");
   const [focusOpen, setFocusOpen] = useState(false);
+
+  // Use real child name from store if available, fall back to demo data.
+  const activeChild = useAppStore((s) => s.activeChild);
+  const childName = activeChild?.name || child.name;
 
   useEffect(() => {
     setGreeting(getGreeting());
@@ -71,7 +76,7 @@ export default function ChildProfileHeader({ focus, onFocusChange }: Props) {
           {greeting}
         </p>
         <h1 className="text-[38px] font-black text-foreground tracking-tight leading-[0.92]">
-          {child.name}
+          {childName}
         </h1>
         <p className="text-[13px] text-muted-foreground mt-2 font-medium">
           {child.age} · {child.moodLabel}

@@ -53,7 +53,7 @@ export default function ChildProfileHeader({ focus, onFocusChange, onSetupOpen }
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, ease: [0.25, 1, 0.5, 1] }}
-      className="px-5 pt-10 pb-7 bg-gradient-to-b from-[#F0E8D8]/80 via-[#F4EDE0]/30 to-transparent dark:from-amber-950/30 dark:via-stone-950/10 dark:to-transparent"
+      className="px-5 pt-4 pb-7 bg-gradient-to-b from-[#F0E8D8]/80 via-[#F4EDE0]/30 to-transparent dark:from-amber-950/30 dark:via-stone-950/10 dark:to-transparent"
     >
       {/* Top row: date + theme toggle + floating avatar */}
       <div className="flex items-start justify-between mb-6">

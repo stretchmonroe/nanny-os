@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Camera, Loader2, AlertCircle } from "lucide-react";
+import { useRef, useState } from "react";
+import { Camera, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -12,7 +12,8 @@ interface Props {
 
 export default function PhotoUploader({ childId, onUpload }: Props) {
   const [uploading, setUploading] = useState(false);
-  const [errored,   setErrored]   = useState(false);
+  const [errorMsg,  setErrorMsg]  = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const currentUserRole = useAppStore((s) => s.currentUserRole);
 
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -20,7 +21,7 @@ export default function PhotoUploader({ childId, onUpload }: Props) {
     if (!file) return;
 
     setUploading(true);
-    setErrored(false);
+    setErrorMsg(null);
     try {
       const ext      = file.name.split(".").pop() ?? "jpg";
       const folder   = childId ?? "shared";
@@ -29,7 +30,7 @@ export default function PhotoUploader({ childId, onUpload }: Props) {
       const { error: uploadErr } = await supabase.storage
         .from("photos")
         .upload(fileName, file, { upsert: false });
-      if (uploadErr) throw uploadErr;
+      if (uploadErr) throw new Error(`Storage: ${uploadErr.message}`);
 
       const { data } = supabase.storage.from("photos").getPublicUrl(fileName);
 
@@ -40,41 +41,48 @@ export default function PhotoUploader({ childId, onUpload }: Props) {
         child_id:   childId ?? "default",
         created_by: currentUserRole ?? "nanny",
       });
-      if (insertErr) throw insertErr;
+      if (insertErr) throw new Error(`DB: ${insertErr.message}`);
 
-      e.target.value = "";
+      if (inputRef.current) inputRef.current.value = "";
       onUpload?.();
     } catch (err) {
-      console.error("[PhotoUploader]", err);
-      setErrored(true);
-      setTimeout(() => setErrored(false), 3000);
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      console.error("[PhotoUploader]", msg);
+      setErrorMsg(msg);
+      setTimeout(() => setErrorMsg(null), 5000);
     } finally {
       setUploading(false);
     }
   }
 
   return (
-    <label
-      htmlFor="photo-upload"
-      className="w-9 h-9 rounded-full bg-surface-raised flex items-center justify-center cursor-pointer active:scale-90 transition-transform"
-      title={errored ? "Upload failed — check that the photos storage bucket exists" : "Add photo"}
-    >
-      {uploading ? (
-        <Loader2 size={15} className="animate-spin text-muted-foreground" />
-      ) : errored ? (
-        <AlertCircle size={15} className="text-red-500" />
-      ) : (
-        <Camera size={15} className="text-muted-foreground" />
+    <div className="relative">
+      <button
+        type="button"
+        disabled={uploading}
+        onClick={() => inputRef.current?.click()}
+        className="w-9 h-9 rounded-full bg-surface-raised flex items-center justify-center active:scale-90 transition-transform disabled:opacity-50"
+      >
+        {uploading
+          ? <Loader2 size={15} className="animate-spin text-muted-foreground" />
+          : <Camera size={15} className="text-muted-foreground" />
+        }
+      </button>
+
+      {/* Error toast */}
+      {errorMsg && (
+        <div className="absolute right-0 top-11 w-64 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-[11px] font-medium rounded-xl px-3 py-2 shadow-lg z-50 leading-snug">
+          {errorMsg}
+        </div>
       )}
+
       <input
-        id="photo-upload"
+        ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={upload}
-        disabled={uploading}
       />
-    </label>
+    </div>
   );
 }

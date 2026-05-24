@@ -84,7 +84,11 @@ function MomentMenu({ onEdit, onDelete, canEdit }: { onEdit: () => void; onDelet
 }
 
 /** Heart button — toggles is_favorite in the DB */
-function FavoriteButton({ momentId, initialFavorited }: { momentId: string; initialFavorited?: boolean }) {
+function FavoriteButton({ momentId, initialFavorited, variant = "photo" }: {
+  momentId: string;
+  initialFavorited?: boolean;
+  variant?: "photo" | "card";
+}) {
   const [liked, setLiked] = useState(initialFavorited ?? false);
   const [popped, setPopped] = useState(false);
 
@@ -101,7 +105,10 @@ function FavoriteButton({ momentId, initialFavorited }: { momentId: string; init
       animate={popped ? { scale: [1, 1.5, 0.85, 1.1, 1] } : { scale: 1 }}
       whileTap={{ scale: 0.85 }}
       transition={{ duration: 0.45, ease: [0.34, 1.56, 0.64, 1] }}
-      className="w-9 h-9 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center"
+      className={variant === "photo"
+        ? "w-9 h-9 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center"
+        : "w-8 h-8 rounded-full bg-surface-raised flex items-center justify-center"
+      }
     >
       <AnimatePresence mode="wait">
         <motion.span
@@ -110,7 +117,7 @@ function FavoriteButton({ momentId, initialFavorited }: { momentId: string; init
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.6, opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="text-[16px] leading-none"
+          className={variant === "photo" ? "text-[16px] leading-none" : "text-[13px] leading-none"}
         >
           {liked ? "❤️" : "🤍"}
         </motion.span>
@@ -190,7 +197,10 @@ function InsetPhoto({ moment, authorName, actions }: { moment: JournalMoment; au
 function MilestonePanel({ moment, authorName, actions }: { moment: JournalMoment; authorName?: string; actions?: React.ReactNode }) {
   return (
     <div className="px-8 py-16 text-center relative">
-      {actions && <div className="absolute top-4 right-4">{actions}</div>}
+      <div className="absolute top-4 right-4 flex items-center gap-1.5">
+        <FavoriteButton momentId={moment.id} initialFavorited={moment.isFavorite} variant="card" />
+        {actions}
+      </div>
       <div className="text-[42px] text-amber-400 dark:text-amber-500 mb-5 leading-none select-none">✦</div>
       <p className="text-[28px] font-extrabold text-foreground leading-snug tracking-tight mb-4 max-w-[260px] mx-auto">
         {moment.content}
@@ -215,7 +225,10 @@ function MilestonePanel({ moment, authorName, actions }: { moment: JournalMoment
 function NoteCard({ moment, authorName, actions }: { moment: JournalMoment; authorName?: string; actions?: React.ReactNode }) {
   return (
     <div className="px-8 py-10 relative">
-      {actions && <div className="absolute top-4 right-4">{actions}</div>}
+      <div className="absolute top-4 right-4 flex items-center gap-1.5">
+        <FavoriteButton momentId={moment.id} initialFavorited={moment.isFavorite} variant="card" />
+        {actions}
+      </div>
       <p className="text-[64px] leading-[0.65] text-amber-300 dark:text-amber-700 font-serif mb-4 select-none">&ldquo;</p>
       <p className="text-[20px] font-medium text-foreground leading-[1.7] mb-5">
         {moment.content}

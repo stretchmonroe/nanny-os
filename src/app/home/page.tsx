@@ -40,7 +40,7 @@ export default function HomePage() {
 
         <div className="pt-2 pb-12 space-y-6">
           <QuickActions />
-          <TimelineFeed />
+          <TimelineFeed childId={activeChild?.id ?? null} />
 
           <div className="flex justify-center pb-4">
             <button
@@ -81,15 +81,15 @@ export default function HomePage() {
         </div>
 
         <div className="mt-8">
-          <MomentsCarousel />
+          <MomentsCarousel childId={activeChild?.id ?? null} />
         </div>
 
         <div className="mt-9">
-          <TimelineFeed />
+          <TimelineFeed childId={activeChild?.id ?? null} />
         </div>
 
         <div className="mt-6">
-          <InsightStrip />
+          <InsightStrip childName={activeChild?.name} childBirthDate={activeChild?.birthDate} />
         </div>
 
         <div className="flex justify-center pb-4">

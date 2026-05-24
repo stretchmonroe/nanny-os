@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { weeklyMoments } from "@/lib/data/demo";
 import type { JournalMoment, JournalDay, JournalMomentType, ActivityCategory } from "@/lib/data/demo";
 import { cn } from "@/lib/utils";
@@ -155,29 +156,46 @@ function DaySection({ dayData, dayIndex }: { dayData: JournalDay; dayIndex: numb
 }
 
 export default function WeekView({ childId }: { childId?: string | null }) {
-  const [realDays, setRealDays] = useState<JournalDay[]>([]);
-  const [status, setStatus]     = useState<"idle" | "loading" | "done">("idle");
+  const [realDays,   setRealDays]   = useState<JournalDay[]>([]);
+  const [status,     setStatus]     = useState<"idle" | "loading" | "done">("idle");
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = last week, etc.
 
   useEffect(() => {
     if (!childId) { setStatus("idle"); return; }
 
     setStatus("loading");
-    const sevenAgo = new Date();
-    sevenAgo.setDate(sevenAgo.getDate() - 7);
-    sevenAgo.setHours(0, 0, 0, 0);
+
+    const end   = new Date();
+    end.setDate(end.getDate() + weekOffset * 7);
+    end.setHours(23, 59, 59, 999);
+
+    const start = new Date(end);
+    start.setDate(start.getDate() - 6);
+    start.setHours(0, 0, 0, 0);
 
     supabase
       .from("memory_events")
       .select("*")
       .eq("child_id", childId)
       .in("type", ["note", "photo", "milestone"])
-      .gte("created_at", sevenAgo.toISOString())
+      .gte("created_at", start.toISOString())
+      .lte("created_at", end.toISOString())
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         setRealDays(groupByDay(data ?? []));
         setStatus("done");
       });
-  }, [childId]);
+  }, [childId, weekOffset]);
+
+  function weekLabel() {
+    if (weekOffset === 0) return "This week";
+    if (weekOffset === -1) return "Last week";
+    const end = new Date();
+    end.setDate(end.getDate() + weekOffset * 7);
+    const start = new Date(end);
+    start.setDate(start.getDate() - 6);
+    return `${start.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${end.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+  }
 
   // Demo mode
   if (!childId) {
@@ -195,15 +213,37 @@ export default function WeekView({ childId }: { childId?: string | null }) {
 
   if (status !== "done") return null;
 
+  const nav = (
+    <div className="flex items-center justify-between px-5 mb-6">
+      <button
+        onClick={() => setWeekOffset((w) => w - 1)}
+        className="w-9 h-9 rounded-full bg-surface-raised flex items-center justify-center active:scale-90 transition-transform"
+      >
+        <ChevronLeft size={16} className="text-muted-foreground" />
+      </button>
+      <p className="text-[13px] font-bold text-muted-foreground">{weekLabel()}</p>
+      <button
+        onClick={() => setWeekOffset((w) => Math.min(0, w + 1))}
+        disabled={weekOffset === 0}
+        className="w-9 h-9 rounded-full bg-surface-raised flex items-center justify-center active:scale-90 transition-transform disabled:opacity-30"
+      >
+        <ChevronRight size={16} className="text-muted-foreground" />
+      </button>
+    </div>
+  );
+
   // Real — empty
   if (realDays.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 text-center pt-14 pb-8 px-6">
-        <span className="text-4xl">🗓️</span>
-        <p className="text-[15px] font-semibold text-foreground mt-2">Nothing logged this week yet</p>
-        <p className="text-[13px] text-muted-foreground max-w-[230px] leading-relaxed">
-          Moments you log will appear here as a weekly story.
-        </p>
+      <div className="pb-8">
+        {nav}
+        <div className="flex flex-col items-center gap-2 text-center pt-8 pb-8 px-6">
+          <span className="text-4xl">🗓️</span>
+          <p className="text-[15px] font-semibold text-foreground mt-2">Nothing logged this week</p>
+          <p className="text-[13px] text-muted-foreground max-w-[230px] leading-relaxed">
+            Use the arrows to browse other weeks.
+          </p>
+        </div>
       </div>
     );
   }
@@ -211,6 +251,7 @@ export default function WeekView({ childId }: { childId?: string | null }) {
   // Real — has moments
   return (
     <div className="pb-8">
+      {nav}
       <div className="space-y-12">
         {realDays.map((dayData, i) => (
           <DaySection key={dayData.date} dayData={dayData} dayIndex={i} />

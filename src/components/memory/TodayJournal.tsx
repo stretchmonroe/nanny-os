@@ -33,6 +33,7 @@ function normalizeMoment(raw: Record<string, unknown>): JournalMoment {
     imageUrl:   raw.image_url as string | undefined,
     category:   (raw.category ?? "play") as ActivityCategory,
     createdBy:  raw.created_by === "parent" ? "parent" : "nanny",
+    isFavorite: Boolean(raw.is_favorite),
   };
 }
 
@@ -82,17 +83,16 @@ function MomentMenu({ onEdit, onDelete, canEdit }: { onEdit: () => void; onDelet
   );
 }
 
-/** Small heart button for photo overlays */
-function PhotoHeart() {
-  const [liked, setLiked] = useState(false);
+/** Heart button — toggles is_favorite in the DB */
+function FavoriteButton({ momentId, initialFavorited }: { momentId: string; initialFavorited?: boolean }) {
+  const [liked, setLiked] = useState(initialFavorited ?? false);
   const [popped, setPopped] = useState(false);
 
-  function tap() {
-    if (!liked) {
-      setPopped(true);
-      setTimeout(() => setPopped(false), 600);
-    }
-    setLiked((v) => !v);
+  async function tap() {
+    const next = !liked;
+    setLiked(next);
+    if (next) { setPopped(true); setTimeout(() => setPopped(false), 600); }
+    await supabase.from("memory_events").update({ is_favorite: next }).eq("id", momentId);
   }
 
   return (
@@ -136,7 +136,7 @@ function HeroPhoto({ moment, authorName, actions }: { moment: JournalMoment; aut
 
       <div className="absolute top-4 right-4 flex items-center gap-2">
         {actions}
-        <PhotoHeart />
+        <FavoriteButton momentId={moment.id} initialFavorited={moment.isFavorite} />
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 px-8 pb-10">
@@ -171,7 +171,7 @@ function InsetPhoto({ moment, authorName, actions }: { moment: JournalMoment; au
 
         <div className="absolute top-3.5 right-3.5 flex items-center gap-2">
           {actions}
-          <PhotoHeart />
+          <FavoriteButton momentId={moment.id} initialFavorited={moment.isFavorite} />
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-5">

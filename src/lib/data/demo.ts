@@ -222,10 +222,11 @@ export interface JournalMoment {
   type: JournalMomentType
   content: string
   time: string
-  createdAt?: string   // ISO string — used for 7-day edit window check
+  createdAt?: string
   imageUrl?: string
   category: ActivityCategory
   createdBy?: "nanny" | "parent"
+  isFavorite?: boolean
   reactions?: MomentReaction[]
   replies?: MomentReply[]
 }

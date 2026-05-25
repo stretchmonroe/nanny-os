@@ -191,6 +191,7 @@ export const typeConfig = {
   play:     { label: "Play",     color: "bg-sage-light text-sage dark:bg-sage/15 dark:text-sage-muted",               dot: "bg-sage"        },
   nap:      { label: "Nap",      color: "bg-trust-light text-trust dark:bg-trust/15 dark:text-trust-muted",           dot: "bg-trust"       },
   learning: { label: "Learning", color: "bg-lavender-light text-lavender dark:bg-lavender/15 dark:text-lavender",     dot: "bg-lavender"    },
+  creative: { label: "Creative", color: "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300",           dot: "bg-rose-400"    },
 }
 
 // ── Memory / Journal page data ───────────────────────────────────────────────

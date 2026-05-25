@@ -12,15 +12,24 @@ type ScheduleItem = {
   notes?: string;
 };
 
-export default function ScheduleBlock({ item }: { item: ScheduleItem }) {
+export default function ScheduleBlock({
+  item,
+  onToggleDone,
+}: {
+  item: ScheduleItem;
+  onToggleDone?: () => void;
+}) {
   const config = typeConfig[item.type] ?? typeConfig.play;
 
   return (
     <div
+      role={onToggleDone ? "button" : undefined}
+      onClick={onToggleDone}
       className={cn(
         "relative flex items-start gap-4 bg-surface-card rounded-2xl px-4 py-4 shadow-card border-soft overflow-hidden transition-opacity",
         item.active && "ring-1 ring-amber-300/60 dark:ring-amber-800/40",
-        item.done && "opacity-50"
+        item.done && "opacity-50",
+        onToggleDone && "active:scale-[0.985] transition-transform cursor-pointer select-none"
       )}
     >
       {/* Left accent bar */}
@@ -66,6 +75,8 @@ export default function ScheduleBlock({ item }: { item: ScheduleItem }) {
               <div className="w-5 h-5 rounded-full bg-sage-light flex items-center justify-center">
                 <Check size={11} strokeWidth={2.5} className="text-sage" />
               </div>
+            ) : onToggleDone ? (
+              <div className="w-5 h-5 rounded-full border-2 border-border/50" />
             ) : !item.active ? (
               <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", config.color)}>
                 {config.label}

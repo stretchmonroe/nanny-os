@@ -5,7 +5,9 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { type, input } = body;
 
-    if (!process.env.ANTHROPIC_API_KEY) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    console.log("[ai] key present:", !!apiKey, "length:", apiKey?.length ?? 0, "prefix:", apiKey?.slice(0, 7) ?? "none");
+    if (!apiKey) {
       return Response.json({ error: "no_key" });
     }
 
@@ -41,7 +43,7 @@ export async function POST(req: Request) {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
       },

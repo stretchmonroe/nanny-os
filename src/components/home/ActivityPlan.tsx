@@ -10,6 +10,15 @@ import { isValidGuidanceSource } from "@/lib/ai/guidance";
 import { cn } from "@/lib/utils";
 import type { PlannedActivity, FocusArea } from "@/lib/data/demo";
 
+function ageLabel(birthDate?: string | null): string {
+  if (!birthDate) return "18 months";
+  const birth = new Date(birthDate);
+  const now = new Date();
+  const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+  if (months < 24) return `${months} months`;
+  return `${Math.floor(months / 12)} years`;
+}
+
 const areaConfig = {
   "language":       { emoji: "🗣️", label: "Language",      bg: "bg-lavender-light dark:bg-lavender/10", accent: "bg-lavender" },
   "sensory":        { emoji: "🫧", label: "Sensory",        bg: "bg-amber-50   dark:bg-amber-950/25",   accent: "bg-amber-400"  },
@@ -19,21 +28,25 @@ const areaConfig = {
 } as const;
 
 interface Props {
-  focus: FocusArea;
+  focus:           FocusArea;
+  childName?:      string | null;
+  childBirthDate?: string | null;
 }
 
-export default function ActivityPlan({ focus }: Props) {
+export default function ActivityPlan({ focus, childName, childBirthDate }: Props) {
   const [activities, setActivities] = useState<PlannedActivity[]>(dailyActivities);
   const [swapping, setSwapping] = useState<string | null>(null);
 
   useEffect(() => {
     const done = schedule.filter((s) => s.done).map((s) => s.title);
+    const name = childName ?? "Mateo";
+    const age  = ageLabel(childBirthDate);
     callAI("activityPlan", {
-      childName: "Mateo",
-      childAge: "18 months",
-      focusArea: focus,
+      childName:      name,
+      childAge:       age,
+      focusArea:      focus,
       completedToday: done,
-      timeOfDay: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+      timeOfDay:      new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
     }).then((res) => {
       if (!res) return;
       const parsed = parseAIJson<{ activities: PlannedActivity[] }>(res.result, { activities: [] });

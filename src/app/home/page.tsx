@@ -74,10 +74,17 @@ export default function HomePage() {
           </div>
         )}
 
-        <RecommendationCard />
+        <RecommendationCard
+          childName={activeChild?.name}
+          childBirthDate={activeChild?.birthDate}
+        />
 
         <div className="mt-6">
-          <ActivityPlan focus={focus} />
+          <ActivityPlan
+            focus={focus}
+            childName={activeChild?.name}
+            childBirthDate={activeChild?.birthDate}
+          />
         </div>
 
         <div className="mt-7">

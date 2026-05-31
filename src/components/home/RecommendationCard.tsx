@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Brain, ChevronDown, Send, MessageCircle, Check, Clock, X } from "lucide-react";
 import { aiSuggestion, schedule } from "@/lib/data/demo";
+
+function ageLabel(birthDate?: string | null): string {
+  if (!birthDate) return "18 months";
+  const birth = new Date(birthDate);
+  const now = new Date();
+  const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+  if (months < 24) return `${months} months`;
+  return `${Math.floor(months / 12)} years`;
+}
 import { callAI, parseAIJson } from "@/lib/ai/client";
 import GuidanceTag from "@/components/ui/GuidanceTag";
 import { cn } from "@/lib/utils";
@@ -34,18 +43,25 @@ const demo: RichRecommendation = {
   flagForApproval: aiSuggestion.flagForApproval,
 };
 
-export default function RecommendationCard() {
+interface Props {
+  childName?:      string | null;
+  childBirthDate?: string | null;
+}
+
+export default function RecommendationCard({ childName, childBirthDate }: Props) {
   const [action, setAction] = useState<RichRecommendation>(demo);
   const [expanded, setExpanded] = useState(false);
   const [approval, setApproval] = useState<ApprovalState>("idle");
 
   useEffect(() => {
     const lastDone = schedule.filter((s) => s.done).at(-1);
+    const name = childName ?? "Mateo";
+    const age  = ageLabel(childBirthDate);
     callAI("nextBestAction", {
-      currentTime: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+      currentTime:  new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
       lastActivity: lastDone?.title ?? "Morning Park Walk",
-      energyLevel: "moderate",
-      context: "Mateo, 18 months, developmental focus: Language & Communication, sunny day",
+      energyLevel:  "moderate",
+      context:      `${name}, ${age}, developmental focus: Language & Communication`,
     }).then((res) => {
       if (!res) return;
       const parsed = parseAIJson<RichRecommendation>(res.result, demo);
@@ -160,14 +176,14 @@ export default function RecommendationCard() {
                   className="flex items-center gap-1.5 text-[12px] font-semibold text-trust bg-trust-light border border-trust-light px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform"
                 >
                   <Send size={11} />
-                  Share with Sofia
+                  Share with caregiver
                 </button>
                 <button
                   onClick={() => setApproval("awaiting")}
                   className="flex items-center gap-1.5 text-[12px] font-semibold text-muted-foreground bg-muted px-3 py-1.5 rounded-full active:scale-[0.97] transition-transform"
                 >
                   <MessageCircle size={11} />
-                  Ask Sofia first
+                  Ask caregiver first
                 </button>
               </motion.div>
             )}
@@ -183,7 +199,7 @@ export default function RecommendationCard() {
               >
                 <span className="flex items-center gap-1.5 text-[12px] font-semibold text-sage bg-sage-light border border-sage-light px-3 py-1.5 rounded-full">
                   <Check size={11} strokeWidth={2.5} />
-                  Shared with Sofia
+                  Shared with caregiver
                 </span>
                 <button
                   onClick={() => setApproval("idle")}
@@ -205,7 +221,7 @@ export default function RecommendationCard() {
               >
                 <span className="flex items-center gap-1.5 text-[12px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30 px-3 py-1.5 rounded-full">
                   <Clock size={11} />
-                  Waiting for Sofia
+                  Waiting for caregiver
                 </span>
                 <button
                   onClick={() => setApproval("idle")}

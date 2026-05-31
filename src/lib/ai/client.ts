@@ -10,7 +10,10 @@ export async function callAI(
     });
     if (!res.ok) return null;
     const data = await res.json();
-    if (data.error || !data.result) return null;
+    if (data.error || !data.result) {
+      console.warn("[callAI]", type, "failed:", data.error, data.status ?? "");
+      return null;
+    }
     return data;
   } catch {
     return null;

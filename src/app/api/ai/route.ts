@@ -54,12 +54,17 @@ export async function POST(req: Request) {
     });
 
     if (!response.ok) {
-      return Response.json({ error: "api_error" });
+      const errBody = await response.text().catch(() => "(unreadable)");
+      console.error("[ai] anthropic error", response.status, errBody);
+      return Response.json({ error: "api_error", status: response.status });
     }
 
     const data = await response.json();
-    return Response.json({ result: data.content?.[0]?.text ?? null });
-  } catch {
+    const result = data.content?.[0]?.text ?? null;
+    if (!result) console.error("[ai] empty result from anthropic", JSON.stringify(data));
+    return Response.json({ result });
+  } catch (err) {
+    console.error("[ai] server_error", err);
     return Response.json({ error: "server_error" });
   }
 }

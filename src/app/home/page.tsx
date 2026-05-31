@@ -84,6 +84,7 @@ export default function HomePage() {
             focus={focus}
             childName={activeChild?.name}
             childBirthDate={activeChild?.birthDate}
+            childId={activeChild?.id}
           />
         </div>
 

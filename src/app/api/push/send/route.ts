@@ -2,12 +2,6 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT!,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!,
-);
-
 function admin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,6 +17,12 @@ export async function POST(req: NextRequest) {
   if (!childId || !targetRole) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
   const db = admin();
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT!,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!,
+  );
+
   const { data: { user } } = await db.auth.getUser(token);
   if (!user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 

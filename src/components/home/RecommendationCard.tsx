@@ -23,6 +23,9 @@ type RichRecommendation = {
   recommendation: string;
   reason: string;
   duration: string;
+  activity?: string;
+  developmentalFocus?: string;
+  developmentalNote?: string;
   backupOption: string;
   developmentalReason: string;
   guidanceSource: GuidanceSource;
@@ -33,14 +36,17 @@ type RichRecommendation = {
 type ApprovalState = "idle" | "shared" | "awaiting";
 
 const demo: RichRecommendation = {
-  recommendation: aiSuggestion.title,
-  reason: aiSuggestion.body,
-  duration: aiSuggestion.duration,
-  backupOption: "Short walk outside",
+  recommendation:    aiSuggestion.title,
+  reason:            aiSuggestion.body,
+  duration:          aiSuggestion.duration,
+  activity:          aiSuggestion.activity,
+  developmentalFocus: aiSuggestion.developmentalFocus,
+  developmentalNote:  aiSuggestion.developmentalNote,
+  backupOption:      "Short walk outside",
   developmentalReason: aiSuggestion.developmentalReason,
-  guidanceSource: aiSuggestion.guidanceSource,
-  ageRange: aiSuggestion.ageRange,
-  flagForApproval: aiSuggestion.flagForApproval,
+  guidanceSource:    aiSuggestion.guidanceSource,
+  ageRange:          aiSuggestion.ageRange,
+  flagForApproval:   aiSuggestion.flagForApproval,
 };
 
 interface Props {
@@ -55,13 +61,14 @@ export default function RecommendationCard({ childName, childBirthDate }: Props)
 
   useEffect(() => {
     const lastDone = schedule.filter((s) => s.done).at(-1);
-    const name = childName ?? "Mateo";
+    const name = childName ?? "the child";
     const age  = ageLabel(childBirthDate);
     callAI("nextBestAction", {
       currentTime:  new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-      lastActivity: lastDone?.title ?? "Morning Park Walk",
+      lastActivity: lastDone?.title ?? "Morning routine",
       energyLevel:  "moderate",
-      context:      `${name}, ${age}, developmental focus: Language & Communication`,
+      childName:    name,
+      childAge:     age,
     }).then((res) => {
       if (!res) return;
       const parsed = parseAIJson<RichRecommendation>(res.result, demo);
@@ -96,9 +103,11 @@ export default function RecommendationCard({ childName, childBirthDate }: Props)
             </p>
 
             <div className="mt-3 flex items-center gap-2.5 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 bg-white/80 dark:bg-surface-raised border-soft text-trust text-[12px] font-semibold px-3 py-1.5 rounded-full shadow-card">
-                🎯 {aiSuggestion.activity}
-              </span>
+              {action.activity && (
+                <span className="inline-flex items-center gap-1.5 bg-white/80 dark:bg-surface-raised border-soft text-trust text-[12px] font-semibold px-3 py-1.5 rounded-full shadow-card">
+                  🎯 {action.activity}
+                </span>
+              )}
               <span className="text-[12px] text-muted-foreground/70 font-medium">
                 {action.duration}
               </span>
@@ -114,10 +123,10 @@ export default function RecommendationCard({ childName, childBirthDate }: Props)
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-trust-muted uppercase tracking-widest mb-0.5">
-                {aiSuggestion.developmentalFocus}
+                {action.developmentalFocus ?? aiSuggestion.developmentalFocus}
               </p>
               <p className="text-[13px] text-muted-foreground leading-relaxed">
-                {aiSuggestion.developmentalNote}
+                {action.developmentalNote ?? aiSuggestion.developmentalNote}
               </p>
             </div>
           </div>

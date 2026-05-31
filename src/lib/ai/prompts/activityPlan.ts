@@ -33,6 +33,7 @@ OUTPUT JSON — return exactly this shape:
 }
 
 Rules:
+- ALWAYS use the child's real name (${input.childName}) in descriptions — never substitute "Mateo", "the child", or any placeholder
 - Activities must be age-appropriate for ${input.childAge}
 - Prefer low-prep, screen-free, child-led exploration
 - Each activity should support the focus area: ${input.focusArea}

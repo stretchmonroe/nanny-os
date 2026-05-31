@@ -28,8 +28,9 @@ export async function registerPush(token: string): Promise<void> {
       return;
     }
 
-    const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim();
     if (!key) return;
+    console.log("[push] VAPID key length:", key.length, "first4:", key.slice(0, 4));
 
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly:      true,

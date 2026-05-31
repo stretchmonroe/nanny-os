@@ -14,6 +14,7 @@ import NoteComposeSheet from "@/components/memory/NoteComposeSheet";
 import VoiceRecorder from "@/components/voice/VoiceRecorder";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore as useStore } from "@/store/useAppStore";
+import { notifyHousehold } from "@/lib/push/notify";
 import type { VoiceResult } from "@/lib/voice/transcriptParser";
 
 type Tab = "today" | "week" | "favorites";
@@ -34,10 +35,12 @@ export default function MemoryPage() {
   const [tab,        setTab]        = useState<Tab>("today");
   const [refreshKey, setRefreshKey] = useState(0);
   const [composing,  setComposing]  = useState(false);
-  const activeChild    = useAppStore((s) => s.activeChild);
+  const activeChild     = useAppStore((s) => s.activeChild);
   const currentUserRole = useStore((s) => s.currentUserRole);
+  const profileFullName = useStore((s) => s.profileFullName);
 
   const childId    = activeChild?.id ?? null;
+  const childName  = activeChild?.name ?? null;
   const childLabel = activeChild ? activeChild.name : "Mateo · 18 months";
 
   function refresh() {
@@ -55,6 +58,9 @@ export default function MemoryPage() {
       created_by: currentUserRole ?? "nanny",
       created_at: new Date().toISOString(),
     });
+    if (childId && childId !== "default") {
+      notifyHousehold({ childId, childName, senderRole: currentUserRole ?? "nanny", senderName: profileFullName, eventType: "note" });
+    }
     refresh();
   }
 
@@ -84,7 +90,7 @@ export default function MemoryPage() {
             >
               <PenLine size={15} className="text-muted-foreground" />
             </button>
-            <PhotoUploader childId={childId} onUpload={refresh} />
+            <PhotoUploader childId={childId} childName={childName} onUpload={refresh} />
           </div>
         </div>
 
@@ -133,6 +139,7 @@ export default function MemoryPage() {
       <NoteComposeSheet
         open={composing}
         childId={childId}
+        childName={childName}
         onClose={() => setComposing(false)}
         onSaved={refresh}
       />

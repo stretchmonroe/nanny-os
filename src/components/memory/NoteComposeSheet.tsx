@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
+import { notifyHousehold } from "@/lib/push/notify";
 
 const CATEGORIES = [
   { id: "play",     label: "Play",     emoji: "🎮" },
@@ -19,22 +20,23 @@ const CATEGORIES = [
 type Category = typeof CATEGORIES[number]["id"];
 
 interface Props {
-  open: boolean;
-  childId: string | null;
-  onClose: () => void;
-  onSaved: () => void;
+  open:      boolean;
+  childId:   string | null;
+  childName?: string | null;
+  onClose:   () => void;
+  onSaved:   () => void;
   // Edit mode — pass these to pre-fill and UPDATE instead of INSERT
-  momentId?: string;
-  initialText?: string;
+  momentId?:       string;
+  initialText?:    string;
   initialCategory?: Category;
 }
 
-export default function NoteComposeSheet({ open, childId, onClose, onSaved, momentId, initialText, initialCategory }: Props) {
+export default function NoteComposeSheet({ open, childId, childName, onClose, onSaved, momentId, initialText, initialCategory }: Props) {
   const [text,     setText]     = useState(initialText ?? "");
   const [category, setCategory] = useState<Category>(initialCategory ?? "play");
   const [saving,   setSaving]   = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const currentUserRole = useAppStore((s) => s.currentUserRole);
+  const { currentUserRole, profileFullName } = useAppStore();
   const isEdit = !!momentId;
 
   useEffect(() => {
@@ -65,6 +67,15 @@ export default function NoteComposeSheet({ open, childId, onClose, onSaved, mome
         created_by: currentUserRole ?? "nanny",
         created_at: new Date().toISOString(),
       });
+      if (childId && childId !== "default") {
+        notifyHousehold({
+          childId,
+          childName,
+          senderRole: currentUserRole ?? "nanny",
+          senderName: profileFullName,
+          eventType:  category === "milestone" ? "milestone" : "note",
+        });
+      }
     }
 
     setSaving(false);

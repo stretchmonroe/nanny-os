@@ -4,17 +4,19 @@ import { useRef, useState } from "react";
 import { Camera, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
+import { notifyHousehold } from "@/lib/push/notify";
 
 interface Props {
-  childId?: string | null;
-  onUpload?: () => void;
+  childId?:   string | null;
+  childName?: string | null;
+  onUpload?:  () => void;
 }
 
-export default function PhotoUploader({ childId, onUpload }: Props) {
+export default function PhotoUploader({ childId, childName, onUpload }: Props) {
   const [uploading, setUploading] = useState(false);
   const [errorMsg,  setErrorMsg]  = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const currentUserRole = useAppStore((s) => s.currentUserRole);
+  const { currentUserRole, profileFullName } = useAppStore();
 
   async function upload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -43,6 +45,16 @@ export default function PhotoUploader({ childId, onUpload }: Props) {
         created_at: new Date().toISOString(),
       });
       if (insertErr) throw new Error(`DB: ${insertErr.message}`);
+
+      if (childId && childId !== "default") {
+        notifyHousehold({
+          childId,
+          childName,
+          senderRole: currentUserRole ?? "nanny",
+          senderName: profileFullName,
+          eventType:  "photo",
+        });
+      }
 
       if (inputRef.current) inputRef.current.value = "";
       onUpload?.();

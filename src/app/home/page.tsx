@@ -11,6 +11,7 @@ import QuickActions from "@/components/home/QuickActions";
 import MomentsCarousel from "@/components/home/MomentsCarousel";
 import InsightStrip from "@/components/home/InsightStrip";
 import { ProfileSetupCard } from "@/components/home/ProfileSetupCard";
+import PushPermission from "@/components/notifications/PushPermission";
 import type { FocusArea } from "@/lib/data/demo";
 
 export default function HomePage() {
@@ -39,6 +40,7 @@ export default function HomePage() {
         />
 
         <div className="pt-2 pb-12 space-y-6">
+          <PushPermission />
           <QuickActions />
           <TimelineFeed childId={activeChild?.id ?? null} />
 
@@ -64,6 +66,8 @@ export default function HomePage() {
       />
 
       <div className="pt-2 pb-12">
+        <PushPermission />
+
         {setupOpen && !activeChild && (
           <div className="mb-5">
             <ProfileSetupCard onDismiss={() => setSetupOpen(false)} />

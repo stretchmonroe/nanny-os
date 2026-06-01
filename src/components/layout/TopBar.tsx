@@ -27,7 +27,9 @@ export default function TopBar() {
 
   if (HIDE_ON.some((p) => pathname.startsWith(p))) return null;
 
-  const showDot = authReady && hasSession && (!activeChild || !currentUserRole);
+  // Only parents (and new users who haven't chosen a role yet) see the setup dot.
+  // Nannies cannot do household setup so the dot is never relevant to them.
+  const showDot = authReady && hasSession && currentUserRole !== "nanny" && (!activeChild || !currentUserRole);
 
   return (
     <>

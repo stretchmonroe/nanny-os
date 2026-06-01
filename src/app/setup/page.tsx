@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Check, ChevronRight } from "lucide-react";
@@ -9,9 +9,16 @@ import { cn } from "@/lib/utils";
 import CreateHomeFlow from "@/components/onboarding/CreateHomeFlow";
 
 export default function SetupPage() {
-  const { currentUserRole, activeChild } = useAppStore();
+  const { currentUserRole, activeChild, authReady } = useAppStore();
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
+
+  // Caregivers cannot manage household setup — send them back to the app shell.
+  useEffect(() => {
+    if (authReady && currentUserRole === "nanny") {
+      router.replace("/home");
+    }
+  }, [authReady, currentUserRole, router]);
 
   // completion state — required cards only
   const homeDetailsDone  = currentUserRole !== null;

@@ -9,12 +9,14 @@ import type { AgedActivity } from "@/lib/data/activities";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
 
+// Map Montessori areas to memory_events categories that exist in the DB schema.
+// "creative" is not a valid DB category — use "play" as the safe fallback.
 const areaToCategory: Record<string, string> = {
   "language":       "learning",
   "sensory":        "play",
   "movement":       "outdoor",
   "practical-life": "play",
-  "creativity":     "creative",
+  "creativity":     "play",
 };
 
 const areaConfig: Record<string, { emoji: string; label: string; bg: string; border: string }> = {
@@ -109,7 +111,14 @@ export default function SuggestionsCarousel({ birthDate, childId, className }: P
   async function handleDone(activity: AgedActivity) {
     dismiss(activity.id); // immediate UI feedback
     if (!childId) return; // demo mode — skip DB write
-    await supabase.from("memory_events").insert({
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.error("[SuggestionsCarousel] no session — skipping insert");
+      return;
+    }
+
+    const { error } = await supabase.from("memory_events").insert({
       type:       "note",
       content:    `${activity.title} — ${activity.description}`,
       category:   areaToCategory[activity.area] ?? "play",
@@ -117,6 +126,8 @@ export default function SuggestionsCarousel({ birthDate, childId, className }: P
       created_by: currentUserRole ?? "nanny",
       created_at: new Date().toISOString(),
     });
+
+    if (error) console.error("[SuggestionsCarousel] insert failed:", error.message, error.details);
   }
 
   return (

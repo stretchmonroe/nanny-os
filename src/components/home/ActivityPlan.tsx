@@ -75,19 +75,29 @@ export default function ActivityPlan({ focus, childName, childBirthDate, childId
   // Real child: fetch today's diary entries
   useEffect(() => {
     if (!childId) return;
-    setLoading(true);
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    supabase
-      .from("memory_events")
-      .select("id, type, content, category, image_url, created_at")
-      .eq("child_id", childId)
-      .gte("created_at", todayStart.toISOString())
-      .order("created_at", { ascending: true })
-      .then(({ data }) => {
-        setEvents((data as MemoryEvent[]) ?? []);
-        setLoading(false);
-      });
+
+    function fetchEvents() {
+      setLoading(true);
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      supabase
+        .from("memory_events")
+        .select("id, type, content, category, image_url, created_at")
+        .eq("child_id", childId as string)
+        .gte("created_at", todayStart.toISOString())
+        .order("created_at", { ascending: true })
+        .then(({ data }) => {
+          setEvents((data as MemoryEvent[]) ?? []);
+          setLoading(false);
+        });
+    }
+
+    fetchEvents();
+
+    // Re-fetch when navigating back to this page
+    function onFocus() { fetchEvents(); }
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [childId]);
 
   // Demo mode: call AI for suggestions

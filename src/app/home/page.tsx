@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
 import ChildProfileHeader from "@/components/home/ChildProfileHeader";
-import RecommendationCard from "@/components/home/RecommendationCard";
 import ActivityPlan from "@/components/home/ActivityPlan";
 import TimelineFeed from "@/components/home/TimelineFeed";
 import QuickActions from "@/components/home/QuickActions";
@@ -46,12 +45,7 @@ export default function HomePage() {
           </div>
         )}
 
-        <RecommendationCard
-          childName={activeChild?.name}
-          childBirthDate={activeChild?.birthDate}
-        />
-
-        <div className="mt-6">
+        <div className="mt-2">
           <ActivityPlan
             focus={focus}
             childName={activeChild?.name}
@@ -60,7 +54,7 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="mt-7">
+        <div className="mt-6">
           <QuickActions />
         </div>
 

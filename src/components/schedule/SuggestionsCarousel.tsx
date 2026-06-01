@@ -6,6 +6,16 @@ import { Check, SkipForward } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getDailyActivities } from "@/lib/data/activities";
 import type { AgedActivity } from "@/lib/data/activities";
+import { supabase } from "@/lib/supabase/client";
+import { useAppStore } from "@/store/useAppStore";
+
+const areaToCategory: Record<string, string> = {
+  "language":       "learning",
+  "sensory":        "play",
+  "movement":       "outdoor",
+  "practical-life": "play",
+  "creativity":     "creative",
+};
 
 const areaConfig: Record<string, { emoji: string; label: string; bg: string; border: string }> = {
   "language":       { emoji: "🗣️", label: "Language",       bg: "bg-lavender-light/60 dark:bg-lavender/8", border: "border-lavender-light dark:border-lavender/15" },
@@ -84,8 +94,9 @@ interface Props {
 }
 
 export default function SuggestionsCarousel({ birthDate, childId, className }: Props) {
-  const [allActivities]   = useState(() => getDailyActivities(birthDate, childId, 10));
-  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+  const [allActivities]            = useState(() => getDailyActivities(birthDate, childId, 10));
+  const [dismissed, setDismissed]  = useState<Set<string>>(() => new Set());
+  const currentUserRole            = useAppStore((s) => s.currentUserRole);
 
   const visible = allActivities.filter((a) => !dismissed.has(a.id));
 
@@ -93,6 +104,19 @@ export default function SuggestionsCarousel({ birthDate, childId, className }: P
 
   function dismiss(id: string) {
     setDismissed((prev) => new Set([...prev, id]));
+  }
+
+  async function handleDone(activity: AgedActivity) {
+    dismiss(activity.id); // immediate UI feedback
+    if (!childId) return; // demo mode — skip DB write
+    await supabase.from("memory_events").insert({
+      type:       "note",
+      content:    `${activity.title} — ${activity.description}`,
+      category:   areaToCategory[activity.area] ?? "play",
+      child_id:   childId,
+      created_by: currentUserRole ?? "nanny",
+      created_at: new Date().toISOString(),
+    });
   }
 
   return (
@@ -118,7 +142,7 @@ export default function SuggestionsCarousel({ birthDate, childId, className }: P
             >
               <SuggestionCard
                 activity={activity}
-                onDone={() => dismiss(activity.id)}
+                onDone={() => handleDone(activity)}
                 onSkip={() => dismiss(activity.id)}
               />
             </motion.div>

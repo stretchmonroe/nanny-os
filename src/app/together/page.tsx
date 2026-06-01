@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import Link from "next/link";
-import { Users } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -235,21 +233,6 @@ export default function TogetherPage() {
             Set up your home to start leaving real notes for your care team.
           </p>
         )}
-
-        {/* Care Circle link */}
-        <Link
-          href="/care-circle"
-          className="flex items-center gap-3 bg-surface-card border-soft rounded-2xl px-4 py-3.5 shadow-card"
-        >
-          <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
-            <Users size={16} strokeWidth={1.8} className="text-muted-foreground" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold text-foreground">Care Circle</p>
-            <p className="text-[12px] text-muted-foreground">Manage your care team</p>
-          </div>
-          <span className="text-muted-foreground/40 text-[18px] leading-none">›</span>
-        </Link>
       </div>
     </div>
   );

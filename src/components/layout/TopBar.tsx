@@ -13,8 +13,9 @@ export default function TopBar() {
   const pathname   = usePathname();
   const [open, setOpen]             = useState(false);
   const [hasSession, setHasSession] = useState(false);
-  const activeChild = useAppStore((s) => s.activeChild);
-  const authReady   = useAppStore((s) => s.authReady);
+  const activeChild     = useAppStore((s) => s.activeChild);
+  const authReady       = useAppStore((s) => s.authReady);
+  const currentUserRole = useAppStore((s) => s.currentUserRole);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
@@ -26,7 +27,7 @@ export default function TopBar() {
 
   if (HIDE_ON.some((p) => pathname.startsWith(p))) return null;
 
-  const showDot = authReady && hasSession && !activeChild;
+  const showDot = authReady && hasSession && (!activeChild || !currentUserRole);
 
   return (
     <>
@@ -41,7 +42,7 @@ export default function TopBar() {
         >
           <Menu className="w-5 h-5 text-foreground" strokeWidth={2} />
           {showDot && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-[var(--surface-header)]" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#D4694A] ring-2 ring-[var(--surface-header)]" />
           )}
         </button>
       </header>

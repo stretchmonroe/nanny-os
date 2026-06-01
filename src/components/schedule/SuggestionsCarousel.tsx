@@ -6,18 +6,7 @@ import { Check, SkipForward } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getDailyActivities } from "@/lib/data/activities";
 import type { AgedActivity } from "@/lib/data/activities";
-import { supabase } from "@/lib/supabase/client";
-import { useAppStore } from "@/store/useAppStore";
-
-// Map Montessori areas to memory_events categories that exist in the DB schema.
-// "creative" is not a valid DB category — use "play" as the safe fallback.
-const areaToCategory: Record<string, string> = {
-  "language":       "learning",
-  "sensory":        "play",
-  "movement":       "outdoor",
-  "practical-life": "play",
-  "creativity":     "play",
-};
+import { useDailyActivitiesStore } from "@/store/useDailyActivitiesStore";
 
 const areaConfig: Record<string, { emoji: string; label: string; bg: string; border: string }> = {
   "language":       { emoji: "🗣️", label: "Language",       bg: "bg-lavender-light/60 dark:bg-lavender/8", border: "border-lavender-light dark:border-lavender/15" },
@@ -96,9 +85,9 @@ interface Props {
 }
 
 export default function SuggestionsCarousel({ birthDate, childId, className }: Props) {
-  const [allActivities]            = useState(() => getDailyActivities(birthDate, childId, 10));
-  const [dismissed, setDismissed]  = useState<Set<string>>(() => new Set());
-  const currentUserRole            = useAppStore((s) => s.currentUserRole);
+  const [allActivities]           = useState(() => getDailyActivities(birthDate, childId, 10));
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+  const markDone                  = useDailyActivitiesStore((s) => s.markDone);
 
   const visible = allActivities.filter((a) => !dismissed.has(a.id));
 
@@ -108,26 +97,22 @@ export default function SuggestionsCarousel({ birthDate, childId, className }: P
     setDismissed((prev) => new Set([...prev, id]));
   }
 
-  async function handleDone(activity: AgedActivity) {
-    dismiss(activity.id); // immediate UI feedback
-    if (!childId) return; // demo mode — skip DB write
+  function handleDone(activity: AgedActivity) {
+    dismiss(activity.id);
+    if (!childId) return; // demo mode — nothing to persist
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      console.error("[SuggestionsCarousel] no session — skipping insert");
-      return;
-    }
+    const d = new Date();
+    const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-    const { error } = await supabase.from("memory_events").insert({
-      type:       "note",
-      content:    `${activity.title} — ${activity.description}`,
-      category:   areaToCategory[activity.area] ?? "play",
-      child_id:   childId,
-      created_by: currentUserRole ?? "nanny",
-      created_at: new Date().toISOString(),
+    markDone({
+      id:          activity.id,
+      title:       activity.title,
+      description: activity.description,
+      area:        activity.area,
+      childId,
+      date,
+      completedAt: d.toISOString(),
     });
-
-    if (error) console.error("[SuggestionsCarousel] insert failed:", error.message, error.details);
   }
 
   return (

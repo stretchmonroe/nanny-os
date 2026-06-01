@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, RefreshCw, Play, ChevronRight } from "lucide-react";
-import { dailyActivities, schedule, typeConfig } from "@/lib/data/demo";
+import { dailyActivities, schedule } from "@/lib/data/demo";
 import { callAI, parseAIJson } from "@/lib/ai/client";
 import GuidanceTag from "@/components/ui/GuidanceTag";
 import { isValidGuidanceSource } from "@/lib/ai/guidance";
 import { cn } from "@/lib/utils";
 import type { PlannedActivity, FocusArea } from "@/lib/data/demo";
-import { supabase } from "@/lib/supabase/client";
+import { useDailyActivitiesStore } from "@/store/useDailyActivitiesStore";
 
 function ageLabel(birthDate?: string | null): string {
   if (!birthDate) return "18 months";
@@ -28,32 +28,6 @@ const areaConfig = {
   "creativity":     { emoji: "🎨", label: "Creativity",     bg: "bg-rose-50    dark:bg-rose-950/25",   accent: "bg-rose-400"    },
 } as const;
 
-const categoryBg: Record<string, string> = {
-  meal:     "bg-amber-50 dark:bg-amber-950/25",
-  outdoor:  "bg-sky-50 dark:bg-sky-950/25",
-  play:     "bg-sage-light dark:bg-sage/10",
-  nap:      "bg-trust-light dark:bg-trust/10",
-  learning: "bg-lavender-light dark:bg-lavender/10",
-  creative: "bg-rose-50 dark:bg-rose-950/25",
-};
-
-const categoryEmoji: Record<string, string> = {
-  meal:     "🍽️",
-  outdoor:  "🌳",
-  play:     "🎮",
-  nap:      "💤",
-  learning: "📚",
-  creative: "🎨",
-};
-
-type MemoryEvent = {
-  id: string;
-  type: "photo" | "note" | "milestone";
-  content: string;
-  category: string;
-  image_url: string | null;
-  created_at: string;
-};
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
@@ -69,36 +43,9 @@ interface Props {
 export default function ActivityPlan({ focus, childName, childBirthDate, childId }: Props) {
   const [activities, setActivities] = useState<PlannedActivity[]>(dailyActivities);
   const [swapping, setSwapping] = useState<string | null>(null);
-  const [events, setEvents]     = useState<MemoryEvent[]>([]);
-  const [loading, setLoading]   = useState(false);
 
-  // Real child: fetch today's diary entries
-  useEffect(() => {
-    if (!childId) return;
-
-    function fetchEvents() {
-      setLoading(true);
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      supabase
-        .from("memory_events")
-        .select("id, type, content, category, image_url, created_at")
-        .eq("child_id", childId as string)
-        .gte("created_at", todayStart.toISOString())
-        .order("created_at", { ascending: true })
-        .then(({ data }) => {
-          setEvents((data as MemoryEvent[]) ?? []);
-          setLoading(false);
-        });
-    }
-
-    fetchEvents();
-
-    // Re-fetch when navigating back to this page
-    function onFocus() { fetchEvents(); }
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [childId]);
+  const getTodayForChild = useDailyActivitiesStore((s) => s.getTodayForChild);
+  const doneActivities   = childId ? getTodayForChild(childId) : [];
 
   // Demo mode: call AI for suggestions
   useEffect(() => {
@@ -146,59 +93,49 @@ export default function ActivityPlan({ focus, childName, childBirthDate, childId
             Today&rsquo;s activities
           </p>
           <p className="text-[11px] font-semibold text-muted-foreground/50">
-            {events.length > 0 ? `${events.length} logged` : ""}
+            {doneActivities.length > 0 ? `${doneActivities.length} done` : ""}
           </p>
         </div>
 
-        {loading ? (
-          <div className="px-5">
-            <div className="h-[160px] rounded-[1.5rem] bg-surface-raised animate-pulse" />
-          </div>
-        ) : events.length === 0 ? (
+        {doneActivities.length === 0 ? (
           <div className="mx-5 rounded-[1.5rem] bg-surface-raised border-soft px-6 py-8 text-center">
-            <p className="text-[28px] mb-2">📓</p>
-            <p className="text-[14px] font-semibold text-foreground/60">Nothing logged yet today</p>
+            <p className="text-[28px] mb-2">🌱</p>
+            <p className="text-[14px] font-semibold text-foreground/60">Nothing done yet today</p>
             <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">
-              Activities added in the diary will show up here.
+              Mark a suggestion as done on the Daily tab to see it here.
             </p>
           </div>
         ) : (
           <div className="flex gap-3 px-5 overflow-x-auto scroll-hide pb-1">
-            {events.map((event, i) => {
-              const bg  = categoryBg[event.category] ?? "bg-surface-raised";
-              const emoji = categoryEmoji[event.category] ?? "✏️";
-              const cfg   = typeConfig[event.category as keyof typeof typeConfig];
+            {doneActivities.map((activity, i) => {
+              const cfg = areaConfig[activity.area as keyof typeof areaConfig] ?? areaConfig["language"];
 
               return (
                 <motion.div
-                  key={event.id}
+                  key={activity.id}
                   initial={{ opacity: 0, x: 12 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.07, duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
-                  className={cn("shrink-0 w-[82%] rounded-[1.5rem] border-soft shadow-card overflow-hidden", bg)}
+                  className={cn("shrink-0 w-[82%] rounded-[1.5rem] border-soft shadow-card overflow-hidden", cfg.bg)}
                 >
-                  {event.image_url && (
-                    <div className="w-full h-[140px] overflow-hidden">
-                      <img src={event.image_url} alt="" className="w-full h-full object-cover" />
-                    </div>
-                  )}
                   <div className="p-5">
                     <div className="flex items-center gap-2 mb-2.5">
-                      <span className="text-[20px]">{emoji}</span>
-                      <span className={cn("text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full", cfg?.color ?? "text-muted-foreground bg-surface-raised")}>
-                        {cfg?.label ?? event.category}
+                      <span className="text-[20px]">{cfg.emoji}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                        {cfg.label}
                       </span>
-                      {event.type === "milestone" && (
-                        <span className="ml-auto text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100/80 dark:bg-amber-950/60 px-2 py-0.5 rounded-full shrink-0">
-                          🌟 Milestone
-                        </span>
-                      )}
+                      <div className="ml-auto w-5 h-5 rounded-full bg-sage-light flex items-center justify-center shrink-0">
+                        <Check size={10} strokeWidth={2.5} className="text-sage" />
+                      </div>
                     </div>
-                    <p className="text-[14px] text-foreground/80 leading-relaxed line-clamp-3">
-                      {event.content}
+                    <p className="text-[14px] font-semibold text-foreground/80 leading-snug mb-1">
+                      {activity.title}
+                    </p>
+                    <p className="text-[12px] text-foreground/55 leading-relaxed line-clamp-2">
+                      {activity.description}
                     </p>
                     <p className="text-[11px] text-muted-foreground/50 mt-2.5 font-medium">
-                      {formatTime(event.created_at)}
+                      {formatTime(activity.completedAt)}
                     </p>
                   </div>
                 </motion.div>

@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     .insert({
       household_id:  householdId,
       invited_email: email,
-      role:          "caregiver",
+      role:          "nanny",
       status:        "invited",
     })
     .select("id, invited_email, role, status")

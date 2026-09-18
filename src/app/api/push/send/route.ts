@@ -15,6 +15,15 @@ export async function POST(req: NextRequest) {
 
   const { childId, targetRole, title, body, url = "/memory" } = await req.json();
   if (!childId || !targetRole) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  if (!['parent', 'nanny'].includes(targetRole)) {
+    return NextResponse.json({ error: "Invalid target role" }, { status: 400 });
+  }
+  if (typeof title !== 'string' || typeof body !== 'string') {
+    return NextResponse.json({ error: "Invalid notification content" }, { status: 400 });
+  }
+  if (typeof url !== 'string' || !url.startsWith('/') || url.startsWith('//')) {
+    return NextResponse.json({ error: "Invalid notification URL" }, { status: 400 });
+  }
 
   const db = admin();
   webpush.setVapidDetails(
@@ -32,6 +41,17 @@ export async function POST(req: NextRequest) {
     .eq("id", childId)
     .single();
   if (!child) return NextResponse.json({ error: "Child not found" }, { status: 404 });
+
+  // The service-role client bypasses RLS, so authorization must be explicit.
+  const { data: membership } = await db
+    .from("household_members")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("household_id", child.household_id)
+    .maybeSingle();
+  if (!membership) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { data: subs } = await db
     .from("push_subscriptions")

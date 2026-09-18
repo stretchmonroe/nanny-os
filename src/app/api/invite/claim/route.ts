@@ -41,25 +41,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ child: children?.[0] ?? null });
   }
 
-  // Find household where the first UUID segment matches the code.
-  // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-  // Code = first 8 chars (before the first dash), uppercased.
-  const { data: allHouseholds } = await db
-    .from("households")
-    .select("id");
+  const email = user.email?.trim().toLowerCase();
+  if (!email) return NextResponse.json({ error: "Your account has no verified email" }, { status: 400 });
 
-  const match = (allHouseholds ?? []).find(
-    (h) => h.id.split("-")[0].toUpperCase() === code.slice(0, 8)
+  // A code alone is not authorization. It must match an outstanding invitation
+  // for the signed-in email address.
+  const { data: invites, error: inviteErr } = await db
+    .from("household_members")
+    .select("id, household_id, role")
+    .eq("invited_email", email)
+    .eq("status", "invited")
+    .is("user_id", null);
+
+  if (inviteErr) {
+    console.error("[invite/claim] invite lookup failed:", inviteErr);
+    return NextResponse.json({ error: "Could not verify invite" }, { status: 500 });
+  }
+
+  const invite = (invites ?? []).find(
+    (row) => String(row.household_id).split("-")[0].toUpperCase() === code.slice(0, 8)
   );
+  if (!invite) return NextResponse.json({ error: "Invite code not found for this email" }, { status: 404 });
 
-  if (!match) return NextResponse.json({ error: "Invite code not found" }, { status: 404 });
+  const householdId = invite.household_id as string;
 
-  const householdId = match.id;
-
-  // Create nanny membership.
+  // Claim the pre-authorized membership rather than creating a new one.
   const { error: memErr } = await db
     .from("household_members")
-    .insert({ user_id: user.id, household_id: householdId, role: "nanny" });
+    .update({ user_id: user.id, status: "active" })
+    .eq("id", invite.id)
+    .eq("status", "invited");
 
   if (memErr) {
     console.error("[invite/claim] membership insert failed:", memErr);

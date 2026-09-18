@@ -9,8 +9,9 @@ Baseline commit: `63ff249`
 - TypeScript: passes
 - Dependency audit: 0 known vulnerabilities after upgrading Next.js and safe transitive fixes
 - Lint: fails on legacy React hook rules, two unescaped strings, one explicit `any`, and several unused values
-- Automated tests: none found
-- Production data/schema verification: pending authenticated Supabase and Vercel inspection
+- Automated tests: local PostgreSQL invitation and AI-policy regression tests added
+- Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
+- Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending
 
 ## Changes in this stabilization pass
 
@@ -25,7 +26,7 @@ Baseline commit: `63ff249`
 
 ### P0 — Verify and reconcile the live Supabase schema
 
-The checked-in `supabase/rls.sql` defines roles as `parent | nanny` and does not define the invitation fields used by the application (`id`, `status`, and `invited_email`). The application previously attempted to insert `caregiver`, while client state supports only `parent | nanny`. The live schema must be exported and compared with the repository before another database change is deployed.
+The live export confirms roles `parent | nanny`, a composite membership key, required user_id, and status. Membership id and invited_email do not exist. The revised implementation uses a separate invitation table and transactional server-only claim function. Neither migration has been applied to production. Staging verification remains required.
 
 Acceptance criteria:
 

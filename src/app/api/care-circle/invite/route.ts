@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
   if (error || !user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
-  const email: string = (body.email ?? "").trim().toLowerCase();
-  if (!email) return NextResponse.json({ error: "email required" }, { status: 400 });
+  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return NextResponse.json({ error: "Valid email required" }, { status: 400 });
 
   // Confirm the inviter is an active parent in a household.
   const { data: membership } = await db
@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
 
   // Avoid duplicate invites.
   const { data: existing } = await db
-    .from("household_members")
-    .select("id, status")
+    .from("household_invitations")
+    .select("id")
     .eq("household_id", householdId)
     .eq("invited_email", email)
     .maybeSingle();
@@ -46,14 +46,14 @@ export async function POST(req: NextRequest) {
   }
 
   const { data: invite, error: insertErr } = await db
-    .from("household_members")
+    .from("household_invitations")
     .insert({
       household_id:  householdId,
       invited_email: email,
       role:          "nanny",
-      status:        "invited",
+      created_by:    user.id,
     })
-    .select("id, invited_email, role, status")
+    .select("id, invited_email, role, expires_at")
     .single();
 
   if (insertErr || !invite) {

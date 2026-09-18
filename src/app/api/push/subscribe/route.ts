@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
     .from("household_members")
     .select("household_id, role")
     .eq("user_id", user.id)
+    .eq("status", "active")
     .maybeSingle();
   if (!membership) return NextResponse.json({ error: "No household" }, { status: 400 });
 

@@ -49,3 +49,8 @@ Supabase setup assets live under `supabase/`. Server routes using the service-ro
 ## Deployment
 
 The live app is deployed on Vercel and redirects to `https://ankurcare.vercel.app`. Supabase project configuration and Vercel environment values must stay aligned. Validate authenticated flows in a non-production household before promoting authorization or schema changes.
+# Schema stabilization status
+
+Invitation/schema reconciliation is prepared on the draft stabilization PR, not
+deployed. See [rollout and remaining blockers](docs/SCHEMA_ROLLOUT.md).
+Run `npm test` for local PostgreSQL authorization regression tests.

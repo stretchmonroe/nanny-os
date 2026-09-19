@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/memory/PrivatePhoto";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { weeklyMoments } from "@/lib/data/demo";
 import type { JournalMoment, JournalDay, JournalMomentType, ActivityCategory } from "@/lib/data/demo";

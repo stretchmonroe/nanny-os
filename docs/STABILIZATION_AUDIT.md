@@ -9,7 +9,7 @@ Baseline commit: `63ff249`
 - TypeScript: passes
 - Dependency audit: 0 known vulnerabilities after upgrading Next.js and safe transitive fixes
 - Lint: fails on legacy React hook rules, two unescaped strings, one explicit `any`, and several unused values
-- Automated tests: local PostgreSQL invitation and AI-policy regression tests added
+- Automated tests: local PostgreSQL invitation/AI/storage tests, photo-path validation, and isolated API-handler tests
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
 - Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending
 
@@ -37,7 +37,9 @@ Acceptance criteria:
 
 ### P0 — Make child-photo storage private
 
-The checked-in policy permits public reads from the `photos` bucket and the client calls `getPublicUrl`. Family photos should use a private bucket, household-scoped object paths, and short-lived signed URLs.
+The production bucket remains public. Signed-photo rendering, safe object paths
+and guarded migration 003 are now implemented on the draft branch. Live inventory
+and staging HTTP checks are required before cutover; see SCHEMA_ROLLOUT.md.
 
 Acceptance criteria:
 

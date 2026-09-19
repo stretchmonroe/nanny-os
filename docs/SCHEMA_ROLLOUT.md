@@ -1,6 +1,36 @@
 # Schema reconciliation — 2026-09-18
 
-Status: implementation prepared; production untouched; PR remains draft.
+Status (2026-09-19): invitation and photo privacy implementations prepared;
+production untouched; PR remains draft.
+
+## Photo implementation and remaining access requirement
+
+PrivatePhoto now exchanges bucket-relative paths or this project's legacy public
+URLs for five-minute signed URLs, refreshes them, and clears them on auth changes.
+No fallback to public family-photo URLs is allowed. Explicit picsum demo images
+remain supported. Private images bypass the Next optimizer and the Supabase host
+has been removed from its allowlist; existing CDN/optimizer/browser cached copies
+still require review at cutover. Already issued signed links last until expiry.
+
+Uploads require a selected child, use random filenames, cap size at 10 MB and
+allow JPEG/PNG/WebP/GIF. Persisted values are object paths, not signed links.
+Existing objects and memory records are not rewritten.
+
+Migration 003 installs active-household storage policies and makes photos private.
+It fails transactionally on unknown storage policies, unsupported legacy paths,
+or objects whose owner cannot be matched to the path's child's household.
+This is intentional: do not guess ownership or skip the guard.
+
+Before applying migrations, run the read-only supabase/security-preflight.sql
+in the existing Supabase project and return its JSON output. It contains helper
+definitions, grants and aggregate counts, not photo contents or family records.
+This environment has no authenticated database access, so staging/production
+execution and storage HTTP verification remain blocked on that access.
+
+Deployment order: rehearse 001/002 in staging, deploy the signed-photo application,
+then rehearse/apply guarded 003. Test existing photos and uploads with two
+households, anonymous requests and removed members. Never deploy old photo clients
+after cutover. Do not change the bucket manually as a substitute for the migration.
 
 ## Evidence and decisions
 
@@ -47,9 +77,9 @@ comparison casts to text without rewriting existing records.
 
 ## Still blocking full release
 
-- Photos bucket is public and application uses getPublicUrl. Inventory existing
-  object ownership/path-to-household mappings before a coordinated private-bucket
-  and signed-URL migration. Do not flip the bucket alone.
+- Production photos remain public until guarded migration 003 is applied.
+  Client compatibility and local policy tests are ready; actual object inventory,
+  storage HTTP checks and cache review remain required.
 - Audit push_subscriptions client policy: it only checks user_id, not household
   and role. Server delivery now intersects active membership, but direct client
   writes and subscription endpoint validation still need dedicated regression tests.

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { moments } from "@/lib/data/demo";
-import Image from "next/image";
+import Image from "@/components/memory/PrivatePhoto";
 import Link from "next/link";
 
 export default function RecentMomentsGrid() {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { moments } from "@/lib/data/demo";
-import Image from "next/image";
+import Image from "@/components/memory/PrivatePhoto";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 

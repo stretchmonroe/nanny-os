@@ -15,6 +15,15 @@ export async function POST(req: NextRequest) {
 
   const { childId, targetRole, title, body, url = "/memory" } = await req.json();
   if (!childId || !targetRole) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  if (!['parent', 'nanny'].includes(targetRole)) {
+    return NextResponse.json({ error: "Invalid target role" }, { status: 400 });
+  }
+  if (typeof title !== 'string' || typeof body !== 'string') {
+    return NextResponse.json({ error: "Invalid notification content" }, { status: 400 });
+  }
+  if (typeof url !== 'string' || !url.startsWith('/') || url.startsWith('//')) {
+    return NextResponse.json({ error: "Invalid notification URL" }, { status: 400 });
+  }
 
   const db = admin();
   webpush.setVapidDetails(
@@ -33,10 +42,28 @@ export async function POST(req: NextRequest) {
     .single();
   if (!child) return NextResponse.json({ error: "Child not found" }, { status: 404 });
 
+  // The service-role client bypasses RLS, so authorization must be explicit.
+  const { data: membership } = await db
+    .from("household_members")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("household_id", child.household_id)
+    .eq("status", "active")
+    .maybeSingle();
+  if (!membership) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { data: recipients, error: recipientError } = await db.from("household_members")
+    .select("user_id").eq("household_id", child.household_id)
+    .eq("status", "active").eq("role", targetRole);
+  if (recipientError) return NextResponse.json({ error: "Could not load recipients" }, { status: 503 });
+  if (!recipients?.length) return NextResponse.json({ ok: true, sent: 0 });
   const { data: subs } = await db
     .from("push_subscriptions")
     .select("id, subscription")
     .eq("household_id", child.household_id)
+    .in("user_id", recipients.map((member) => member.user_id))
     .eq("role", targetRole);
 
   if (!subs || subs.length === 0) return NextResponse.json({ ok: true, sent: 0 });

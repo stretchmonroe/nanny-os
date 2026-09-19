@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/memory/PrivatePhoto";
 import { Heart } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import AuthorBadge from "@/components/ui/AuthorBadge";

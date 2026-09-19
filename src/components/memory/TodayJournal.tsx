@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/memory/PrivatePhoto";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { weeklyMoments } from "@/lib/data/demo";
 import type { JournalMoment, JournalMomentType, ActivityCategory } from "@/lib/data/demo";

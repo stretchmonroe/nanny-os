@@ -156,7 +156,7 @@ export default function CareCirclePage() {
             <div className="bg-surface-card border-soft rounded-2xl px-5 py-5 shadow-card space-y-4">
               <div>
                 <p className="text-[13px] text-muted-foreground leading-relaxed mb-3">
-                  Share this code with your nanny. They enter it in the app when setting up their account.
+                  Register your nanny’s email below, then share this code. They must verify that same email to join within seven days.
                 </p>
                 {/* Code display */}
                 <div className="flex items-center justify-between bg-surface-raised rounded-2xl px-5 py-4">
@@ -199,9 +199,9 @@ export default function CareCirclePage() {
             {inviteDone ? (
               <div className="bg-surface-card border-soft rounded-2xl px-4 py-5 shadow-card text-center">
                 <p className="text-[22px] mb-1">🌱</p>
-                <p className="text-[14px] font-semibold text-foreground">Invite sent</p>
+                <p className="text-[14px] font-semibold text-foreground">Invitation registered</p>
                 <p className="text-[13px] text-muted-foreground mt-1 leading-relaxed">
-                  Ask your caregiver to sign up with that email address.
+                  No email was sent. Share the code above and ask your caregiver to verify the registered email and join within seven days.
                 </p>
                 <button
                   onClick={() => setInviteDone(false)}
@@ -234,7 +234,7 @@ export default function CareCirclePage() {
                   disabled={inviting || !inviteEmail.trim()}
                   className="w-full bg-foreground text-white font-bold text-[14px] py-3 rounded-xl disabled:opacity-40 transition-opacity"
                 >
-                  {inviting ? "Sending…" : "Send invite"}
+                  {inviting ? "Registering…" : "Register invitation"}
                 </button>
               </form>
             )}

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import { moments as demoMoments } from "@/lib/data/demo";
-import Image from "next/image";
+import Image from "@/components/memory/PrivatePhoto";
 
 type Moment = {
   id: string;

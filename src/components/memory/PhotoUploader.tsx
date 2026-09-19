@@ -25,26 +25,29 @@ export default function PhotoUploader({ childId, childName, onUpload }: Props) {
     setUploading(true);
     setErrorMsg(null);
     try {
-      const ext      = file.name.split(".").pop() ?? "jpg";
-      const folder   = childId ?? "shared";
-      const fileName = `${folder}/${Date.now()}.${ext}`;
+      if (!childId || childId === "default") throw new Error("Select a child before uploading");
+      const types: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
+      const ext = types[file.type];
+      if (!ext || file.size > 10 * 1024 * 1024) throw new Error("Choose a JPEG, PNG, WebP or GIF under 10 MB");
+      const fileName = `${childId}/${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadErr } = await supabase.storage
         .from("photos")
-        .upload(fileName, file, { upsert: false });
+        .upload(fileName, file, { upsert: false, contentType: file.type, cacheControl: "60" });
       if (uploadErr) throw new Error(`Storage: ${uploadErr.message}`);
-
-      const { data } = supabase.storage.from("photos").getPublicUrl(fileName);
 
       const { error: insertErr } = await supabase.from("memory_events").insert({
         type:       "photo",
         content:    "Photo",
-        image_url:  data.publicUrl,
-        child_id:   childId ?? "default",
+        image_url:  fileName,
+        child_id:   childId,
         created_by: currentUserRole ?? "nanny",
         created_at: new Date().toISOString(),
       });
-      if (insertErr) throw new Error(`DB: ${insertErr.message}`);
+      if (insertErr) {
+        await supabase.storage.from("photos").remove([fileName]);
+        throw new Error("Could not save photo; please try again");
+      }
 
       if (childId && childId !== "default") {
         notifyHousehold({

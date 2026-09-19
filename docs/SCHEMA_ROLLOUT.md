@@ -5,6 +5,24 @@ production untouched; PR remains draft.
 
 ## Photo implementation and remaining access requirement
 
+Latest preflight reviewed (2026-09-19): 8 photos, zero unmapped paths, zero
+missing owners; 6 active membership rows. This passes the exported photo
+ownership guard, not the real Storage HTTP or full migration release gate.
+
+Live helper definitions confirmed missing status checks and unqualified search
+paths. Migration 004 fixes them, denies ambiguous multiple-active-household
+selection, restricts activity logs and push-subscription writes, and revokes
+TRUNCATE/REFERENCES/TRIGGER from client roles on existing public tables.
+Existing rows are unchanged. Grants alone do not prove a remotely exposed
+TRUNCATE endpoint; removing those privileges is defense in depth.
+Review default privileges separately before introducing future tables.
+
+Rehearse 001 through 004 on a staging copy before release. Helpers now intentionally
+deny users with multiple active memberships; the migration aborts before changes
+if any already exist (the exported total of six memberships does not answer that
+question). Resolve those accounts deliberately rather than choosing a household.
+No further photo mapping export is needed for the current eight objects.
+
 PrivatePhoto now exchanges bucket-relative paths or this project's legacy public
 URLs for five-minute signed URLs, refreshes them, and clears them on auth changes.
 No fallback to public family-photo URLs is allowed. Explicit picsum demo images

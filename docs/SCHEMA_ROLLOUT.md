@@ -17,9 +17,11 @@ Existing rows are unchanged. Grants alone do not prove a remotely exposed
 TRUNCATE endpoint; removing those privileges is defense in depth.
 Review default privileges separately before introducing future tables.
 
-The isolated local fixture in tests/local-supabase/ now applies migrations 001
-through 004 in order under PGlite. Run scripts/start-local-supabase.sh on a
-Docker host for a full local Supabase migration rehearsal; see its README.
+The isolated local fixture in tests/local-supabase/ applies migrations 001
+through 004 in order under PGlite. The Docker-backed stack started successfully
+on the user's Mac on 2026-09-23, validating first-start migration application.
+Run scripts/smoke-local-supabase.mjs on that host for synthetic Auth and
+Storage HTTP checks; see its README.
 This generated fixture has no production rows, foreign keys, unseen functions
 or triggers, so a staging copy or reviewed production backup is still needed
 before release. Helpers now intentionally

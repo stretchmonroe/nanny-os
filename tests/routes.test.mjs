@@ -135,3 +135,67 @@ test('setup preserves the card birth date and blocks invalid dates',async()=>{
   assert.equal(result.status,200);
   assert.equal((await result.json()).child.birth_date,'2025-04-17');
 });
+const validSubscription = {
+  endpoint:'https://fcm.googleapis.com/fcm/send/synthetic',
+  keys:{p256dh:'A'.repeat(87),auth:'A'.repeat(22)},
+};
+test('push registration rejects malformed endpoints before database access',async()=>{
+  const {POST}=await handler('push/subscribe',{auth:{getUser(){throw Error('Should not authenticate')}}});
+  for (const subscription of [null,{...validSubscription,endpoint:'http://127.0.0.1/push'},
+    {...validSubscription,keys:{auth:'short',p256dh:'A'.repeat(87)}}]) {
+    assert.equal((await POST(request({subscription}))).status,400);
+  }
+});
+test('push registration rejects removed members before writing subscriptions',async()=>{
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'removed-user'}}};}},
+    from(table){assert.equal(table,'household_members');return {
+      select(){return this},eq(){return this},async maybeSingle(){return {data:null,error:null}},
+    }},
+  };
+  const {POST}=await handler('push/subscribe',db);
+  assert.equal((await POST(request({subscription:validSubscription}))).status,403);
+});
+test('push registration preserves an old subscription when a replacement insert fails',async()=>{
+  let deleted=false;
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'parent-user'}}};}},
+    from(table){
+      if(table==='household_members')return {
+        select(){return this},eq(){return this},async maybeSingle(){return {data:{household_id:'home-1',role:'parent'},error:null}},
+      };
+      assert.equal(table,'push_subscriptions');return {
+        insert(row){assert.equal(row.user_id,'parent-user');assert.equal(row.household_id,'home-1');return this},
+        select(){return this},async single(){return {data:null,error:{message:'write failed'}}},
+        delete(){deleted=true;throw Error('Must not delete old subscription')},
+      };
+    },
+  };
+  const {POST}=await handler('push/subscribe',db);
+  assert.equal((await POST(request({subscription:validSubscription}))).status,503);
+  assert.equal(deleted,false);
+});
+test('push registration replaces the old row only after a successful insert',async()=>{
+  const actions=[];
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'parent-user'}}};}},
+    from(table){
+      if(table==='household_members')return {
+        select(){return this},eq(k,v){actions.push([k,v]);return this},
+        async maybeSingle(){return {data:{household_id:'home-1',role:'parent'},error:null}},
+      };
+      assert.equal(table,'push_subscriptions');return {
+        insert(row){actions.push(['insert',row.role]);return this},
+        select(){return this},async single(){return {data:{id:'new-id'},error:null}},
+        delete(){actions.push(['delete']);return this},
+        eq(k,v){actions.push([k,v]);return this},
+        async neq(k,v){actions.push([k,v]);return {error:null}},
+      };
+    },
+  };
+  const {POST}=await handler('push/subscribe',db);
+  assert.equal((await POST(request({subscription:validSubscription}))).status,200);
+  assert.ok(actions.some(([k,v])=>k==='status'&&v==='active'));
+  assert.ok(actions.findIndex(([k])=>k==='insert')<actions.findIndex(([k])=>k==='delete'));
+  assert.ok(actions.some(([k,v])=>k==='id'&&v==='new-id'));
+});

@@ -114,7 +114,9 @@ comparison casts to text without rewriting existing records.
   Local synthetic HTTP tests pass; existing-photo behavior, production inventory
   and cache review remain required.
 - Migration 004 restricts push-subscription client writes by active household
-  and role. Subscription endpoint validation still needs regression tests.
+  and role. The server subscription route validates endpoint and keys, checks
+  active membership and reports write failures; route regression tests pass.
+  Delivery to browser push services and rate limiting remain to be checked.
 - Review the 27 policy-less tables against actual callers; do not grant all access.
 - Rate limiting and full route-level authorization tests remain outstanding.
 - Metadata proves neither row integrity nor successful end-to-end restoration.

@@ -54,7 +54,9 @@ Every service-role route needs tests proving that users cannot act on another ho
 
 Both setup paths now share a guarded parent workflow. Regression tests cover
 removed membership, caregiver rejection, parent retry and birth date handling.
-Push and the other route-level cases above remain open.
+Push registration validates subscriptions, denies removed members and preserves
+existing subscriptions on failed writes. Push delivery and the other route-level
+cases above remain open.
 
 ### P1 — Restore a green lint gate
 

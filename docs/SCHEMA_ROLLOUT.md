@@ -19,8 +19,10 @@ TRUNCATE endpoint; removing those privileges is defense in depth.
 Review default privileges separately before introducing future tables.
 
 The isolated local fixture in tests/local-supabase/ applies migrations 001
-through 004 in order under PGlite. The Docker-backed stack started successfully
-on the user's Mac on 2026-09-23, validating first-start migration application.
+through 005 in order under PGlite. The Docker-backed stack started successfully
+on the user's Mac on 2026-09-23 with migrations 001–004. Migration 005 adds a
+guarded unique index for one active household per user and awaits local Docker
+rehearsal via scripts/rehearse-local-supabase.sh.
 On 2026-09-23 the user ran scripts/smoke-local-supabase.mjs successfully:
 invitation verification and replay, AI plan isolation, private photo access,
 cross-household denial, removed-member denial and parent deletion passed.
@@ -80,7 +82,9 @@ require an administrator-reviewed renewal.
 
 Both parent setup paths now share an active-parent check. They reject removed
 members and caregivers before accessing children. Concurrent first-time home
-creation still needs an atomic database constraint or RPC before launch.
+creation is guarded by migration 005's active-membership unique index once
+deployed. The API still requires a household-level transaction to make all
+creation steps atomic and avoid partial retries.
 
 Care Circle no longer selects nonexistent columns. Care Circle and push routes
 require active memberships; push recipients must also be active members.
@@ -94,13 +98,13 @@ comparison casts to text without rewriting existing records.
 ## Test and release gate
 
 1. Run npm test, npx tsc --noEmit, targeted ESLint, npm run build.
-2. Back up the target database and rehearse all four migrations on a staging copy.
+2. Back up the target database and rehearse all five migrations on a staging copy.
    Local tests use actual embedded PostgreSQL (PGlite), but do not reproduce
    all production RLS helper functions, Auth, concurrency, or application routes.
 3. Inspect my_household_id(), my_role(), in_my_household() and table grants.
    Their definitions were absent from the export. Verify removed members cannot
    access other tables and all required client features have appropriate policies.
-4. Apply migrations 001 through 004 in version order only after review/approval. These scripts
+4. Apply migrations 001 through 005 in version order only after review/approval. These scripts
    expect the exported baseline and intentionally fail on unexpected existing
    objects. Do not blindly replay old rls.sql or infer an existing migration history.
 5. Deploy application changes after the invitation migration. Test parent
@@ -123,8 +127,8 @@ comparison casts to text without rewriting existing records.
 
 ## Recovery
 
-All four migrations are transactional; 003 changes bucket privacy and policies,
-and 004 changes access grants and policies. A failure
+All five migrations are transactional; 003 changes bucket privacy and policies,
+004 changes access grants and policies, and 005 adds active-household uniqueness. A failure
 inside either transaction rolls that migration back. After a successful rollout,
 retain invitation rows and membership data; do not drop the invitation table or
 restore broad AI policies as a casual rollback. Prefer a forward fix or temporarily

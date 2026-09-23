@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 
-test('metadata fixture accepts all four migrations in order', async () => {
+test('metadata fixture accepts all five migrations and enforces one active household', async () => {
   const db = new PGlite();
   try {
     // PGlite has no Supabase Auth/Storage services or uuid-ossp extension.
@@ -24,7 +24,7 @@ test('metadata fixture accepts all four migrations in order', async () => {
     await db.exec(sql);
     const migrations = (await readdir(new URL('../supabase/migrations/', import.meta.url)))
       .filter(name => name.endsWith('.sql')).sort();
-    assert.equal(migrations.length, 4);
+    assert.equal(migrations.length, 5);
     for (const migration of migrations) {
       await db.exec(await readFile(new URL(`../supabase/migrations/${migration}`, import.meta.url), 'utf8'));
     }
@@ -32,6 +32,13 @@ test('metadata fixture accepts all four migrations in order', async () => {
     assert.equal(count, 39); // 38 observed tables plus household_invitations.
     const { rows: [{ public: isPublic }] } = await db.query("select public from storage.buckets where id='photos'");
     assert.equal(isPublic, false);
+    const user = '10000000-0000-0000-0000-000000000001';
+    await db.query('insert into public.household_members(user_id,household_id,role,status) values ($1,$2,$3,$4)',
+      [user, '20000000-0000-0000-0000-000000000001', 'parent', 'active']);
+    await db.query('insert into public.household_members(user_id,household_id,role,status) values ($1,$2,$3,$4)',
+      [user, '20000000-0000-0000-0000-000000000002', 'nanny', 'removed']);
+    await assert.rejects(db.query('insert into public.household_members(user_id,household_id,role,status) values ($1,$2,$3,$4)',
+      [user, '20000000-0000-0000-0000-000000000003', 'parent', 'active']));
   } finally {
     await db.close();
   }

@@ -15,7 +15,18 @@ baseline.sql reconstructs the 38 public tables' columns, checks, indexes, polici
 and three inspected helpers from the supplied metadata. It contains no user rows.
 It deliberately omits foreign keys, unseen functions and triggers. It is a
 migration/security fixture, not a production backup or a complete schema dump.
-Migration files 001–004 run after this fixture on first startup.
+Migration files 001–005 run after this fixture on first startup.
+
+If you already started this isolated stack before migration 005 was added,
+refresh only its local database and rerun the Auth/Storage checks:
+
+```bash
+bash scripts/rehearse-local-supabase.sh
+```
+
+This clears the isolated local database and its test records. The script checks
+the dedicated project ID, refuses a linked project and passes `--local` to the
+Supabase CLI. It never resets the live Supabase project.
 
 Successful startup validates migration application on the real local stack.
 Run the Auth and Storage HTTP checks next, from the same checkout:

@@ -11,6 +11,7 @@ Baseline commit: `63ff249`
 - Lint: fails on legacy React hook rules, two unescaped strings, one explicit `any`, and several unused values
 - Automated tests: local PostgreSQL invitation/AI/storage tests, photo-path validation, and isolated API-handler tests
 - Local Supabase on user's Mac: migrations 001–004 and synthetic Auth/Storage HTTP smoke checks passed on 2026-09-23
+- Migration 005 prevents concurrent active-household duplicates; PGlite passes and the local Docker rehearsal is pending
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
 - Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending
 

@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/tests/local-supabase/runtime/
 
 # next.js
 /.next/

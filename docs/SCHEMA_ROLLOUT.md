@@ -17,7 +17,12 @@ Existing rows are unchanged. Grants alone do not prove a remotely exposed
 TRUNCATE endpoint; removing those privileges is defense in depth.
 Review default privileges separately before introducing future tables.
 
-Rehearse 001 through 004 on a staging copy before release. Helpers now intentionally
+The isolated local fixture in tests/local-supabase/ now applies migrations 001
+through 004 in order under PGlite. Run scripts/start-local-supabase.sh on a
+Docker host for a full local Supabase migration rehearsal; see its README.
+This generated fixture has no production rows, foreign keys, unseen functions
+or triggers, so a staging copy or reviewed production backup is still needed
+before release. Helpers now intentionally
 deny users with multiple active memberships; the migration aborts before changes
 if any already exist (the exported total of six memberships does not answer that
 question). Resolve those accounts deliberately rather than choosing a household.
@@ -39,11 +44,12 @@ It fails transactionally on unknown storage policies, unsupported legacy paths,
 or objects whose owner cannot be matched to the path's child's household.
 This is intentional: do not guess ownership or skip the guard.
 
-Before applying migrations, run the read-only supabase/security-preflight.sql
-in the existing Supabase project and return its JSON output. It contains helper
-definitions, grants and aggregate counts, not photo contents or family records.
-This environment has no authenticated database access, so staging/production
-execution and storage HTTP verification remain blocked on that access.
+The read-only supabase/security-preflight.sql export has already been reviewed.
+It contains helper definitions, grants and aggregate counts, not photo contents
+or family records. A local Supabase rehearsal does not establish production
+readiness: the multiple-active-membership guard and full Storage HTTP flows
+need validation against a complete database copy. Production execution remains
+blocked on that validation and explicit release review.
 
 Deployment order: rehearse 001/002 in staging, deploy the signed-photo application,
 then rehearse/apply guarded 003. Test existing photos and uploads with two
@@ -79,13 +85,13 @@ comparison casts to text without rewriting existing records.
 ## Test and release gate
 
 1. Run npm test, npx tsc --noEmit, targeted ESLint, npm run build.
-2. Back up the target database and rehearse both migrations on a staging copy.
+2. Back up the target database and rehearse all four migrations on a staging copy.
    Local tests use actual embedded PostgreSQL (PGlite), but do not reproduce
    all production RLS helper functions, Auth, concurrency, or application routes.
 3. Inspect my_household_id(), my_role(), in_my_household() and table grants.
    Their definitions were absent from the export. Verify removed members cannot
    access other tables and all required client features have appropriate policies.
-4. Apply 202609180001 then 202609180002 only after review/approval. These scripts
+4. Apply migrations 001 through 004 in version order only after review/approval. These scripts
    expect the exported baseline and intentionally fail on unexpected existing
    objects. Do not blindly replay old rls.sql or infer an existing migration history.
 5. Deploy application changes after the invitation migration. Test parent
@@ -107,7 +113,8 @@ comparison casts to text without rewriting existing records.
 
 ## Recovery
 
-Both migrations are transactional and additive/non-data-deleting. A failure
+All four migrations are transactional; 003 changes bucket privacy and policies,
+and 004 changes access grants and policies. A failure
 inside either transaction rolls that migration back. After a successful rollout,
 retain invitation rows and membership data; do not drop the invitation table or
 restore broad AI policies as a casual rollback. Prefer a forward fix or temporarily

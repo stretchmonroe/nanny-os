@@ -4,20 +4,24 @@ import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 
 // Execute the actual handler with an isolated database double: no live requests.
-async function handler(path, db) {
+async function handler(path, db, modules = {}) {
   const source = await readFile(new URL('../src/app/api/'+path+'/route.ts', import.meta.url),'utf8');
   const compiled = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
   }).outputText;
   const exports = {};
   const require = (name) => {
+    if (name in modules) return modules[name];
     if (name === '@supabase/supabase-js') return { createClient: () => db };
+    if (name === 'crypto') return { randomUUID: () => 'child-uuid' };
     if (name === 'next/server') return { NextResponse: { json: (body,init) => Response.json(body,init) } };
     throw new Error('Unexpected import '+name);
   };
   new Function('require','exports',compiled)(require,exports);
   return exports;
 }
+process.env.NEXT_PUBLIC_SUPABASE_URL ??= 'http://localhost:55321';
+process.env.SUPABASE_SERVICE_ROLE_KEY ??= 'local-test-key';
 const request = (body, token='valid') => new Request('https://example.test/api/invite/claim',{
   method:'POST', headers:token ? {authorization:'Bearer '+token,'content-type':'application/json'} : {},
   body:JSON.stringify(body)
@@ -66,4 +70,68 @@ test('me excludes removed membership before reading children',async()=>{
   assert.equal(res.status,200);
   assert.deepEqual((await res.json()).children,[]);
   assert.equal(queriedChildren,false);
+});
+test('both setup paths reject removed members before reading or creating children',async()=>{
+  let childAccess = false;
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'removed-user'}}};}},
+    from(table){
+      if (table==='children') childAccess = true;
+      assert.equal(table,'household_members');
+      return {select(){return this},eq(){return this},async maybeSingle(){
+        return {data:{household_id:'home-1',role:'parent',status:'removed'}};
+      }};
+    },
+  };
+  const {POST: createHome}=await handler('create-home',db);
+  const setup=await handler('setup',db,{'../create-home/route':{POST:createHome}});
+  assert.equal((await createHome(request({childName:'Test',role:'parent'}))).status,403);
+  assert.equal((await setup.POST(request({child_name:'Test',birth_date:'2025-04-01'}))).status,403);
+  assert.equal(childAccess,false);
+});
+test('caregivers cannot create a home and active parents may retry safely',async()=>{
+  let member={household_id:'home-1',role:'nanny',status:'active'};
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'user-1'}}};}},
+    from(table){
+      if(table==='profiles')return {async upsert(){return {error:null}}};
+      if(table==='household_members')return {select(){return this},eq(){return this},async maybeSingle(){return {data:member}}};
+      assert.equal(table,'children');
+      return {select(){return this},eq(){return this},async limit(){return {data:[{id:'child-1',name:'Existing',birth_date:null}]}}};
+    },
+  };
+  const {POST}=await handler('create-home',db);
+  assert.equal((await POST(request({childName:'Test',role:'nanny'}))).status,400);
+  assert.equal((await POST(request({childName:'Test',role:'parent'}))).status,403);
+  member={...member,role:'parent'};
+  const result=await POST(request({childName:'Test',role:'parent'}));
+  assert.equal(result.status,200);
+  assert.equal((await result.json()).child.id,'child-1');
+});
+test('setup preserves the card birth date and blocks invalid dates',async()=>{
+  let birthDate;
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'new-parent'}}};}},
+    from(table){
+      if(table==='profiles')return {async upsert(){return {error:null}}};
+      if(table==='household_members')return {
+        select(){return this},eq(){return this},async maybeSingle(){return {data:null}},
+        insert(row){assert.equal(row.role,'parent');return Promise.resolve({error:null})},
+      };
+      if(table==='households')return {
+        insert(){return this},select(){return this},async single(){return {data:{id:'home-1'},error:null}},
+      };
+      if(table==='children')return {
+        insert(row){birthDate=row.birth_date;return this},select(){return this},
+        async single(){return {data:{id:'child-1',name:'Test',birth_date:birthDate},error:null}},
+      };
+      throw Error('Unexpected table '+table);
+    },
+  };
+  const {POST: createHome}=await handler('create-home',db);
+  const {POST: setup}=await handler('setup',db,{'../create-home/route':{POST:createHome}});
+  assert.equal((await setup(request({child_name:'Test',birth_date:'2025-02-31'}))).status,400);
+  const result=await setup(request({child_name:'Test',birth_date:'2025-04-17'}));
+  assert.equal(result.status,200);
+  assert.equal((await result.json()).child.birth_date,'2025-04-17');
 });

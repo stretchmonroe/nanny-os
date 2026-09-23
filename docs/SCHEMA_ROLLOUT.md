@@ -1,13 +1,14 @@
 # Schema reconciliation — 2026-09-18
 
-Status (2026-09-19): invitation and photo privacy implementations prepared;
+Status (2026-09-23): local Auth/Storage HTTP smoke checks passed;
 production untouched; PR remains draft.
 
 ## Photo implementation and remaining access requirement
 
 Latest preflight reviewed (2026-09-19): 8 photos, zero unmapped paths, zero
 missing owners; 6 active membership rows. This passes the exported photo
-ownership guard, not the real Storage HTTP or full migration release gate.
+ownership guard; synthetic Storage HTTP checks also passed. Existing production
+objects and a complete database copy still need release validation.
 
 Live helper definitions confirmed missing status checks and unqualified search
 paths. Migration 004 fixes them, denies ambiguous multiple-active-household
@@ -20,8 +21,10 @@ Review default privileges separately before introducing future tables.
 The isolated local fixture in tests/local-supabase/ applies migrations 001
 through 004 in order under PGlite. The Docker-backed stack started successfully
 on the user's Mac on 2026-09-23, validating first-start migration application.
-Run scripts/smoke-local-supabase.mjs on that host for synthetic Auth and
-Storage HTTP checks; see its README.
+On 2026-09-23 the user ran scripts/smoke-local-supabase.mjs successfully:
+invitation verification and replay, AI plan isolation, private photo access,
+cross-household denial, removed-member denial and parent deletion passed.
+See its README.
 This generated fixture has no production rows, foreign keys, unseen functions
 or triggers, so a staging copy or reviewed production backup is still needed
 before release. Helpers now intentionally
@@ -49,7 +52,7 @@ This is intentional: do not guess ownership or skip the guard.
 The read-only supabase/security-preflight.sql export has already been reviewed.
 It contains helper definitions, grants and aggregate counts, not photo contents
 or family records. A local Supabase rehearsal does not establish production
-readiness: the multiple-active-membership guard and full Storage HTTP flows
+readiness: the multiple-active-membership guard and existing-photo Storage HTTP flows
 need validation against a complete database copy. Production execution remains
 blocked on that validation and explicit release review.
 
@@ -74,6 +77,10 @@ RPC inserts membership and consumes the invitation in one transaction. Removed
 members cannot be silently reinstated. Expiry is seven days; resend/revoke UI is
 not implemented. Duplicate/expired registrations currently return conflict and
 require an administrator-reviewed renewal.
+
+Both parent setup paths now share an active-parent check. They reject removed
+members and caregivers before accessing children. Concurrent first-time home
+creation still needs an atomic database constraint or RPC before launch.
 
 Care Circle no longer selects nonexistent columns. Care Circle and push routes
 require active memberships; push recipients must also be active members.
@@ -104,11 +111,10 @@ comparison casts to text without rewriting existing records.
 ## Still blocking full release
 
 - Production photos remain public until guarded migration 003 is applied.
-  Client compatibility and local policy tests are ready; actual object inventory,
-  storage HTTP checks and cache review remain required.
-- Audit push_subscriptions client policy: it only checks user_id, not household
-  and role. Server delivery now intersects active membership, but direct client
-  writes and subscription endpoint validation still need dedicated regression tests.
+  Local synthetic HTTP tests pass; existing-photo behavior, production inventory
+  and cache review remain required.
+- Migration 004 restricts push-subscription client writes by active household
+  and role. Subscription endpoint validation still needs regression tests.
 - Review the 27 policy-less tables against actual callers; do not grant all access.
 - Rate limiting and full route-level authorization tests remain outstanding.
 - Metadata proves neither row integrity nor successful end-to-end restoration.

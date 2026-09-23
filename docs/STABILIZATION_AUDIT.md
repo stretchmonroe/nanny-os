@@ -10,6 +10,7 @@ Baseline commit: `63ff249`
 - Dependency audit: 0 known vulnerabilities after upgrading Next.js and safe transitive fixes
 - Lint: fails on legacy React hook rules, two unescaped strings, one explicit `any`, and several unused values
 - Automated tests: local PostgreSQL invitation/AI/storage tests, photo-path validation, and isolated API-handler tests
+- Local Supabase on user's Mac: migrations 001–004 and synthetic Auth/Storage HTTP smoke checks passed on 2026-09-23
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
 - Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending
 
@@ -50,6 +51,10 @@ Acceptance criteria:
 ### P0 — Add authorization regression tests
 
 Every service-role route needs tests proving that users cannot act on another household. Cover invite claiming, push sending/subscribing, profile updates, care-circle reads, setup, and together notes.
+
+Both setup paths now share a guarded parent workflow. Regression tests cover
+removed membership, caregiver rejection, parent retry and birth date handling.
+Push and the other route-level cases above remain open.
 
 ### P1 — Restore a green lint gate
 

@@ -68,8 +68,10 @@ untouched. It refuses all other error types and repeated retries.
 If this admin retry fails, run
 `node scripts/diagnose-local-restore.mjs --retry "$HOME/Downloads/ankur-staging.XXXXXX"`
 with the actual backup folder. Share only its `RESTORE_DIAGNOSIS` and
-`RESTORE_ERROR_SHAPE` lines. The output replaces identifiers and values with
-`[redacted]` and identifies which SQL file failed. Never share the raw log.
+`RESTORE_ERROR_SHAPE` lines, plus `RESTORE_MISSING_RELATION` when present. The
+output replaces row values with `[redacted]`, identifies which SQL file failed,
+and prints the missing table name only for known Supabase/app schemas. Never
+share the raw log.
 This is a copy for inspection, not a completed migration rehearsal. Database
 dumps exclude custom policies/triggers on Supabase-managed auth/storage schemas;
 the script reports the restored storage policy count to make that gap visible.

@@ -41,10 +41,12 @@ const classes = [
 const category = classes.find(([, pattern]) => pattern.test(message))?.[0] ?? 'UNCLASSIFIED';
 let phase = 'unknown';
 const backup = process.argv[3];
+let schemaSql;
 if (backup && lineMatch) {
   try {
     const roles = readFileSync(join(backup, 'roles.sql'), 'utf8');
     const schema = readFileSync(join(backup, 'schema.sql'), 'utf8');
+    schemaSql = schema;
     const rolesLines = roles.split('\n').length - 1;
     const schemaLines = schema.split('\n').length - 1;
     const position = Number(line);
@@ -52,6 +54,25 @@ if (backup && lineMatch) {
   } catch { /* Keep the backup private; classification remains unknown. */ }
 }
 console.log(`RESTORE_DIAGNOSIS attempt=${attempt} category=${category} sql_line=${line} phase=${phase}`);
+if (category === 'MISSING_DEPENDENCY' && schemaSql) {
+  // Relation names are schema metadata, not records. Limit output to known
+  // Supabase/app schemas and SQL identifiers; do not echo arbitrary text.
+  const match = message.match(/(?:relation|table)\s+"([^"\r\n]+)"\s+does not exist/i);
+  const relation = match?.[1].split('.');
+  const known = new Set(['public', 'auth', 'storage', 'realtime', '_realtime',
+    'vault', 'net', 'cron', 'supabase_migrations', 'graphql_public', 'extensions']);
+  if (relation?.length === 2 && known.has(relation[0]) &&
+      relation.every((part) => /^[a-z_][a-z_0-9]{0,62}$/.test(part))) {
+    const [schemaName, tableName] = relation;
+    const escaped = (part) => `"?${part}"?`;
+    const expression = new RegExp(`\\bCREATE\\s+(?:UNLOGGED\\s+)?TABLE\\s+` +
+      `(?:IF\\s+NOT\\s+EXISTS\\s+)?${escaped(schemaName)}\\.${escaped(tableName)}(?=\\s|\\(|;|$)`, 'i');
+    const inSchema = expression.test(schemaSql) ? 'yes' : 'no';
+    console.log(`RESTORE_MISSING_RELATION relation=${schemaName}.${tableName} in_schema_export=${inSchema}`);
+  } else {
+    console.log('RESTORE_MISSING_RELATION relation=redacted in_schema_export=unknown');
+  }
+}
 // Each output word belongs to this fixed grammar. All identifiers, values and
 // unknown English words become [redacted]; no raw diagnostic text is printed.
 const grammar = new Set(`a an the is are was were be been to for from by with in on of as at
@@ -75,4 +96,4 @@ const tokens = message.match(/"[^"]*"|'[^']*'|[A-Za-z][A-Za-z_0-9]*|[0-9]+/g) ??
 const safe = tokens.map((token) => grammar.has(token.toLowerCase()) ? token.toLowerCase() : '[redacted]');
 const collapsed = safe.filter((token, i) => token !== '[redacted]' || safe[i - 1] !== token);
 console.log(`RESTORE_ERROR_SHAPE ${collapsed.slice(0, 45).join(' ') || 'unavailable'}`);
-console.log('Share only the RESTORE_DIAGNOSIS and RESTORE_ERROR_SHAPE lines. Keep logs and SQL files private.');
+console.log('Share only the RESTORE_DIAGNOSIS, RESTORE_MISSING_RELATION and RESTORE_ERROR_SHAPE lines. Keep logs and SQL files private.');

@@ -10,8 +10,8 @@ Baseline commit: `63ff249`
 - Dependency audit: 0 known vulnerabilities after upgrading Next.js and safe transitive fixes
 - Lint: fails on legacy React hook rules, two unescaped strings, one explicit `any`, and several unused values
 - Automated tests: local PostgreSQL invitation/AI/storage tests, photo-path validation, and isolated API-handler tests
-- Local Supabase on user's Mac: migrations 001–004 and synthetic Auth/Storage HTTP smoke checks passed on 2026-09-23
-- Migration 005 prevents concurrent active-household duplicates; PGlite passes and the local Docker rehearsal is pending
+- Local Supabase on user's Mac: migrations 001–005 and synthetic Auth/Storage HTTP smoke checks passed on 2026-09-24
+- Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
 - Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending
 
@@ -56,8 +56,12 @@ Every service-role route needs tests proving that users cannot act on another ho
 Both setup paths now share a guarded parent workflow. Regression tests cover
 removed membership, caregiver rejection, parent retry and birth date handling.
 Push registration validates subscriptions, denies removed members and preserves
-existing subscriptions on failed writes. Push delivery and the other route-level
-cases above remain open.
+existing subscriptions on failed writes. Push delivery now has tests for
+cross-household denial and active target-role recipients. Profile edits use the
+verified identity and can create a missing profile; handoff notes reject users
+outside the child's household and use the database role. Care Circle reads
+scope active members and profiles to the verified household, and only an active
+parent can create an invite. Complete live browser flows remain open.
 
 ### P1 — Restore a green lint gate
 
@@ -69,7 +73,9 @@ Create a server-only data-access layer for environment validation, token verific
 
 ### P1 — Remove duplicate onboarding/setup paths
 
-`/api/create-home` and `/api/setup` overlap but differ in defaults and membership status handling. Select one canonical workflow and migrate callers.
+`/api/setup` now forwards its legacy card input to the guarded `/api/create-home`
+workflow. Consolidate the UI caller later and remove the compatibility route
+after verifying no deployed clients still use it.
 
 ### P2 — Production readiness
 

@@ -13,24 +13,23 @@ export async function POST(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { childId, targetRole, title, body, url = "/memory" } = await req.json();
-  if (!childId || !targetRole) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  const input = await req.json().catch(() => null);
+  const { childId, targetRole, title, body, url = "/memory" } = input ?? {};
+  if (typeof childId !== 'string' || !childId || childId.length > 120 || !targetRole) {
+    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  }
   if (!['parent', 'nanny'].includes(targetRole)) {
     return NextResponse.json({ error: "Invalid target role" }, { status: 400 });
   }
-  if (typeof title !== 'string' || typeof body !== 'string') {
+  if (typeof title !== 'string' || !title.trim() || title.length > 120 ||
+      typeof body !== 'string' || !body.trim() || body.length > 1000) {
     return NextResponse.json({ error: "Invalid notification content" }, { status: 400 });
   }
-  if (typeof url !== 'string' || !url.startsWith('/') || url.startsWith('//')) {
+  if (typeof url !== 'string' || !url.startsWith('/') || url.startsWith('//') || url.length > 250) {
     return NextResponse.json({ error: "Invalid notification URL" }, { status: 400 });
   }
 
   const db = admin();
-  webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT!,
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!,
-  );
 
   const { data: { user } } = await db.auth.getUser(token);
   if (!user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
@@ -59,14 +58,23 @@ export async function POST(req: NextRequest) {
     .eq("status", "active").eq("role", targetRole);
   if (recipientError) return NextResponse.json({ error: "Could not load recipients" }, { status: 503 });
   if (!recipients?.length) return NextResponse.json({ ok: true, sent: 0 });
-  const { data: subs } = await db
+  const { data: subs, error: subsError } = await db
     .from("push_subscriptions")
     .select("id, subscription")
     .eq("household_id", child.household_id)
     .in("user_id", recipients.map((member) => member.user_id))
     .eq("role", targetRole);
 
+  if (subsError) return NextResponse.json({ error: "Could not load subscriptions" }, { status: 503 });
   if (!subs || subs.length === 0) return NextResponse.json({ ok: true, sent: 0 });
+
+  const vapidSubject = process.env.VAPID_SUBJECT;
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+  if (!vapidSubject || !vapidPublicKey || !vapidPrivateKey) {
+    return NextResponse.json({ error: "Push not configured" }, { status: 503 });
+  }
+  webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
 
   const payload = JSON.stringify({ title, body, url });
 

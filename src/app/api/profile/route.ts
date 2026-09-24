@@ -16,16 +16,15 @@ export async function PATCH(req: NextRequest) {
   const { data: { user }, error } = await db.auth.getUser(token);
   if (error || !user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-  const body = await req.json().catch(() => ({}));
-  const fullName = (body.full_name ?? "").trim();
-  if (!fullName) return NextResponse.json({ error: "Name is required" }, { status: 400 });
+  const body = await req.json().catch(() => null);
+  const fullName = typeof body?.full_name === "string" ? body.full_name.trim() : "";
+  if (!fullName || fullName.length > 120) return NextResponse.json({ error: "Valid name required" }, { status: 400 });
 
   const { error: updateErr } = await db
     .from("profiles")
-    .update({ full_name: fullName })
-    .eq("id", user.id);
+    .upsert({ id: user.id, email: user.email ?? null, full_name: fullName }, { onConflict: "id" });
 
-  if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  if (updateErr) return NextResponse.json({ error: "Could not save name" }, { status: 503 });
 
   return NextResponse.json({ ok: true });
 }

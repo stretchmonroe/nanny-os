@@ -199,3 +199,192 @@ test('push registration replaces the old row only after a successful insert',asy
   assert.ok(actions.findIndex(([k])=>k==='insert')<actions.findIndex(([k])=>k==='delete'));
   assert.ok(actions.some(([k,v])=>k==='id'&&v==='new-id'));
 });
+test('profile update uses the verified user and creates a missing profile',async()=>{
+  let saved;
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'verified-user',email:'user@example.test'}}};}},
+    from(table){assert.equal(table,'profiles');return {async upsert(row,options){saved=row;
+      assert.equal(options.onConflict,'id');return {error:null};}}},
+  };
+  const {PATCH}=await handler('profile',db);
+  const patch=(body)=>new Request('https://example.test/api/profile',{
+    method:'PATCH',headers:{authorization:'Bearer valid','content-type':'application/json'},body:JSON.stringify(body),
+  });
+  assert.equal((await PATCH(patch({full_name:17}))).status,400);
+  assert.equal((await PATCH(patch({full_name:' Tobi ',id:'another-user'}))).status,200);
+  assert.deepEqual(saved,{id:'verified-user',email:'user@example.test',full_name:'Tobi'});
+});
+test('handoff notes deny another household and removed members before writes',async()=>{
+  let notesAccess=false;
+  let status='removed';
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'user-a'}}};}},
+    from(table){
+      const filters=[];
+      if(table==='memory_events'){notesAccess=true;throw Error('Unauthorized notes access')}
+      return {select(){return this},eq(k,v){filters.push([k,v]);return this},
+        async maybeSingle(){
+          if(table==='children')return {data:{household_id:'home-b'}};
+          assert.equal(table,'household_members');
+          assert.deepEqual(filters,[['household_id','home-b'],['user_id','user-a'],['status','active']]);
+          return {data:status==='active'?{role:'nanny'}:null};
+        },
+      };
+    },
+  };
+  const {POST,GET}=await handler('together/notes',db);
+  assert.equal((await POST(request({childId:'child-b',content:'Hello'}))).status,403);
+  const get=new Request('https://example.test/api/together/notes?childId=child-b',{
+    headers:{authorization:'Bearer valid'},
+  });
+  get.nextUrl=new URL(get.url);
+  const result=await GET(get);
+  assert.deepEqual(await result.json(),{notes:[]});
+  assert.equal(notesAccess,false);
+  status='active';
+  assert.equal((await POST(request({childId:'child-b',content:42}))).status,400);
+  assert.equal(notesAccess,false);
+});
+test('handoff note uses the active household role rather than a supplied role',async()=>{
+  let inserted;
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'user-a'}}};}},
+    from(table){
+      if(table==='children')return {select(){return this},eq(){return this},async maybeSingle(){return {data:{household_id:'home-a'}}}};
+      if(table==='household_members')return {select(){return this},eq(){return this},async maybeSingle(){return {data:{role:'nanny'}}}};
+      assert.equal(table,'memory_events');return {
+        insert(row){inserted=row;return this},select(){return this},async single(){return {data:{id:'note-1'},error:null}},
+      };
+    },
+  };
+  const {POST}=await handler('together/notes',db);
+  assert.equal((await POST(request({childId:'child-a',content:' Hello ',created_by:'parent'}))).status,200);
+  assert.equal(inserted.child_id,'child-a');
+  assert.equal(inserted.created_by,'nanny');
+  assert.equal(inserted.content,'Hello');
+});
+test('push delivery denies cross-household and removed senders before loading recipients',async()=>{
+  let recipientsRead=false;
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'sender'}}};}},
+    from(table){
+      if(table==='children')return {select(){return this},eq(){return this},async single(){return {data:{household_id:'home-b'}}}};
+      assert.equal(table,'household_members');
+      const filters=[];
+      return {select(){return this},eq(k,v){filters.push([k,v]);return this},
+        async maybeSingle(){assert.deepEqual(filters,[['user_id','sender'],['household_id','home-b'],['status','active']]);return {data:null}},
+        then(){recipientsRead=true;throw Error('Should not load recipients')},
+      };
+    },
+  };
+  const webpush={default:{setVapidDetails(){throw Error('Should not configure push')},sendNotification(){throw Error('Should not send')}}};
+  const {POST}=await handler('push/send',db,{'web-push':webpush});
+  assert.equal((await POST(request({childId:'child-b',targetRole:'parent',title:'Update',body:'Photo'}))).status,403);
+  assert.equal(recipientsRead,false);
+});
+test('push delivery selects only active target-role recipients in the child household',async()=>{
+  let sent=0;
+  const filters=[];
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'sender'}}};}},
+    from(table){
+      const chain={
+        select(){return this},eq(k,v){filters.push([table,k,v]);return this},
+        in(k,v){filters.push([table,k,v]);return this},
+        async single(){return {data:{household_id:'home-a'}}},
+        async maybeSingle(){return {data:{role:'nanny'}}},
+        then(resolve){
+          if(table==='household_members')return Promise.resolve({data:[{user_id:'parent-a'}],error:null}).then(resolve);
+          return Promise.resolve({data:[{id:'sub-1',subscription:{endpoint:'https://push.example.test'}}],error:null}).then(resolve);
+        },
+      };
+      return chain;
+    },
+  };
+  const webpush={default:{setVapidDetails(){},async sendNotification(){sent++}}};
+  const old=[process.env.VAPID_SUBJECT,process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,process.env.VAPID_PRIVATE_KEY];
+  process.env.VAPID_SUBJECT='mailto:local@example.test';
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY='local-public';
+  process.env.VAPID_PRIVATE_KEY='local-private';
+  try {
+    const {POST}=await handler('push/send',db,{'web-push':webpush});
+    const result=await POST(request({childId:'child-a',targetRole:'parent',title:'Update',body:'Photo'}));
+    assert.deepEqual(await result.json(),{ok:true,sent:1});
+    assert.equal(sent,1);
+    assert.ok(filters.some(([t,k,v])=>t==='household_members'&&k==='status'&&v==='active'));
+    assert.ok(filters.some(([t,k,v])=>t==='household_members'&&k==='role'&&v==='parent'));
+    assert.ok(filters.some(([t,k,v])=>t==='push_subscriptions'&&k==='household_id'&&v==='home-a'));
+    assert.ok(filters.some(([t,k,v])=>t==='push_subscriptions'&&k==='user_id'&&v.length===1&&v[0]==='parent-a'));
+  } finally {
+    for(const [key,value] of [['VAPID_SUBJECT',old[0]],['NEXT_PUBLIC_VAPID_PUBLIC_KEY',old[1]],['VAPID_PRIVATE_KEY',old[2]]]) {
+      if(value===undefined) delete process.env[key]; else process.env[key]=value;
+    }
+  }
+});
+test('care-circle read returns no other household when membership is removed',async()=>{
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'former-user'}}};}},
+    from(table){assert.equal(table,'household_members');const filters=[];return {
+      select(){return this},eq(k,v){filters.push([k,v]);return this},
+      async maybeSingle(){assert.deepEqual(filters,[['user_id','former-user'],['status','active']]);return {data:null}},
+    }},
+  };
+  const {GET}=await handler('care-circle',db);
+  const res=await GET(new Request('https://example.test/api/care-circle',{headers:{authorization:'Bearer valid'}}));
+  assert.deepEqual(await res.json(),{members:[],householdId:null});
+});
+test('care-circle read scopes active members and profiles to the caller household',async()=>{
+  const checks=[];
+  let memberReads=0;
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'user-a'}}};}},
+    from(table){
+      const filters=[];
+      return {
+        select(){return this},eq(k,v){filters.push([k,v]);return this},
+        not(){return this},
+        async maybeSingle(){checks.push([table,filters]);return {data:{household_id:'home-a',role:'parent'}}},
+        async order(){checks.push([table,filters]);memberReads++;return {data:[
+          {user_id:'user-a',role:'parent',created_at:'2026-09-01'},
+          {user_id:'user-b',role:'nanny',created_at:'2026-09-02'},
+        ]}},
+        async in(k,v){checks.push([table,k,v]);return {data:[
+          {id:'user-a',full_name:'A',email:'a@example.test'},
+          {id:'user-b',full_name:'B',email:'b@example.test'},
+        ]}},
+      };
+    },
+  };
+  const {GET}=await handler('care-circle',db);
+  const res=await GET(new Request('https://example.test/api/care-circle',{headers:{authorization:'Bearer valid'}}));
+  const json=await res.json();
+  assert.equal(json.householdId,'home-a');
+  assert.equal(json.members.length,2);
+  assert.equal(memberReads,1);
+  assert.ok(checks.some(([t,filters])=>t==='household_members'&&filters.some(([k,v])=>k==='household_id'&&v==='home-a')&&filters.some(([k,v])=>k==='status'&&v==='active')));
+  assert.ok(checks.some(([t,k,v])=>t==='profiles'&&k==='id'&&v.join(',')==='user-a,user-b'));
+});
+test('only an active parent can invite; inviter and household come from verified membership',async()=>{
+  let role='nanny';
+  let invitation;
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'verified-parent'}}};}},
+    from(table){
+      if(table==='household_members')return {
+        select(){return this},eq(){return this},async maybeSingle(){return {data:{household_id:'home-a',role}}},
+      };
+      assert.equal(table,'household_invitations');return {
+        select(){return this},eq(){return this},async maybeSingle(){return {data:null}},
+        insert(row){invitation=row;return this},async single(){return {data:{id:'invite-1'},error:null}},
+      };
+    },
+  };
+  const {POST}=await handler('care-circle/invite',db);
+  assert.equal((await POST(request({email:' n@example.test '}))).status,403);
+  assert.equal(invitation,undefined);
+  role='parent';
+  assert.equal((await POST(request({email:' N@EXAMPLE.TEST '}))).status,200);
+  assert.equal(invitation.household_id,'home-a');
+  assert.equal(invitation.created_by,'verified-parent');
+  assert.equal(invitation.invited_email,'n@example.test');
+});

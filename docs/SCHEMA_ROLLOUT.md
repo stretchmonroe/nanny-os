@@ -1,6 +1,6 @@
 # Schema reconciliation — 2026-09-18
 
-Status (2026-09-23): local Auth/Storage HTTP smoke checks passed;
+Status (2026-09-24): all five migrations and local Auth/Storage HTTP smoke checks passed;
 production untouched; PR remains draft.
 
 ## Photo implementation and remaining access requirement
@@ -20,17 +20,17 @@ Review default privileges separately before introducing future tables.
 
 The isolated local fixture in tests/local-supabase/ applies migrations 001
 through 005 in order under PGlite. The Docker-backed stack started successfully
-on the user's Mac on 2026-09-23 with migrations 001–004. Migration 005 adds a
-guarded unique index for one active household per user and awaits local Docker
-rehearsal via scripts/rehearse-local-supabase.sh.
-On 2026-09-23 the user ran scripts/smoke-local-supabase.mjs successfully:
+on the user's Mac on 2026-09-23 with migrations 001–004. On 2026-09-24 the user
+reset only the isolated local database and applied migration 005 as well. Its
+guarded unique index prevents one user from holding two active memberships.
+The Auth/Storage HTTP smoke check passed again after the reset:
 invitation verification and replay, AI plan isolation, private photo access,
 cross-household denial, removed-member denial and parent deletion passed.
 See its README.
 This generated fixture has no production rows, foreign keys, unseen functions
 or triggers, so a staging copy or reviewed production backup is still needed
-before release. Helpers now intentionally
-deny users with multiple active memberships; the migration aborts before changes
+before release. Helpers now intentionally deny users with multiple active
+memberships; migrations 004 and 005 abort before changes
 if any already exist (the exported total of six memberships does not answer that
 question). Resolve those accounts deliberately rather than choosing a household.
 No further photo mapping export is needed for the current eight objects.
@@ -120,7 +120,8 @@ comparison casts to text without rewriting existing records.
 - Migration 004 restricts push-subscription client writes by active household
   and role. The server subscription route validates endpoint and keys, checks
   active membership and reports write failures; route regression tests pass.
-  Delivery to browser push services and rate limiting remain to be checked.
+  The delivery route tests active sender and recipient filtering; delivery to
+  actual browser push services and rate limiting remain to be checked.
 - Review the 27 policy-less tables against actual callers; do not grant all access.
 - Rate limiting and full route-level authorization tests remain outstanding.
 - Metadata proves neither row integrity nor successful end-to-end restoration.

@@ -21,7 +21,10 @@ Baseline commit: `63ff249`
   three legacy photo policies with expected names, roles and exact expressions.
   The one managed-schema custom trigger is the Auth trigger named
   `auth.users:on_auth_user_created:public.handle_new_user`; review its body and
-  live registration behavior. Existing photo bytes still need review.
+  live registration behavior. All eight existing photo objects returned image
+  bytes from their public URLs; private signed-photo access remains untested.
+- Signup UI now shows email-confirmation instructions when account creation
+  returns no session, with a sign-in path after verification.
 - Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
 - Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending
@@ -52,7 +55,8 @@ Acceptance criteria:
 
 The production bucket remains public. Signed-photo rendering, safe object paths
 and guarded migration 003 are now implemented on the draft branch. Live inventory
-and existing-photo HTTP checks are required before cutover; see SCHEMA_ROLLOUT.md.
+and public-byte availability checks passed for all eight photos; private
+existing-photo HTTP flows require validation after cutover; see SCHEMA_ROLLOUT.md.
 
 Acceptance criteria:
 

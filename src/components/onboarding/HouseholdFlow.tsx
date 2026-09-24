@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
-type Screen = "welcome" | "signup" | "signin" | "done";
+type Screen = "welcome" | "signup" | "signin" | "verify" | "done";
 
 const wrap: React.CSSProperties = {
   minHeight: "100dvh", background: "#F4EFE8",
@@ -60,9 +60,10 @@ export function HouseholdFlow() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error: err } = await supabase.auth.signUp({ email, password });
+    const { data, error: err } = await supabase.auth.signUp({ email, password });
     setLoading(false);
     if (err) { setError(err.message); return; }
+    if (!data.session) { setScreen("verify"); return; }
     // SIGNED_IN event fires → useAuthInit → /home
     setScreen("done");
   }
@@ -71,9 +72,10 @@ export function HouseholdFlow() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (err) { setError(err.message); return; }
+    if (!data.session) { setError("Could not start a session. Please try again."); return; }
     // SIGNED_IN event fires → useAuthInit → /home
     setScreen("done");
   }
@@ -84,6 +86,21 @@ export function HouseholdFlow() {
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
           <p style={{ fontSize: 16, color: "#7A6D62" }}>Getting your home ready…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "verify") {
+    return (
+      <div style={wrap}>
+        <div style={card}>
+          <h1 style={heading}>Check your email</h1>
+          <p style={sub}>
+            Follow the confirmation link sent to {email}, then sign in to finish setting up your home.
+          </p>
+          <button style={btnPrimary} onClick={() => setScreen("signin")}>Sign in</button>
+          <button style={btnGhost} onClick={() => setScreen("welcome")}>Back</button>
         </div>
       </div>
     );

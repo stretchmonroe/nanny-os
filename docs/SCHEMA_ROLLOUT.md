@@ -5,14 +5,16 @@ and the restored local SQL copy. The copied six Auth users, six active
 memberships and eight photo metadata rows remained intact; no user had two
 active memberships, no photo path was unmapped, and the local photos bucket
 became private. Synthetic Auth/Storage HTTP smoke checks passed. Production
-was untouched; PR remains draft.
+was untouched. All eight live photo objects returned image bytes from their
+public URLs; PR remains draft.
 
 ## Photo implementation and remaining access requirement
 
-Latest preflight reviewed (2026-09-19): 8 photos, zero unmapped paths, zero
+Latest preflight reviewed (2026-09-24): 8 photos, zero unmapped paths, zero
 missing owners; 6 active membership rows. This passes the exported photo
-ownership guard; synthetic Storage HTTP checks also passed. Existing photo
-bytes and live access behavior still need release validation.
+ownership guard; synthetic Storage HTTP checks also passed. A read-only check
+fetched image bytes for all eight existing live objects from their public URLs.
+Private signed-photo access and live browser behavior still need release validation.
 
 Live helper definitions confirmed missing status checks and unqualified search
 paths. Migration 004 fixes them, denies ambiguous multiple-active-household
@@ -45,7 +47,7 @@ encoding special password characters automatically, and saves SQL files
 in a restricted Downloads folder outside the repository. It does not link,
 reset or migrate production. Storage object bytes require a separate transfer.
 Keep the dump, connection URI and log private. The SQL copy and local migration
-rehearsal completed; managed-schema policy parity remains to be checked.
+rehearsal completed; the legacy photo-policy expressions were also verified live.
 
 The owner's SQL export completed on 2026-09-24. Restore this private export to a
 **database-only local copy** with
@@ -140,14 +142,21 @@ migrations replaces it or writes to `auth.users`; it remains live but was not
 recreated on the isolated copy. Review its function body and test actual new
 user registration before release; the trigger name alone does not prove its
 behavior. This check did not verify Storage bytes or actual access behavior.
+Run `bash scripts/check-local-signup-hook.sh` from the updated checkout on the
+owner's Mac. It reads the restored `public.handle_new_user()` definition and
+prints only presence, security configuration and table-reference flags. It
+does not print the function body or connect to production. Text-reference
+flags cannot prove the full behavior of the trigger; a live new-user flow
+remains necessary before release.
 
 On the owner's Mac, run `node scripts/check-live-photo-bytes.mjs` from the
 updated checkout to check whether the eight metadata paths in the isolated
 local copy still serve image bytes from the live **public** bucket. It makes
 read-only, tiny-range HTTP requests without needing a password, does not save
 images, and prints only aggregate counts. Share just `LIVE_PHOTO_BYTE_CHECK`.
-Successful public-byte checks do not exercise private signed URLs or prove
-that browsers have cleared cached public copies after a private cutover.
+The owner's check returned `expected=8 readable=8 missing=0 denied=0 other=0`.
+Public-byte availability does not exercise private signed URLs or prove that
+browsers have cleared cached public copies after a private cutover.
 
 PrivatePhoto now exchanges bucket-relative paths or this project's legacy public
 URLs for five-minute signed URLs, refreshes them, and clears them on auth changes.
@@ -169,9 +178,10 @@ The read-only supabase/security-preflight.sql export has already been reviewed.
 It contains helper definitions, grants and aggregate counts, not photo contents
 or family records. The restored local copy validated the active-membership
 guard and photo-path ownership checks on copied metadata. Existing-photo
-Storage HTTP flows still require the object bytes, and the live managed-schema
-policy definitions require comparison. Production execution remains blocked
-on those checks and explicit release review.
+Storage HTTP flows with existing objects under private policies still require
+end-to-end validation. The eight live objects are readable today, and legacy
+policy definitions match. Production execution remains blocked on actual
+private-photo behavior, Auth registration and explicit release review.
 
 Deployment order: rehearse 001/002 in staging, deploy the signed-photo application,
 then rehearse/apply guarded 003. Test existing photos and uploads with two
@@ -200,6 +210,9 @@ members and caregivers before accessing children. Concurrent first-time home
 creation is guarded by migration 005's active-membership unique index once
 deployed. The API still requires a household-level transaction to make all
 creation steps atomic and avoid partial retries.
+The sign-up screen now prompts users to confirm their email when Supabase
+returns no session, with an explicit path to sign in afterward; it no longer
+leaves that case on a perpetual setup screen.
 
 Care Circle no longer selects nonexistent columns. Care Circle and push routes
 require active memberships; push recipients must also be active members.

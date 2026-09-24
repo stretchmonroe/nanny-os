@@ -18,9 +18,10 @@ Baseline commit: `63ff249`
   after migration. Production was not changed.
 - Live read-only preflight: photos bucket remains public; eight photo metadata
   rows, six active memberships, zero users with multiple active households,
-  three legacy photo policies with expected names/roles. One custom trigger on
-  managed Auth/Storage tables needs identification; exact legacy policy
-  expressions and existing photo bytes still need review.
+  three legacy photo policies with expected names, roles and exact expressions.
+  The one managed-schema custom trigger is the Auth trigger named
+  `auth.users:on_auth_user_created:public.handle_new_user`; review its body and
+  live registration behavior. Existing photo bytes still need review.
 - Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
 - Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending
@@ -38,7 +39,7 @@ Baseline commit: `63ff249`
 
 ### P0 — Verify and reconcile the live Supabase schema
 
-The live export confirms roles `parent | nanny`, a composite membership key, required user_id, and status. Membership id and invited_email do not exist. The revised implementation uses a separate invitation table and transactional server-only claim function. No migration has been applied to production. The local restored-row migration rehearsal passed; managed-schema policy parity and end-to-end flows remain open.
+The live export confirms roles `parent | nanny`, a composite membership key, required user_id, and status. Membership id and invited_email do not exist. The revised implementation uses a separate invitation table and transactional server-only claim function. No migration has been applied to production. The local restored-row migration rehearsal and live legacy photo-policy expression comparison passed; the Auth signup hook and end-to-end flows remain open.
 
 Acceptance criteria:
 

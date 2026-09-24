@@ -131,19 +131,23 @@ reviewed baseline. Photo bytes are not included. Verify the live managed
 policies and existing-object behavior before a production cutover, and do not
 use the copied database to serve app traffic.
 
-The owner's first live read-only preflight confirmed a public bucket, eight
-photo metadata rows, six active memberships, zero duplicate active users and
-three legacy policies with the expected names and roles. It also found one
-custom managed-schema trigger whose identity needs review. Run
-`bash scripts/check-live-cutover-readiness.sh` again after pulling the updated
-branch. It prompts privately for the confirmed Nanny App session-pooler URI
-and password, compares the exact legacy policy expressions to the reviewed
-baseline, and reports the schema/table/trigger/function identifier for the
-single custom trigger. Share only `LIVE CUTOVER PREFLIGHT READY` and its safe
-key/value lines; keep the private log and credentials on the Mac. A false
-expression result may reflect PostgreSQL rendering differences, so investigate
-it before cutover. This check cannot verify Storage bytes, function bodies,
-other managed-schema customizations or actual access behavior.
+The owner's live read-only preflight confirmed a public bucket, eight photo
+metadata rows, six active memberships, zero duplicate active users and three
+legacy policies with the expected names, roles and exact expressions. The one
+custom managed-schema trigger is
+`auth.users:on_auth_user_created:public.handle_new_user`. None of the five
+migrations replaces it or writes to `auth.users`; it remains live but was not
+recreated on the isolated copy. Review its function body and test actual new
+user registration before release; the trigger name alone does not prove its
+behavior. This check did not verify Storage bytes or actual access behavior.
+
+On the owner's Mac, run `node scripts/check-live-photo-bytes.mjs` from the
+updated checkout to check whether the eight metadata paths in the isolated
+local copy still serve image bytes from the live **public** bucket. It makes
+read-only, tiny-range HTTP requests without needing a password, does not save
+images, and prints only aggregate counts. Share just `LIVE_PHOTO_BYTE_CHECK`.
+Successful public-byte checks do not exercise private signed URLs or prove
+that browsers have cleared cached public copies after a private cutover.
 
 PrivatePhoto now exchanges bucket-relative paths or this project's legacy public
 URLs for five-minute signed URLs, refreshes them, and clears them on auth changes.

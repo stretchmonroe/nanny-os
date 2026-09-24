@@ -1,14 +1,18 @@
 # Schema reconciliation — 2026-09-18
 
-Status (2026-09-24): all five migrations and local Auth/Storage HTTP smoke checks passed;
-production untouched; PR remains draft.
+Status (2026-09-24): migrations 001–005 passed on both the synthetic fixture
+and the restored local SQL copy. The copied six Auth users, six active
+memberships and eight photo metadata rows remained intact; no user had two
+active memberships, no photo path was unmapped, and the local photos bucket
+became private. Synthetic Auth/Storage HTTP smoke checks passed. Production
+was untouched; PR remains draft.
 
 ## Photo implementation and remaining access requirement
 
 Latest preflight reviewed (2026-09-19): 8 photos, zero unmapped paths, zero
 missing owners; 6 active membership rows. This passes the exported photo
-ownership guard; synthetic Storage HTTP checks also passed. Existing production
-objects and a complete database copy still need release validation.
+ownership guard; synthetic Storage HTTP checks also passed. Existing photo
+bytes and live access behavior still need release validation.
 
 Live helper definitions confirmed missing status checks and unqualified search
 paths. Migration 004 fixes them, denies ambiguous multiple-active-household
@@ -27,12 +31,11 @@ The Auth/Storage HTTP smoke check passed again after the reset:
 invitation verification and replay, AI plan isolation, private photo access,
 cross-household denial, removed-member denial and parent deletion passed.
 See its README.
-This generated fixture has no production rows, foreign keys, unseen functions
-or triggers, so a staging copy or reviewed production backup is still needed
-before release. Helpers now intentionally deny users with multiple active
-memberships; migrations 004 and 005 abort before changes
-if any already exist (the exported total of six memberships does not answer that
-question). Resolve those accounts deliberately rather than choosing a household.
+The generated fixture has no production rows, foreign keys, unseen functions
+or triggers. A restored SQL copy has now exercised the migrations against
+copied production rows. Helpers intentionally deny users with multiple active
+memberships; migrations 004 and 005 abort if any exist. The restored snapshot
+had none. A later change to live memberships would require a fresh check.
 No further photo mapping export is needed for the current eight objects.
 
 For a full-database staging rehearsal on the owner's Mac, first use the read-only
@@ -40,10 +43,9 @@ For a full-database staging rehearsal on the owner's Mac, first use the read-onl
 prompts privately for the **Nanny App** session-pooler URI and database password,
 encoding special password characters automatically, and saves SQL files
 in a restricted Downloads folder outside the repository. It does not link,
-reset or migrate production. This is a database backup, not yet a staging
-restore; Storage object bytes require a separate transfer. Keep the dump,
-connection URI and log private. Migration rehearsal on the copied records
-still needs review after the restore and managed-schema policy checks.
+reset or migrate production. Storage object bytes require a separate transfer.
+Keep the dump, connection URI and log private. The SQL copy and local migration
+rehearsal completed; managed-schema policy parity remains to be checked.
 
 The owner's SQL export completed on 2026-09-24. Restore this private export to a
 **database-only local copy** with
@@ -122,11 +124,22 @@ local-only file, add exactly those two Storage columns within the restore
 transaction, and preserve the two bucket rows. This still does not reproduce
 managed Auth/Storage triggers, policies or photo bytes; keep the original
 backup intact.
-This is a copy for inspection, not a completed migration rehearsal. Database
-dumps exclude custom policies/triggers on Supabase-managed auth/storage schemas;
-the script reports the restored storage policy count to make that gap visible.
-Photo bytes are not included. Review customizations against production before
-replaying migration 003, and do not use the copied database to serve app traffic.
+The local copy passed the migration rehearsal. Database dumps exclude custom
+policies/triggers on Supabase-managed auth/storage schemas; the three legacy
+photo policies used for migration 003 were locally reconstructed from the
+reviewed baseline. Photo bytes are not included. Verify the live managed
+policies and existing-object behavior before a production cutover, and do not
+use the copied database to serve app traffic.
+
+After the local rehearsal, run `bash scripts/check-live-cutover-readiness.sh`
+on the owner's Mac. It prompts privately for the confirmed Nanny App session
+pooler URI and password and uses a read-only transaction against that project.
+Only share its `LIVE CUTOVER PREFLIGHT READY` line and aggregate key/value
+lines; keep the private log and credentials on the Mac. Expected unchanged
+baseline: bucket public, eight photo metadata rows, six active memberships,
+zero duplicate users, three legacy policy names and matching roles. Check any
+drift before release. This check cannot verify policy expressions, managed
+triggers outside the public schema, Storage bytes or actual access behavior.
 
 PrivatePhoto now exchanges bucket-relative paths or this project's legacy public
 URLs for five-minute signed URLs, refreshes them, and clears them on auth changes.
@@ -146,10 +159,11 @@ This is intentional: do not guess ownership or skip the guard.
 
 The read-only supabase/security-preflight.sql export has already been reviewed.
 It contains helper definitions, grants and aggregate counts, not photo contents
-or family records. A local Supabase rehearsal does not establish production
-readiness: the multiple-active-membership guard and existing-photo Storage HTTP flows
-need validation against a complete database copy. Production execution remains
-blocked on that validation and explicit release review.
+or family records. The restored local copy validated the active-membership
+guard and photo-path ownership checks on copied metadata. Existing-photo
+Storage HTTP flows still require the object bytes, and the live managed-schema
+policy definitions require comparison. Production execution remains blocked
+on those checks and explicit release review.
 
 Deployment order: rehearse 001/002 in staging, deploy the signed-photo application,
 then rehearse/apply guarded 003. Test existing photos and uploads with two
@@ -192,6 +206,7 @@ comparison casts to text without rewriting existing records.
 
 1. Run npm test, npx tsc --noEmit, targeted ESLint, npm run build.
 2. Back up the target database and rehearse all five migrations on a staging copy.
+   Completed on the isolated SQL copy on 2026-09-24; refresh the backup at release.
    Local tests use actual embedded PostgreSQL (PGlite), but do not reproduce
    all production RLS helper functions, Auth, concurrency, or application routes.
 3. Inspect my_household_id(), my_role(), in_my_household() and table grants.

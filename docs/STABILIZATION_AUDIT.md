@@ -12,6 +12,10 @@ Baseline commit: `63ff249`
   child-specific loading snapshots, navigation and unused values
 - Automated tests: local PostgreSQL invitation/AI/storage tests, photo-path validation, and isolated API-handler tests
 - Local Supabase on user's Mac: migrations 001–005 and synthetic Auth/Storage HTTP smoke checks passed on 2026-09-24
+- Restored local copy of the Nanny App SQL export: migrations 001–005 passed on
+  six Auth users, six active memberships and eight photo metadata rows; no
+  duplicate active user memberships or unmapped photo paths; bucket private
+  after migration. Production was not changed.
 - Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
 - Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending
@@ -29,7 +33,7 @@ Baseline commit: `63ff249`
 
 ### P0 — Verify and reconcile the live Supabase schema
 
-The live export confirms roles `parent | nanny`, a composite membership key, required user_id, and status. Membership id and invited_email do not exist. The revised implementation uses a separate invitation table and transactional server-only claim function. Neither migration has been applied to production. Staging verification remains required.
+The live export confirms roles `parent | nanny`, a composite membership key, required user_id, and status. Membership id and invited_email do not exist. The revised implementation uses a separate invitation table and transactional server-only claim function. No migration has been applied to production. The local restored-row migration rehearsal passed; managed-schema policy parity and end-to-end flows remain open.
 
 Acceptance criteria:
 
@@ -42,7 +46,7 @@ Acceptance criteria:
 
 The production bucket remains public. Signed-photo rendering, safe object paths
 and guarded migration 003 are now implemented on the draft branch. Live inventory
-and staging HTTP checks are required before cutover; see SCHEMA_ROLLOUT.md.
+and existing-photo HTTP checks are required before cutover; see SCHEMA_ROLLOUT.md.
 
 Acceptance criteria:
 
@@ -68,7 +72,7 @@ parent can create an invite. Complete live browser flows remain open.
 
 The full lint command passes without disabling the React rules. The draft branch
 now runs lint, typecheck, build, tests and dependency audit in GitHub Actions.
-Confirm its first hosted run succeeds. Live browser checks for
+The first hosted run passed. Live browser checks for
 child switching, edit sheets, voice input and theme toggling are still needed.
 
 ### P1 — Consolidate privileged server access

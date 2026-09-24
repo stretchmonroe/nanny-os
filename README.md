@@ -30,7 +30,7 @@ npm run build
 npm audit
 ```
 
-The production build and TypeScript checks pass. The full lint gate currently has legacy React-hook and cleanup debt; see `docs/STABILIZATION_AUDIT.md`.
+The production build, TypeScript checks and full lint gate pass on the draft stabilization branch; see `docs/STABILIZATION_AUDIT.md` for remaining release work.
 
 ## Data and authorization
 

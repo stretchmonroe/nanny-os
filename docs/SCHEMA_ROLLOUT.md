@@ -8,6 +8,23 @@ became private. Synthetic Auth/Storage HTTP smoke checks passed. Production
 was untouched. All eight live photo objects returned image bytes from their
 public URLs; PR remains draft.
 
+## Release gate snapshot
+
+| Gate | Result | Remaining action |
+| --- | --- | --- |
+| Migrations 001–005 on copied records | Passed locally; six users, six active memberships, eight photo metadata rows retained | Refresh the private backup before release |
+| Existing photo policy baseline | Live names, roles and exact expressions match | Apply guarded migration 003 only after the signed-photo client is deployed |
+| Existing photo objects | All eight publicly served image bytes | Test those objects using private signed URLs, and verify anonymous denial after cutover |
+| Auth signup hook | Restored function present; direct reference to profiles, none to household membership or Storage | Review the function body and test a fresh parent/caregiver signup |
+| App build | GitHub checks and Vercel preview deployment passed on the draft branch | Confirm Preview's Supabase project binding before entering test data; complete browser and push flows |
+
+The Vercel preview deployment is associated with the stabilization branch, but
+its Supabase Preview environment has not been verified. The isolated restored
+copy is database-only and cannot serve Auth or Storage to that deployment.
+Do not use the preview to create test accounts until its database target is
+confirmed as a non-production test project. Continue UI checks against an
+isolated local full stack if Preview points at the live Nanny App project.
+
 ## Photo implementation and remaining access requirement
 
 Latest preflight reviewed (2026-09-24): 8 photos, zero unmapped paths, zero
@@ -148,6 +165,11 @@ prints only presence, security configuration and table-reference flags. It
 does not print the function body or connect to production. Text-reference
 flags cannot prove the full behavior of the trigger; a live new-user flow
 remains necessary before release.
+The owner's local check found the function present with `SECURITY DEFINER`
+and an explicit search path. Its body mentions profiles but has no direct text
+references to household members, households or Storage. This reduces the risk
+of an immediate conflict with migrations 001–005; indirect calls and actual
+registration behavior remain unverified.
 
 On the owner's Mac, run `node scripts/check-live-photo-bytes.mjs` from the
 updated checkout to check whether the eight metadata paths in the isolated
@@ -231,8 +253,8 @@ comparison casts to text without rewriting existing records.
    Local tests use actual embedded PostgreSQL (PGlite), but do not reproduce
    all production RLS helper functions, Auth, concurrency, or application routes.
 3. Inspect my_household_id(), my_role(), in_my_household() and table grants.
-   Their definitions were absent from the export. Verify removed members cannot
-   access other tables and all required client features have appropriate policies.
+   Verify removed members cannot access other tables and all required client
+   features have appropriate policies.
 4. Apply migrations 001 through 005 in version order only after review/approval. These scripts
    expect the exported baseline and intentionally fail on unexpected existing
    objects. Do not blindly replay old rls.sql or infer an existing migration history.
@@ -244,8 +266,8 @@ comparison casts to text without rewriting existing records.
 ## Still blocking full release
 
 - Production photos remain public until guarded migration 003 is applied.
-  Local synthetic HTTP tests pass; existing-photo behavior, production inventory
-  and cache review remain required.
+  Local synthetic HTTP tests, live metadata inventory and public image-byte
+  checks pass; private existing-photo behavior and cache review remain required.
 - Migration 004 restricts push-subscription client writes by active household
   and role. The server subscription route validates endpoint and keys, checks
   active membership and reports write failures; route regression tests pass.

@@ -23,6 +23,9 @@ Baseline commit: `63ff249`
   `auth.users:on_auth_user_created:public.handle_new_user`; review its body and
   live registration behavior. All eight existing photo objects returned image
   bytes from their public URLs; private signed-photo access remains untested.
+- Restored signup function is `SECURITY DEFINER` with an explicit search path;
+  its body mentions profiles but not household members, households or Storage
+  directly. A live new-user test is still needed.
 - Signup UI now shows email-confirmation instructions when account creation
   returns no session, with a sign-in path after verification.
 - Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed

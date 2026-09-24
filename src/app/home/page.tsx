@@ -10,18 +10,14 @@ import TimelineFeed from "@/components/home/TimelineFeed";
 import QuickActions from "@/components/home/QuickActions";
 import MomentsCarousel from "@/components/home/MomentsCarousel";
 import InsightStrip from "@/components/home/InsightStrip";
-import { ProfileSetupCard } from "@/components/home/ProfileSetupCard";
 import PushPermission from "@/components/notifications/PushPermission";
 import type { FocusArea } from "@/lib/data/demo";
 
 export default function HomePage() {
   const [focus,     setFocus]     = useState<FocusArea>("language");
-  const [setupOpen, setSetupOpen] = useState(false);
-  const [setupDismissed, setSetupDismissed] = useState(false);
   const router = useRouter();
 
   const { authReady, activeChild } = useAppStore();
-  const showSetup = !activeChild && (setupOpen || (authReady && !setupDismissed));
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -33,15 +29,23 @@ export default function HomePage() {
       <ChildProfileHeader
         focus={focus}
         onFocusChange={setFocus}
-        onSetupOpen={() => setSetupOpen(true)}
+        onSetupOpen={() => router.push("/setup")}
       />
 
       <div className="pt-2 pb-12">
         <PushPermission />
 
-        {showSetup && (
-          <div className="mb-5">
-            <ProfileSetupCard onDismiss={() => { setSetupOpen(false); setSetupDismissed(true); }} />
+        {authReady && !activeChild && (
+          <div className="mx-4 mb-5 rounded-2xl bg-[#EAF2EC] p-5">
+            <p className="text-base font-bold text-[#261E18]">Create or join your home</p>
+            <p className="mt-1 text-sm text-[#7A6D62]">Choose your role to connect to the right household.</p>
+            <button
+              type="button"
+              onClick={() => router.push("/setup")}
+              className="mt-4 w-full rounded-xl bg-[#6A9C80] px-4 py-3 text-sm font-bold text-white"
+            >
+              Continue setup
+            </button>
           </div>
         )}
 

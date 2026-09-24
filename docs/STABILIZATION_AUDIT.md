@@ -30,7 +30,11 @@ Baseline commit: `63ff249`
 - Signup UI now shows email-confirmation instructions when account creation
   returns no session, with a sign-in path after verification.
 - Isolated local Next.js app started and served onboarding/home; profile update
-  and home setup routes returned 200. Full browser-role flows remain to verify.
+  and home setup routes returned 200. Parent created a child and saw it on Home.
+  Caregiver testing exposed that signup previously redirected to Home, where a
+  setup card could create another parent household. New accounts without a
+  membership now open the create-or-join choice on Setup; Home offers that
+  choice rather than a one-click parent setup. Caregiver claim remains to verify.
 - Local app rehearsal exposed a dummy AI key reaching the external provider and
   receiving 401. The launcher and client now skip AI requests in local rehearsal;
   the server also rejects them, and no key prefix or provider body is logged.

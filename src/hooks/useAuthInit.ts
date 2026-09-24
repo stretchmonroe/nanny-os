@@ -44,12 +44,14 @@ export function useAuthInit() {
     console.log("[auth] session ok →", session.user.id);
 
     // Fetch real data — non-blocking. Failures are safe; app uses demo fallbacks.
+    let needsHouseholdSetup = false;
     try {
       const res = await fetch("/api/me", {
         headers: { authorization: `Bearer ${session.access_token}` },
       });
       if (res.ok) {
         const { profile, membership, children } = await res.json();
+        needsHouseholdSetup = !membership;
 
         setProfileFullName(profile?.full_name ?? null);
         setCurrentUserRole(membership?.role ? membership.role as UserRole : null);
@@ -81,10 +83,9 @@ export function useAuthInit() {
 
     setAuthReady(true);
 
-    if ((pathname === "/" || isPublic(pathname)) && !_navigating) {
+    if ((pathname === "/" || isPublic(pathname) || (pathname === "/home" && needsHouseholdSetup)) && !_navigating) {
       _navigating = true;
-      console.log("[auth] authenticated → /home");
-      router.replace("/home");
+      router.replace(needsHouseholdSetup ? "/setup" : "/home");
     }
   }, [pathname, router, setAuthReady, setProfileFullName, setCurrentUserRole, setActiveChild]);
 

@@ -218,7 +218,7 @@ export default function CareCirclePage() {
                 className="bg-surface-card border-soft rounded-2xl px-4 py-4 shadow-card space-y-3"
               >
                 <p className="text-[13px] text-muted-foreground leading-relaxed">
-                  Enter your caregiver&apos;s email. They sign up with that address to join automatically.
+                  Enter your caregiver&apos;s email. They sign up with that address, then enter the invite code above to join.
                 </p>
                 <input
                   type="email"

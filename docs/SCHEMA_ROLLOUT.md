@@ -24,6 +24,17 @@ copy is database-only and cannot serve Auth or Storage to that deployment.
 Do not use the preview to create test accounts until its database target is
 confirmed as a non-production test project. Continue UI checks against an
 isolated local full stack if Preview points at the live Nanny App project.
+From the same checkout on the owner's Mac, run `npm ci` once if dependencies
+are not installed, then `node scripts/run-app-with-local-supabase.mjs` with
+the isolated Supabase stack running. The launcher refuses remote project links,
+checks the expected local API on port 55321, overrides any inherited Supabase
+environment with local keys, and serves the app at
+`http://localhost:3000/onboarding`. It disables live AI and push credentials
+for this rehearsal. Create throwaway local parent and caregiver accounts,
+complete setup and invite claiming in separate browser sessions, and exercise
+photo upload/display and wrong-household access. Stop the app with Ctrl+C.
+This UI run uses synthetic local data; it does not test the copied photo bytes
+or the live Auth trigger.
 
 ## Photo implementation and remaining access requirement
 

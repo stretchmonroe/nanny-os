@@ -19,6 +19,12 @@ The app has demo fallbacks for much of the UI, but authenticated household flows
 3. Copy `.env.example` to `.env.local` and supply the required values.
 4. Start the app with `npm run dev`.
 
+For a browser rehearsal against the dedicated isolated Supabase stack, first
+start it with `bash scripts/start-local-supabase.sh`, install app dependencies
+with `npm ci` if needed, then run
+`node scripts/run-app-with-local-supabase.mjs`. The launcher uses only local
+Supabase keys and displays the local browser URL without printing credentials.
+
 Do not commit `.env.local` or any service-role, VAPID private, or Anthropic keys.
 
 ## Quality gates

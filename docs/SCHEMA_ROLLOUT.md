@@ -35,6 +35,16 @@ if any already exist (the exported total of six memberships does not answer that
 question). Resolve those accounts deliberately rather than choosing a household.
 No further photo mapping export is needed for the current eight objects.
 
+For a full-database staging rehearsal on the owner's Mac, first use the read-only
+`bash scripts/backup-live-for-staging.sh` command from the audit branch. It
+prompts privately for the **Nanny App** session-pooler URI and saves SQL files
+in a restricted Downloads folder outside the repository. It does not link,
+reset or migrate production. This is a database backup, not yet a staging
+restore; Storage object bytes require a separate transfer. Keep the dump,
+connection URI and log private. A restore procedure against a distinct local
+instance still needs to be prepared and reviewed before migrations run on
+those records.
+
 PrivatePhoto now exchanges bucket-relative paths or this project's legacy public
 URLs for five-minute signed URLs, refreshes them, and clears them on auth changes.
 No fallback to public family-photo URLs is allowed. Explicit picsum demo images

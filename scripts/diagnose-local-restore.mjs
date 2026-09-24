@@ -3,9 +3,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const attempt = process.argv[2] === '--retry' ? 'retry' : 'restore';
-if (process.argv.length > 2 && process.argv[2] !== '--retry') {
-  console.error('Usage: node scripts/diagnose-local-restore.mjs [--retry [backup-folder]]');
+const attempt = ({ '--retry': 'retry', '--compatible': 'compatible' })[process.argv[2]] ?? 'restore';
+if (process.argv.length > 2 && !['--retry', '--compatible'].includes(process.argv[2])) {
+  console.error('Usage: node scripts/diagnose-local-restore.mjs [--retry|--compatible [backup-folder]]');
   process.exit(1);
 }
 const log = join(import.meta.dirname, '..', 'tests', 'production-staging', 'runtime', `${attempt}.log`);
@@ -42,6 +42,7 @@ const category = classes.find(([, pattern]) => pattern.test(message))?.[0] ?? 'U
 let phase = 'unknown';
 const backup = process.argv[3];
 let schemaSql;
+let dataLine = null;
 if (backup && lineMatch) {
   try {
     const roles = readFileSync(join(backup, 'roles.sql'), 'utf8');
@@ -51,9 +52,29 @@ if (backup && lineMatch) {
     const schemaLines = schema.split('\n').length - 1;
     const position = Number(line);
     phase = position <= rolesLines ? 'roles' : position <= rolesLines + schemaLines ? 'schema' : 'data';
+    if (phase === 'data') dataLine = position - rolesLines - schemaLines - 2;
   } catch { /* Keep the backup private; classification remains unknown. */ }
 }
 console.log(`RESTORE_DIAGNOSIS attempt=${attempt} category=${category} sql_line=${line} phase=${phase}`);
+if (attempt === 'compatible' && dataLine && dataLine > 0) {
+  try {
+    const lines = readFileSync(join(import.meta.dirname, '..', 'tests',
+      'production-staging', 'runtime', 'compatible-data.sql'), 'utf8').split('\n');
+    let target = null;
+    let inCopy = false;
+    for (let i = 0; i < Math.min(dataLine, lines.length); i++) {
+      const item = lines[i];
+      if (!inCopy && item.startsWith('COPY ')) {
+        const match = item.match(/^COPY\s+((?:"[a-z_][a-z_0-9]*"|[a-z_][a-z_0-9]*))\.((?:"[a-z_][a-z_0-9]*"|[a-z_][a-z_0-9]*))\s*\(/i);
+        target = match ? `${match[1].replaceAll('"', '')}.${match[2].replaceAll('"', '')}` : null;
+        inCopy = true;
+      } else if (inCopy && item === '\\.') inCopy = false;
+    }
+    if (inCopy && target && /^(auth|storage|public|realtime|_realtime|vault)\.[a-z_][a-z_0-9]{0,62}$/.test(target)) {
+      console.log(`RESTORE_COPY_TARGET relation=${target}`);
+    }
+  } catch { /* Only metadata is emitted; unknown targets remain private. */ }
+}
 if (category === 'MISSING_DEPENDENCY' && schemaSql) {
   // Relation names are schema metadata, not records. Limit output to known
   // Supabase/app schemas and SQL identifiers; do not echo arbitrary text.
@@ -96,4 +117,4 @@ const tokens = message.match(/"[^"]*"|'[^']*'|[A-Za-z][A-Za-z_0-9]*|[0-9]+/g) ??
 const safe = tokens.map((token) => grammar.has(token.toLowerCase()) ? token.toLowerCase() : '[redacted]');
 const collapsed = safe.filter((token, i) => token !== '[redacted]' || safe[i - 1] !== token);
 console.log(`RESTORE_ERROR_SHAPE ${collapsed.slice(0, 45).join(' ') || 'unavailable'}`);
-console.log('Share only the RESTORE_DIAGNOSIS, RESTORE_MISSING_RELATION and RESTORE_ERROR_SHAPE lines. Keep logs and SQL files private.');
+console.log('Share only RESTORE_DIAGNOSIS, RESTORE_COPY_TARGET, RESTORE_MISSING_RELATION and RESTORE_ERROR_SHAPE lines. Keep logs and SQL files private.');

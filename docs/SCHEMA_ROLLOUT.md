@@ -91,6 +91,10 @@ those four zero-row Auth COPY blocks in a private local-only file, and retries
 the complete transactional restore as the local admin. This is a migration
 rehearsal copy; it must not be used as an Auth service or as a full fidelity
 managed-schema backup. Retain the untouched original SQL export.
+For a failure of that compatible retry, run
+`node scripts/diagnose-local-restore.mjs --compatible "$HOME/Downloads/ankur-staging.XXXXXX"`
+with the real folder. Share only the fixed diagnostic lines; `RESTORE_COPY_TARGET`
+identifies the table in the private data file without exposing its rows.
 This is a copy for inspection, not a completed migration rehearsal. Database
 dumps exclude custom policies/triggers on Supabase-managed auth/storage schemas;
 the script reports the restored storage policy count to make that gap visible.

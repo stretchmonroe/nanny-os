@@ -54,6 +54,10 @@ an existing local copy; it never uses a remote URL or a linked project. It
 restores all three SQL files in one transaction and prints only counts for Auth
 users, memberships, duplicate active users, photos and unmapped paths. Private
 restore/check logs remain in the ignored production-staging runtime directory.
+If restore fails, run `node scripts/diagnose-local-restore.mjs` from the same
+checkout and share only its fixed-category `RESTORE_DIAGNOSIS` line. Do not
+paste the SQL or full restore log. The script refuses to reuse an existing
+copy; diagnose it before planning a safe fresh retry.
 This is a copy for inspection, not a completed migration rehearsal. Database
 dumps exclude custom policies/triggers on Supabase-managed auth/storage schemas;
 the script reports the restored storage policy count to make that gap visible.

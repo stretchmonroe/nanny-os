@@ -81,6 +81,16 @@ missing table with rows requires a compatible local schema; never discard its
 records to get a passing rehearsal. Empty managed-table `COPY` blocks can be
 omitted from a local-only rehearsal after all missing tables are identified;
 the original backup remains complete.
+The owner's compatibility audit found 38 public app tables absent only because
+the failed transaction rolled back, and four newer, empty managed Auth tables
+(`mfa_recovery_code_sets`, `mfa_recovery_codes`, `scim_tokens`, `scim_users`)
+absent from the local image and schema export. No nonempty managed table is
+missing. `bash scripts/restore-compatible-local-copy.sh "$HOME/Downloads/ankur-staging.XXXXXX"`
+validates the current local catalog and `schema.sql` declarations, omits only
+those four zero-row Auth COPY blocks in a private local-only file, and retries
+the complete transactional restore as the local admin. This is a migration
+rehearsal copy; it must not be used as an Auth service or as a full fidelity
+managed-schema backup. Retain the untouched original SQL export.
 This is a copy for inspection, not a completed migration rehearsal. Database
 dumps exclude custom policies/triggers on Supabase-managed auth/storage schemas;
 the script reports the restored storage policy count to make that gap visible.

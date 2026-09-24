@@ -101,6 +101,16 @@ with the actual folder. This compares all managed-table COPY column names to
 the isolated local catalog in one read-only pass and counts affected rows.
 Do not add an unknown-typed column or omit nonempty Auth rows to bypass this
 incompatibility; align the managed schema with the backup first.
+The owner's audit found only `auth.one_time_tokens.expires_at` (zero rows) and
+two columns in `storage.buckets` (two rows). Supabase Storage's upstream
+`0068-bucket-lifecycle-configuration.sql` defines the bucket fields as `jsonb`
+and `uuid`. Run
+`bash scripts/restore-aligned-local-copy.sh "$HOME/Downloads/ankur-staging.XXXXXX"`
+with the actual folder to omit the five empty Auth `COPY` blocks in a private
+local-only file, add exactly those two Storage columns within the restore
+transaction, and preserve the two bucket rows. This still does not reproduce
+managed Auth/Storage triggers, policies or photo bytes; keep the original
+backup intact.
 This is a copy for inspection, not a completed migration rehearsal. Database
 dumps exclude custom policies/triggers on Supabase-managed auth/storage schemas;
 the script reports the restored storage policy count to make that gap visible.

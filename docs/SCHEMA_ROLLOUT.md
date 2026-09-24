@@ -91,6 +91,17 @@ those four zero-row Auth COPY blocks in a private local-only file, and retries
 the complete transactional restore as the local admin. This is a migration
 rehearsal copy; it must not be used as an Auth service or as a full fidelity
 managed-schema backup. Retain the untouched original SQL export.
+After `LOCAL DATABASE COPY READY`, use
+`bash scripts/rehearse-restored-production-copy.sh` from the same checkout to
+apply 001–005 against the isolated copy. It guards the observed six users,
+six active memberships, eight photos, expected public policy names and the
+absence of active-membership duplicates. The platform SQL backup omitted
+custom Storage policies, so the script creates the three photo policies from
+the reviewed baseline **only locally** before migration 003 replaces them.
+Each migration has its own private log; an unexpected baseline or migration
+error stops the rehearsal. A successful run preserves copied row counts and
+verifies that the photos bucket is private, but does not validate live policy
+parity, existing object bytes or client application flows.
 For a failure of that compatible retry, run
 `node scripts/diagnose-local-restore.mjs --compatible "$HOME/Downloads/ankur-staging.XXXXXX"`
 with the real folder. Share only the fixed diagnostic lines; `RESTORE_COPY_TARGET`

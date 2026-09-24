@@ -1,11 +1,16 @@
+import { supabase } from "@/lib/supabase/client";
+
 export async function callAI(
   type: string,
   input: Record<string, unknown>
 ): Promise<{ result: string } | null> {
+  if (process.env.NEXT_PUBLIC_LOCAL_AI_DISABLED === "1") return null;
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return null;
     const res = await fetch("/api/ai", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({ type, input }),
     });
     if (!res.ok) return null;

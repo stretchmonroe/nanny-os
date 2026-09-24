@@ -17,6 +17,7 @@ public URLs; PR remains draft.
 | Existing photo objects | All eight publicly served image bytes | Test those objects using private signed URLs, and verify anonymous denial after cutover |
 | Auth signup hook | Restored function present; direct reference to profiles, none to household membership or Storage | Review the function body and test a fresh parent/caregiver signup |
 | App build | GitHub checks and Vercel preview deployment passed on the draft branch | Confirm Preview's Supabase project binding before entering test data; complete browser and push flows |
+| AI endpoint | Now checks verified user and active membership; local rehearsal skips outbound AI | Add per-user rate limiting and confirm live AI key configuration before release |
 
 The Vercel preview deployment is associated with the stabilization branch, but
 its Supabase Preview environment has not been verified. The isolated restored
@@ -30,7 +31,11 @@ the isolated Supabase stack running. The launcher refuses remote project links,
 checks the expected local API on port 55321, overrides any inherited Supabase
 environment with local keys, and serves the app at
 `http://localhost:3000/onboarding`. It disables live AI and push credentials
-for this rehearsal. Create throwaway local parent and caregiver accounts,
+and skips AI requests in the browser and server for this rehearsal. The owner's
+first local run loaded onboarding/home and returned 200 for profile and setup;
+its dummy AI key inadvertently reached the provider and got 401. The launcher
+now leaves that key empty and disables outbound AI. Create throwaway local
+parent and caregiver accounts,
 complete setup and invite claiming in separate browser sessions, and exercise
 photo upload/display and wrong-household access. Stop the app with Ctrl+C.
 This UI run uses synthetic local data; it does not test the copied photo bytes

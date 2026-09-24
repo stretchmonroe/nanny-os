@@ -1,14 +1,43 @@
+import { createClient } from "@supabase/supabase-js";
 import { systemPrompt } from "@/lib/ai/prompts/systemPrompt";
 
 export async function POST(req: Request) {
+  if (process.env.LOCAL_AI_DISABLED === "1") {
+    return Response.json({ error: "disabled_local" });
+  }
   try {
-    const body = await req.json();
+    const token = req.headers.get("authorization")?.match(/^Bearer (\S+)$/i)?.[1];
+    if (!token) return Response.json({ error: "unauthorized" }, { status: 401 });
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !serviceKey) return Response.json({ error: "unavailable" }, { status: 503 });
+    const db = createClient(url, serviceKey);
+    const { data: { user }, error: userError } = await db.auth.getUser(token);
+    if (userError || !user) return Response.json({ error: "unauthorized" }, { status: 401 });
+    const { data: membership, error: memberError } = await db.from("household_members")
+      .select("household_id")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle();
+    if (memberError || !membership) return Response.json({ error: "forbidden" }, { status: 403 });
+
+    const rawBody = await req.text();
+    if (rawBody.length > 12000) return Response.json({ error: "too_large" }, { status: 413 });
+    let body;
+    try { body = JSON.parse(rawBody); }
+    catch { return Response.json({ error: "invalid_request" }, { status: 400 }); }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return Response.json({ error: "invalid_request" }, { status: 400 });
+    }
     const { type, input } = body;
+    if (!input || typeof input !== "object" || Array.isArray(input)) {
+      return Response.json({ error: "invalid_request" }, { status: 400 });
+    }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    console.log("[ai] key present:", !!apiKey, "length:", apiKey?.length ?? 0, "prefix:", apiKey?.slice(0, 7) ?? "none");
     if (!apiKey) {
-      return Response.json({ error: "no_key" });
+      console.error("[ai] missing api key");
+      return Response.json({ error: "unavailable" }, { status: 503 });
     }
 
     let prompt = "";
@@ -37,8 +66,10 @@ export async function POST(req: Request) {
       );
       prompt = activityPlanPrompt(input);
     } else {
-      return Response.json({ error: "unknown_type" });
+      return Response.json({ error: "unknown_type" }, { status: 400 });
     }
+
+    if (prompt.length > 16000) return Response.json({ error: "too_large" }, { status: 413 });
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -56,17 +87,16 @@ export async function POST(req: Request) {
     });
 
     if (!response.ok) {
-      const errBody = await response.text().catch(() => "(unreadable)");
-      console.error("[ai] anthropic error", response.status, errBody);
-      return Response.json({ error: "api_error", status: response.status });
+      console.error("[ai] anthropic error", response.status);
+      return Response.json({ error: "api_error" }, { status: 502 });
     }
 
     const data = await response.json();
     const result = data.content?.[0]?.text ?? null;
-    if (!result) console.error("[ai] empty result from anthropic", JSON.stringify(data));
+    if (!result) console.error("[ai] empty result from anthropic");
     return Response.json({ result });
   } catch (err) {
-    console.error("[ai] server_error", err);
-    return Response.json({ error: "server_error" });
+    console.error("[ai] server_error", err instanceof Error ? err.name : "unknown");
+    return Response.json({ error: "server_error" }, { status: 500 });
   }
 }

@@ -10,7 +10,8 @@ Baseline commit: `63ff249`
 - Dependency audit: 0 known vulnerabilities after upgrading Next.js and safe transitive fixes
 - Lint: passes with no errors or warnings after correcting effect-driven state,
   child-specific loading snapshots, navigation and unused values
-- Automated tests: local PostgreSQL invitation/AI/storage tests, photo-path validation, and isolated API-handler tests
+- Automated tests: 49 passing, including local PostgreSQL invitation/AI/storage,
+  photo-path validation, and isolated API-handler tests
 - Local Supabase on user's Mac: migrations 001–005 and synthetic Auth/Storage HTTP smoke checks passed on 2026-09-24
 - Restored local copy of the Nanny App SQL export: migrations 001–005 passed on
   six Auth users, six active memberships and eight photo metadata rows; no
@@ -28,6 +29,13 @@ Baseline commit: `63ff249`
   directly. A live new-user test is still needed.
 - Signup UI now shows email-confirmation instructions when account creation
   returns no session, with a sign-in path after verification.
+- Isolated local Next.js app started and served onboarding/home; profile update
+  and home setup routes returned 200. Full browser-role flows remain to verify.
+- Local app rehearsal exposed a dummy AI key reaching the external provider and
+  receiving 401. The launcher and client now skip AI requests in local rehearsal;
+  the server also rejects them, and no key prefix or provider body is logged.
+- AI route now verifies the bearer session and an active household membership
+  before provider calls; anonymous and removed-member requests are denied.
 - Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
 - Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending
@@ -80,6 +88,17 @@ verified identity and can create a missing profile; handoff notes reject users
 outside the child's household and use the database role. Care Circle reads
 scope active members and profiles to the verified household, and only an active
 parent can create an invite. Complete live browser flows remain open.
+
+### P0 — Restrict and meter AI requests
+
+The earlier AI endpoint accepted unauthenticated calls. It now checks the
+verified Supabase user and active household membership before sending a prompt,
+bounds request and prompt size, and logs no API key prefix or provider response
+body. Local development disables outbound AI; regression tests cover anonymous,
+removed and active users. Add durable per-user rate limiting before production
+exposes a paid AI key, and review input fields against child-level authorization.
+The existing public production deployment may still run the older endpoint until
+these application changes are deployed; the status of its AI key is unverified.
 
 ### P1 — Keep the lint and CI gates green
 

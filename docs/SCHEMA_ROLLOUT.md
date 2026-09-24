@@ -72,6 +72,15 @@ with the actual backup folder. Share only its `RESTORE_DIAGNOSIS` and
 output replaces row values with `[redacted]`, identifies which SQL file failed,
 and prints the missing table name only for known Supabase/app schemas. Never
 share the raw log.
+When data restore stops on a managed table absent from the local Supabase
+catalog (such as `auth.mfa_recovery_code_sets`), use
+`node scripts/audit-backup-compatibility.mjs "$HOME/Downloads/ankur-staging.XXXXXX"`
+with the actual backup folder to compare all `COPY` headers with the isolated
+database and count rows in absent tables without printing their values. A
+missing table with rows requires a compatible local schema; never discard its
+records to get a passing rehearsal. Empty managed-table `COPY` blocks can be
+omitted from a local-only rehearsal after all missing tables are identified;
+the original backup remains complete.
 This is a copy for inspection, not a completed migration rehearsal. Database
 dumps exclude custom policies/triggers on Supabase-managed auth/storage schemas;
 the script reports the restored storage policy count to make that gap visible.

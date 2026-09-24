@@ -9,25 +9,32 @@ command -v docker >/dev/null || { echo "Docker Desktop is required."; exit 1; }
 docker info --format '{{.ServerVersion}}' >/dev/null
 
 echo "In the Nanny App project, choose Connect > Session pooler (port 5432)."
-echo "Copy its connection URI, replace the password placeholder locally, then paste below."
-echo "The URI is hidden while you paste it and is never saved in this repository."
-IFS= read -r -s -p "Session-pooler database URI: " db_url
+echo "Copy the connection URI as shown, including [YOUR-PASSWORD]."
+echo "Paste it below, then enter the database password separately. Both prompts are hidden."
+IFS= read -r -s -p "Session-pooler database URI: " db_url_template
+echo
+IFS= read -r -s -p "Nanny App database password: " db_password
 echo
 
-project_ref="$(printf '%s' "$db_url" | node -e '
+parsed="$(printf '%s\0%s' "$db_url_template" "$db_password" | node -e '
   const fs = require("node:fs");
   try {
-    const uri = new URL(fs.readFileSync(0, "utf8"));
+    const [template, password] = fs.readFileSync(0, "utf8").split("\0");
+    const uri = new URL(template);
     const ref = uri.username.slice("postgres.".length);
-    const password = decodeURIComponent(uri.password);
     if (!/^postgres(ql)?:$/.test(uri.protocol) ||
         !uri.hostname.endsWith(".pooler.supabase.com") ||
         uri.port !== "5432" || uri.pathname !== "/postgres" ||
         !/^[a-z0-9]{8,32}$/.test(ref) || !password ||
-        /[\[\]]/.test(password)) process.exit(1);
-    process.stdout.write(ref);
+        /[\r\n]/.test(password)) process.exit(1);
+    uri.password = password;
+    process.stdout.write(ref + "\n" + uri.toString());
   } catch { process.exit(1); }
-')" || { unset db_url; echo "Expected a completed Supabase session-pooler URI. Nothing was exported."; exit 1; }
+')" || { unset db_url_template db_password; echo "Expected a Supabase session-pooler URI and password. Nothing was exported."; exit 1; }
+unset db_url_template db_password
+project_ref="${parsed%%$'\n'*}"
+db_url="${parsed#*$'\n'}"
+unset parsed
 
 echo "Connection refers to project $project_ref. Compare this with Nanny App's dashboard URL."
 IFS= read -r -p "Type its project reference to confirm: " confirmation

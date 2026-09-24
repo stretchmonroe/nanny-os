@@ -37,7 +37,8 @@ No further photo mapping export is needed for the current eight objects.
 
 For a full-database staging rehearsal on the owner's Mac, first use the read-only
 `bash scripts/backup-live-for-staging.sh` command from the audit branch. It
-prompts privately for the **Nanny App** session-pooler URI and saves SQL files
+prompts privately for the **Nanny App** session-pooler URI and database password,
+encoding special password characters automatically, and saves SQL files
 in a restricted Downloads folder outside the repository. It does not link,
 reset or migrate production. This is a database backup, not yet a staging
 restore; Storage object bytes require a separate transfer. Keep the dump,

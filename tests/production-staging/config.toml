@@ -1,0 +1,7 @@
+project_id = "ankur-production-copy"
+[db]
+port = 56322
+shadow_port = 56320
+major_version = 17
+[db.seed]
+enabled = false

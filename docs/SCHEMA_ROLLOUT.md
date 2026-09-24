@@ -42,9 +42,23 @@ encoding special password characters automatically, and saves SQL files
 in a restricted Downloads folder outside the repository. It does not link,
 reset or migrate production. This is a database backup, not yet a staging
 restore; Storage object bytes require a separate transfer. Keep the dump,
-connection URI and log private. A restore procedure against a distinct local
-instance still needs to be prepared and reviewed before migrations run on
-those records.
+connection URI and log private. Migration rehearsal on the copied records
+still needs review after the restore and managed-schema policy checks.
+
+The owner's SQL export completed on 2026-09-24. Restore this private export to a
+**database-only local copy** with
+`bash scripts/restore-production-copy.sh "$HOME/Downloads/ankur-staging.XXXXXX"`,
+using the actual folder printed by the backup command. The script starts a new
+`ankur-production-copy` Docker database on port 56322 and refuses to overwrite
+an existing local copy; it never uses a remote URL or a linked project. It
+restores all three SQL files in one transaction and prints only counts for Auth
+users, memberships, duplicate active users, photos and unmapped paths. Private
+restore/check logs remain in the ignored production-staging runtime directory.
+This is a copy for inspection, not a completed migration rehearsal. Database
+dumps exclude custom policies/triggers on Supabase-managed auth/storage schemas;
+the script reports the restored storage policy count to make that gap visible.
+Photo bytes are not included. Review customizations against production before
+replaying migration 003, and do not use the copied database to serve app traffic.
 
 PrivatePhoto now exchanges bucket-relative paths or this project's legacy public
 URLs for five-minute signed URLs, refreshes them, and clears them on auth changes.

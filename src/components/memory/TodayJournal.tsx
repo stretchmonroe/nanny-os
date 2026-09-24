@@ -249,17 +249,15 @@ function NoteCard({ moment, authorName, actions }: { moment: JournalMoment; auth
 }
 
 export default function TodayJournal({ childId, refreshKey }: { childId?: string | null; refreshKey?: number }) {
-  const [realMoments, setRealMoments] = useState<JournalMoment[]>([]);
-  const [status,      setStatus]      = useState<"idle" | "loading" | "done">("idle");
+  const [snapshot, setSnapshot] = useState<{ childId: string; refreshKey?: number; moments: JournalMoment[] } | null>(null);
   const [editing,     setEditing]     = useState<JournalMoment | null>(null);
   const [deleteId,    setDeleteId]    = useState<string | null>(null);
   const { profileFullName, currentUserRole } = useAppStore();
   const isParent = currentUserRole === "parent";
 
   useEffect(() => {
-    if (!childId) { setStatus("idle"); return; }
-
-    setStatus("loading");
+    if (!childId) return;
+    let cancelled = false;
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -271,9 +269,9 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
       .gte("created_at", startOfDay.toISOString())
       .order("created_at", { ascending: true })
       .then(({ data }) => {
-        setRealMoments((data ?? []).map(normalizeMoment));
-        setStatus("done");
+        if (!cancelled) setSnapshot({ childId, refreshKey, moments: (data ?? []).map(normalizeMoment) });
       });
+    return () => { cancelled = true; };
   }, [childId, refreshKey]);
 
   // Demo mode
@@ -299,7 +297,8 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
   }
 
   // Loading
-  if (status !== "done") return null;
+  if (snapshot?.childId !== childId || snapshot.refreshKey !== refreshKey) return null;
+  const realMoments = snapshot.moments;
 
   // Real — empty
   if (realMoments.length === 0) {
@@ -316,7 +315,7 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
 
   async function confirmDelete(id: string) {
     await supabase.from("memory_events").delete().eq("id", id);
-    setRealMoments((prev) => prev.filter((m) => m.id !== id));
+    setSnapshot((prev) => prev && ({ ...prev, moments: prev.moments.filter((m) => m.id !== id) }));
     setDeleteId(null);
   }
 
@@ -354,6 +353,7 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
 
       {/* Edit sheet */}
       <NoteComposeSheet
+        key={editing?.id ?? "closed"}
         open={!!editing}
         childId={childId ?? null}
         momentId={editing?.id}
@@ -363,10 +363,10 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
         onSaved={() => {
           setEditing(null);
           // Refresh by re-fetching
-          setStatus("loading");
+          setSnapshot(null);
           const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
           supabase.from("memory_events").select("*").eq("child_id", childId!).in("type", ["note","photo","milestone"]).gte("created_at", startOfDay.toISOString()).order("created_at", { ascending: true })
-            .then(({ data }) => { setRealMoments((data ?? []).map(normalizeMoment)); setStatus("done"); });
+            .then(({ data }) => { setSnapshot({ childId, refreshKey, moments: (data ?? []).map(normalizeMoment) }); });
         }}
       />
 

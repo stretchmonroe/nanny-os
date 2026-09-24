@@ -8,7 +8,8 @@ Baseline commit: `63ff249`
 - Production build: passes
 - TypeScript: passes
 - Dependency audit: 0 known vulnerabilities after upgrading Next.js and safe transitive fixes
-- Lint: fails on legacy React hook rules, two unescaped strings, one explicit `any`, and several unused values
+- Lint: passes with no errors or warnings after correcting effect-driven state,
+  child-specific loading snapshots, navigation and unused values
 - Automated tests: local PostgreSQL invitation/AI/storage tests, photo-path validation, and isolated API-handler tests
 - Local Supabase on user's Mac: migrations 001–005 and synthetic Auth/Storage HTTP smoke checks passed on 2026-09-24
 - Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed
@@ -63,9 +64,12 @@ outside the child's household and use the database role. Care Circle reads
 scope active members and profiles to the verified household, and only an active
 parent can create an invite. Complete live browser flows remain open.
 
-### P1 — Restore a green lint gate
+### P1 — Keep the lint and CI gates green
 
-Fix the current React hook lifecycle violations rather than disabling the rules globally. Then add CI requiring lint, typecheck, build, tests, and dependency audit.
+The full lint command passes without disabling the React rules. The draft branch
+now runs lint, typecheck, build, tests and dependency audit in GitHub Actions.
+Confirm its first hosted run succeeds. Live browser checks for
+child switching, edit sheets, voice input and theme toggling are still needed.
 
 ### P1 — Consolidate privileged server access
 
@@ -91,5 +95,5 @@ after verifying no deployed clients still use it.
 2. Add authorization tests around the current behavior.
 3. Deploy the invitation and push authorization fixes.
 4. Migrate photo storage from public to private.
-5. Clear lint debt and install CI gates.
+5. Verify the CI run and UI changes in a browser.
 6. Resume feature development only after these controls are green.

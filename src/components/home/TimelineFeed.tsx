@@ -33,12 +33,12 @@ function normalize(raw: Record<string, unknown>): RealEvent {
 }
 
 export default function TimelineFeed({ childId }: { childId?: string | null }) {
-  const [realEvents, setRealEvents] = useState<RealEvent[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [snapshot, setSnapshot] = useState<{ childId: string; items: RealEvent[] } | null>(null);
   const { profileFullName, currentUserRole } = useAppStore();
 
   useEffect(() => {
-    if (!childId) { setLoaded(true); return; }
+    if (!childId) return;
+    let cancelled = false;
 
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -50,9 +50,9 @@ export default function TimelineFeed({ childId }: { childId?: string | null }) {
       .gte("created_at", startOfDay.toISOString())
       .order("created_at", { ascending: true })
       .then(({ data }) => {
-        setRealEvents((data ?? []).map(normalize));
-        setLoaded(true);
+        if (!cancelled) setSnapshot({ childId, items: (data ?? []).map(normalize) });
       });
+    return () => { cancelled = true; };
   }, [childId]);
 
   // Demo mode
@@ -110,7 +110,8 @@ export default function TimelineFeed({ childId }: { childId?: string | null }) {
     );
   }
 
-  if (!loaded) return null;
+  if (snapshot?.childId !== childId) return null;
+  const realEvents = snapshot.items;
 
   if (realEvents.length === 0) {
     return (

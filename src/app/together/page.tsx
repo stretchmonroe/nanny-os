@@ -50,10 +50,20 @@ function relTime(iso: string) {
   return formatDistanceToNow(new Date(iso), { addSuffix: true });
 }
 
+async function fetchNotes(childId: string): Promise<Note[]> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return [];
+  const res = await fetch(`/api/together/notes?childId=${encodeURIComponent(childId)}`, {
+    headers: { authorization: `Bearer ${session.access_token}` },
+  });
+  if (!res.ok) return [];
+  const { notes } = await res.json();
+  return notes ?? [];
+}
+
 export default function TogetherPage() {
   const { activeChild, currentUserRole } = useAppStore();
-  const [notes, setNotes]     = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [snapshot, setSnapshot] = useState<{ childId: string; notes: Note[] } | null>(null);
   const [draft, setDraft]     = useState("");
   const [sending, setSending] = useState(false);
   const [sendErr, setSendErr] = useState("");
@@ -62,27 +72,22 @@ export default function TogetherPage() {
   const childId   = activeChild?.id ?? null;
   const childName = activeChild?.name ?? "Mateo";
   const isDemo    = !activeChild;
+  const notes = isDemo ? DEMO_NOTES : snapshot?.childId === childId ? snapshot.notes : [];
+  const loading = !isDemo && snapshot?.childId !== childId;
 
   useEffect(() => {
-    if (isDemo) { setNotes(DEMO_NOTES); setLoading(false); return; }
-    load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!childId) return;
+    let cancelled = false;
+    void fetchNotes(childId).then((notes) => {
+      if (!cancelled) setSnapshot({ childId, notes });
+    });
+    return () => { cancelled = true; };
   }, [childId]);
 
   async function load() {
     if (!childId) return;
-    setLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { setLoading(false); return; }
-
-    const res = await fetch(`/api/together/notes?childId=${childId}`, {
-      headers: { authorization: `Bearer ${session.access_token}` },
-    });
-    if (res.ok) {
-      const { notes: data } = await res.json();
-      setNotes(data ?? []);
-    }
-    setLoading(false);
+    const notes = await fetchNotes(childId);
+    setSnapshot({ childId, notes });
   }
 
   async function sendNote(e: React.FormEvent) {

@@ -137,6 +137,7 @@ export default function MemoryPage() {
 
       {/* Note compose sheet */}
       <NoteComposeSheet
+        key={composing ? "open" : "closed"}
         open={composing}
         childId={childId}
         childName={childName}

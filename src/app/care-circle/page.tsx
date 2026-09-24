@@ -44,24 +44,26 @@ export default function CareCirclePage() {
   const [inviteDone,  setInviteDone]  = useState(false);
   const [copied,      setCopied]      = useState(false);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !user) { if (!cancelled) setLoading(false); return; }
 
-  async function load() {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session || !user) { setLoading(false); return; }
-
-    const res = await fetch("/api/care-circle", {
-      headers: { authorization: `Bearer ${session.access_token}` },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setMembers(data.members ?? []);
-      setHouseholdId(data.householdId ?? null);
+      const res = await fetch("/api/care-circle", {
+        headers: { authorization: `Bearer ${session.access_token}` },
+      });
+      if (!cancelled && res.ok) {
+        const data = await res.json();
+        setMembers(data.members ?? []);
+        setHouseholdId(data.householdId ?? null);
+      }
+      if (!cancelled) setLoading(false);
     }
-    setLoading(false);
-  }
+    void load();
+    return () => { cancelled = true; };
+  }, []);
 
   async function sendInvite(e: React.FormEvent) {
     e.preventDefault();

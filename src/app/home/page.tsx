@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
 import ChildProfileHeader from "@/components/home/ChildProfileHeader";
@@ -16,16 +17,15 @@ import type { FocusArea } from "@/lib/data/demo";
 export default function HomePage() {
   const [focus,     setFocus]     = useState<FocusArea>("language");
   const [setupOpen, setSetupOpen] = useState(false);
+  const [setupDismissed, setSetupDismissed] = useState(false);
+  const router = useRouter();
 
   const { authReady, activeChild } = useAppStore();
-
-  useEffect(() => {
-    if (authReady && !activeChild) setSetupOpen(true);
-  }, [authReady, activeChild]);
+  const showSetup = !activeChild && (setupOpen || (authReady && !setupDismissed));
 
   async function signOut() {
     await supabase.auth.signOut();
-    window.location.href = "/onboarding";
+    router.replace("/onboarding");
   }
 
   return (
@@ -39,9 +39,9 @@ export default function HomePage() {
       <div className="pt-2 pb-12">
         <PushPermission />
 
-        {setupOpen && !activeChild && (
+        {showSetup && (
           <div className="mb-5">
-            <ProfileSetupCard onDismiss={() => setSetupOpen(false)} />
+            <ProfileSetupCard onDismiss={() => { setSetupOpen(false); setSetupDismissed(true); }} />
           </div>
         )}
 

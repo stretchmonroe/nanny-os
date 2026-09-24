@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
-import { cn } from "@/lib/utils";
 
 const MONTHS = [
   "January","February","March","April","May","June",
@@ -39,7 +38,6 @@ export default function CreateHomeFlow({ open, onClose }: Props) {
 
   // Shared
   const [error,  setError]  = useState("");
-  const [saving, setSaving] = useState(false);
   const [done,   setDone]   = useState(false);
 
   const { setActiveChild, setCurrentUserRole } = useAppStore();
@@ -47,21 +45,16 @@ export default function CreateHomeFlow({ open, onClose }: Props) {
   // ── Parent: create household ──────────────────────────────────────────────
   async function createHome() {
     setStep(3);
-    setSaving(true);
     setError("");
 
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const { data: { session } }        = await supabase.auth.getSession();
     if (!authUser || !session) {
       setError("Session expired — please sign out and back in");
-      setSaving(false); setStep(2); return;
+      setStep(2); return;
     }
 
     try {
-      const birthDate = birthYear && birthMonth
-        ? `${birthYear}-${String(birthMonth).padStart(2, "0")}-01`
-        : null;
-
       const res  = await fetch("/api/create-home", {
         method: "POST",
         headers: { "Content-Type": "application/json", authorization: `Bearer ${session.access_token}` },
@@ -76,21 +69,20 @@ export default function CreateHomeFlow({ open, onClose }: Props) {
       setTimeout(() => { onClose(); resetForm(); }, 1100);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
-      setSaving(false); setStep(2);
+      setStep(2);
     }
   }
 
   // ── Nanny: claim invite ───────────────────────────────────────────────────
   async function claimInvite() {
     setStep(3);
-    setSaving(true);
     setError("");
 
     const { data: { user: authUser } } = await supabase.auth.getUser();
     const { data: { session } }        = await supabase.auth.getSession();
     if (!authUser || !session) {
       setError("Session expired — please sign out and back in");
-      setSaving(false); setStep(2); return;
+      setStep(2); return;
     }
 
     try {
@@ -108,14 +100,14 @@ export default function CreateHomeFlow({ open, onClose }: Props) {
       setTimeout(() => { onClose(); resetForm(); }, 1100);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
-      setSaving(false); setStep(2);
+      setStep(2);
     }
   }
 
   function resetForm() {
     setPath(null); setStep(1);
     setChildName(""); setBirthMonth(null); setBirthYear(null);
-    setCode(""); setError(""); setSaving(false); setDone(false);
+    setCode(""); setError(""); setDone(false);
   }
 
   function handleClose() { onClose(); resetForm(); }

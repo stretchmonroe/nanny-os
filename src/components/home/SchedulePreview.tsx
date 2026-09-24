@@ -6,7 +6,7 @@ export default function SchedulePreview() {
 
   return (
     <div className="border p-4 rounded-xl">
-      <h3 className="font-semibold mb-2">Today's Schedule</h3>
+      <h3 className="font-semibold mb-2">Today&rsquo;s Schedule</h3>
       {items.map((i) => (
         <div key={i.time} className="text-sm flex justify-between">
           <span>{i.time}</span>

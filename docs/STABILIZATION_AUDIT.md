@@ -16,6 +16,11 @@ Baseline commit: `63ff249`
   six Auth users, six active memberships and eight photo metadata rows; no
   duplicate active user memberships or unmapped photo paths; bucket private
   after migration. Production was not changed.
+- Live read-only preflight: photos bucket remains public; eight photo metadata
+  rows, six active memberships, zero users with multiple active households,
+  three legacy photo policies with expected names/roles. One custom trigger on
+  managed Auth/Storage tables needs identification; exact legacy policy
+  expressions and existing photo bytes still need review.
 - Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
 - Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending

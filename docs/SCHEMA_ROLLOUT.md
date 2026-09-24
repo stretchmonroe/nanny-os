@@ -131,15 +131,19 @@ reviewed baseline. Photo bytes are not included. Verify the live managed
 policies and existing-object behavior before a production cutover, and do not
 use the copied database to serve app traffic.
 
-After the local rehearsal, run `bash scripts/check-live-cutover-readiness.sh`
-on the owner's Mac. It prompts privately for the confirmed Nanny App session
-pooler URI and password and uses a read-only transaction against that project.
-Only share its `LIVE CUTOVER PREFLIGHT READY` line and aggregate key/value
-lines; keep the private log and credentials on the Mac. Expected unchanged
-baseline: bucket public, eight photo metadata rows, six active memberships,
-zero duplicate users, three legacy policy names and matching roles. Check any
-drift before release. This check cannot verify policy expressions, managed
-triggers outside the public schema, Storage bytes or actual access behavior.
+The owner's first live read-only preflight confirmed a public bucket, eight
+photo metadata rows, six active memberships, zero duplicate active users and
+three legacy policies with the expected names and roles. It also found one
+custom managed-schema trigger whose identity needs review. Run
+`bash scripts/check-live-cutover-readiness.sh` again after pulling the updated
+branch. It prompts privately for the confirmed Nanny App session-pooler URI
+and password, compares the exact legacy policy expressions to the reviewed
+baseline, and reports the schema/table/trigger/function identifier for the
+single custom trigger. Share only `LIVE CUTOVER PREFLIGHT READY` and its safe
+key/value lines; keep the private log and credentials on the Mac. A false
+expression result may reflect PostgreSQL rendering differences, so investigate
+it before cutover. This check cannot verify Storage bytes, function bodies,
+other managed-schema customizations or actual access behavior.
 
 PrivatePhoto now exchanges bucket-relative paths or this project's legacy public
 URLs for five-minute signed URLs, refreshes them, and clears them on auth changes.

@@ -73,12 +73,35 @@ select 'legacy_photo_policy_roles_match=' ||
    and count(*) filter (where policyname='photos:delete' and cmd='DELETE'
     and array_to_string(roles,',')='authenticated')=1)
   from pg_policies where schemaname='storage' and tablename='objects';
+-- Compare the expressions observed in the reviewed legacy baseline. A false
+-- result also catches harmless formatting/version differences for manual review.
+select 'legacy_photo_policy_expressions_match=' ||
+  (count(*) filter (where policyname='photos:select' and permissive='PERMISSIVE'
+    and qual='(bucket_id = ''photos''::text)' and with_check is null)=1
+   and count(*) filter (where policyname='photos:insert' and permissive='PERMISSIVE'
+    and qual is null and with_check='(bucket_id = ''photos''::text)')=1
+   and count(*) filter (where policyname='photos:delete' and permissive='PERMISSIVE'
+    and qual='((bucket_id = ''photos''::text) AND (auth.uid() = owner))'
+    and with_check is null)=1)
+  from pg_policies where schemaname='storage' and tablename='objects';
 select 'custom_managed_trigger_count=' || count(*) from pg_trigger t
   join pg_class c on c.oid=t.tgrelid
   join pg_namespace n on n.oid=c.relnamespace
   join pg_proc p on p.oid=t.tgfoid
   join pg_namespace pn on pn.oid=p.pronamespace
   where n.nspname in ('auth','storage') and pn.nspname='public' and not t.tgisinternal;
+with managed_triggers as (
+  select n.nspname || '.' || c.relname || ':' || t.tgname || ':' ||
+    pn.nspname || '.' || p.proname as identity
+  from pg_trigger t
+  join pg_class c on c.oid=t.tgrelid
+  join pg_namespace n on n.oid=c.relnamespace
+  join pg_proc p on p.oid=t.tgfoid
+  join pg_namespace pn on pn.oid=p.pronamespace
+  where n.nspname in ('auth','storage') and pn.nspname='public' and not t.tgisinternal
+)
+select 'managed_trigger_identity=' || case when count(*)=1 then max(identity)
+  when count(*)=0 then 'none' else 'multiple' end from managed_triggers;
 commit;
 SQL
 } | docker exec -i "$container" sh -c '
@@ -93,10 +116,11 @@ fi
 unset db_password
 
 safe_counts="$(awk '/^((live_|legacy_|custom_)[a-z_]+)=(true|false|t|f|[0-9]+)$/ { print; count++ }
-  END { if (count != 8) exit 1 }' "$runtime/live-cutover-preflight.txt")" || {
+  /^managed_trigger_identity=[A-Za-z0-9_.:]+$/ { print; count++ }
+  END { if (count != 10) exit 1 }' "$runtime/live-cutover-preflight.txt")" || {
   echo "Unexpected preflight output. Keep live-cutover-preflight.txt private."
   exit 1
 }
 echo "LIVE CUTOVER PREFLIGHT READY"
 printf '%s\n' "$safe_counts"
-echo "Production was read only. This checks policy names and roles, not their expressions or photo bytes."
+echo "Production was read only. Photo bytes and actual access behavior were not checked."

@@ -55,9 +55,16 @@ restores all three SQL files in one transaction and prints only counts for Auth
 users, memberships, duplicate active users, photos and unmapped paths. Private
 restore/check logs remain in the ignored production-staging runtime directory.
 If restore fails, run `node scripts/diagnose-local-restore.mjs` from the same
-checkout and share only its fixed-category `RESTORE_DIAGNOSIS` line. Do not
+checkout and share only its fixed-category `RESTORE_DIAGNOSIS` and
+`RESTORE_ERROR_TERMS` lines. Do not
 paste the SQL or full restore log. The script refuses to reuse an existing
 copy; diagnose it before planning a safe fresh retry.
+If the first error is the known reserved-role restriction, use
+`bash scripts/retry-local-restore-as-admin.sh "$HOME/Downloads/ankur-staging.XXXXXX"`
+with the actual backup folder. The retry script checks that precise error,
+requires the isolated local container and an empty app schema, and uses the
+local `supabase_admin` superuser. It leaves production and the original backup
+untouched. It refuses all other error types and repeated retries.
 This is a copy for inspection, not a completed migration rehearsal. Database
 dumps exclude custom policies/triggers on Supabase-managed auth/storage schemas;
 the script reports the restored storage policy count to make that gap visible.

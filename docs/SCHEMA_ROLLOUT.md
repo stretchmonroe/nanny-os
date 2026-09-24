@@ -95,6 +95,12 @@ For a failure of that compatible retry, run
 `node scripts/diagnose-local-restore.mjs --compatible "$HOME/Downloads/ankur-staging.XXXXXX"`
 with the real folder. Share only the fixed diagnostic lines; `RESTORE_COPY_TARGET`
 identifies the table in the private data file without exposing its rows.
+If a backup `COPY` references an Auth/Storage column absent locally, use
+`node scripts/audit-managed-column-drift.mjs "$HOME/Downloads/ankur-staging.XXXXXX"`
+with the actual folder. This compares all managed-table COPY column names to
+the isolated local catalog in one read-only pass and counts affected rows.
+Do not add an unknown-typed column or omit nonempty Auth rows to bypass this
+incompatibility; align the managed schema with the backup first.
 This is a copy for inspection, not a completed migration rehearsal. Database
 dumps exclude custom policies/triggers on Supabase-managed auth/storage schemas;
 the script reports the restored storage policy count to make that gap visible.

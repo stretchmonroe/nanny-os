@@ -10,7 +10,7 @@ Baseline commit: `63ff249`
 - Dependency audit: 0 known vulnerabilities after upgrading Next.js and safe transitive fixes
 - Lint: passes with no errors or warnings after correcting effect-driven state,
   child-specific loading snapshots, navigation and unused values
-- Automated tests: 49 passing, including local PostgreSQL invitation/AI/storage,
+- Automated tests: 56 passing, including local PostgreSQL invitation/AI/storage,
   photo-path validation, and isolated API-handler tests
 - Local Supabase on user's Mac: migrations 001–005 and synthetic Auth/Storage HTTP smoke checks passed on 2026-09-24
 - Restored local copy of the Nanny App SQL export: migrations 001–005 passed on
@@ -34,7 +34,8 @@ Baseline commit: `63ff249`
   Caregiver testing exposed that signup previously redirected to Home, where a
   setup card could create another parent household. New accounts without a
   membership now open the create-or-join choice on Setup; Home offers that
-  choice rather than a one-click parent setup. Caregiver claim remains to verify.
+  choice rather than a one-click parent setup. The newer invite-code flow was
+  verified in the isolated browser rehearsal below.
 - Local app rehearsal exposed a dummy AI key reaching the external provider and
   receiving 401. The launcher and client now skip AI requests in local rehearsal;
   the server also rejects them, and no key prefix or provider body is logged.
@@ -60,7 +61,8 @@ Baseline commit: `63ff249`
   endpoint needs migration 007 applied before paid AI can run in production.
 - Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
-- Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending
+- Rollout: see SCHEMA_ROLLOUT.md and REMAINING_WORK.md; production migrations
+  and full end-to-end release verification remain pending
 
 ## Changes in this stabilization pass
 

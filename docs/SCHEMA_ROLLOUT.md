@@ -281,7 +281,8 @@ comparison casts to text without rewriting existing records.
 
 1. Run npm test, npx tsc --noEmit, targeted ESLint, npm run build.
 2. Back up the target database and rehearse all seven migrations on a staging copy.
-   Completed on the isolated SQL copy on 2026-09-24; refresh the backup at release.
+   Migrations 001–005 passed on the isolated SQL copy on 2026-09-24;
+   006–007 still require a refreshed-copy rehearsal.
    Local tests use actual embedded PostgreSQL (PGlite), but do not reproduce
    all production RLS helper functions, Auth, concurrency, or application routes.
 3. Inspect my_household_id(), my_role(), in_my_household() and table grants.
@@ -306,7 +307,8 @@ comparison casts to text without rewriting existing records.
   The delivery route tests active sender and recipient filtering; delivery to
   actual browser push services and rate limiting remain to be checked.
 - Review the 27 policy-less tables against actual callers; do not grant all access.
-- Rate limiting and full route-level authorization tests remain outstanding.
+- Paid AI has a database-backed per-user quota in migration 007; invite, upload
+  and push throttling and full route-level authorization review remain outstanding.
 - Metadata proves neither row integrity nor successful end-to-end restoration.
 
 ## Recovery

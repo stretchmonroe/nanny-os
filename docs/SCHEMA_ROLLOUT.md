@@ -40,15 +40,17 @@ and refuses to overwrite the older staging copy or local app accounts.
 | Existing photo policy baseline | Live names, roles and exact expressions match | Apply guarded migration 003 only after the signed-photo client is deployed |
 | Existing photo objects | All eight publicly served image bytes | Test those objects using private signed URLs, and verify anonymous denial after cutover |
 | Auth signup hook | Restored function present; direct reference to profiles, none to household membership or Storage | Review the function body and test a fresh parent/caregiver signup |
-| App build | GitHub checks and Vercel preview deployment passed on the draft branch | Confirm Preview's Supabase project binding before entering test data; complete browser and push flows |
+| App build | GitHub checks and Vercel preview deployment passed on the draft branch | Preview points at production Supabase; perform browser photo checks against isolated local app instead |
 | AI endpoint | Checks verified user and active membership; migration 007 provides durable per-user limits | Rehearse migration 007 and confirm live AI key configuration before release |
 
-The Vercel preview deployment is associated with the stabilization branch, but
-its Supabase Preview environment has not been verified. The isolated restored
-copy is database-only and cannot serve Auth or Storage to that deployment.
-Do not use the preview to create test accounts until its database target is
-confirmed as a non-production test project. Continue UI checks against an
-isolated local full stack if Preview points at the live Nanny App project.
+The Vercel preview deployment is associated with the stabilization branch.
+The owner inspected its loaded client resources and found production Supabase
+project reference `mgbzsikninkwmlqtastg`; Preview currently points at the
+live Nanny App project. Do not create test accounts or modify photos there.
+The isolated restored copy is database-only and cannot serve Auth or Storage
+to that deployment. Continue UI checks against the isolated local full stack.
+Review all other Preview and Production variables before deploying; the public
+project URL alone does not establish the service-role, AI or push configuration.
 From the same checkout on the owner's Mac, run `npm ci` once if dependencies
 are not installed, then `node scripts/run-app-with-local-supabase.mjs` with
 the isolated Supabase stack running. The launcher refuses remote project links,

@@ -11,11 +11,14 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
   rehearsal of all seven migrations on six Auth users, six active memberships
   and eight photo metadata rows. Neither local app accounts nor production
   changed.
-- All 59 automated tests, lint and production build pass locally. GitHub Actions
-  passed at the previous draft-branch head; the latest changes still need CI.
-  Production schema and app are unchanged.
+- All 62 automated tests, lint and production build pass locally. GitHub Actions
+  passed at the previous draft-branch head; the photo-deletion fix still needs
+  CI. Production schema and app are unchanged.
 - Privileged-route review closed a notification URL redirect, stopped returning
   database errors to clients, and removed the unused public `/api/upload` stub.
+- Deleting a photo now removes its private Storage object before its journal
+  row and reports a failed deletion, leaving the row available for retry if
+  Storage denies access. Browser checks on the isolated local app are pending.
 
 ## 1. Complete the release rehearsal (blocking)
 
@@ -24,8 +27,10 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
   for live changes since the rehearsal. Keep SQL and credentials private.
 - Review the live `public.handle_new_user()` signup hook and confirm a genuine
   parent and caregiver signup behaves correctly in a safe test environment.
-- Confirm Vercel Preview's Supabase target before creating Preview accounts;
-  review service-role, Anthropic, redirect and push/VAPID configuration.
+- The branch Preview embeds production Supabase project reference
+  `mgbzsikninkwmlqtastg`. Do not create test accounts or perform photo writes
+  there. Use the isolated local app for browser testing; review the remaining
+  service-role, Anthropic, redirect and push/VAPID settings before release.
 - Run real browser checks for private existing-photo rendering, upload,
   deletion, anonymous denial, removed caregiver denial and cross-household
   denial. Synthetic Storage checks already pass but did not copy photo bytes.
@@ -60,8 +65,10 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
 - Trace AI input fields to the selected child and centralize service-role
   authorization. Maintain backup, restore and data-retention procedures.
 
-**Next concrete action:** verify the Vercel Preview Supabase target and the
-production deployment controls, without sharing secret values. The earlier
-live photo-policy expression and public-byte checks passed; refresh them just
-before release. The SQL export omits managed policy customizations and Storage
-object bytes. No production write is authorized by the rehearsal result.
+**Next concrete action:** complete browser photo upload, signed display and
+deletion checks with parent/caregiver accounts on the isolated local app, then
+review the live signup hook and the production deployment controls without
+sharing secrets. The earlier live photo-policy expression and public-byte
+checks passed; refresh them just before release. The SQL export omits managed
+policy customizations and Storage object bytes. No production write is
+authorized by the rehearsal result.

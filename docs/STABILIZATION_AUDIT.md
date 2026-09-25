@@ -10,7 +10,7 @@ Baseline commit: `63ff249`
 - Dependency audit: 0 known vulnerabilities after upgrading Next.js and safe transitive fixes
 - Lint: passes with no errors or warnings after correcting effect-driven state,
   child-specific loading snapshots, navigation and unused values
-- Automated tests: 59 passing, including local PostgreSQL invitation/AI/storage,
+- Automated tests: 62 passing, including local PostgreSQL invitation/AI/storage,
   photo-path validation, and isolated API-handler tests
 - Local Supabase on user's Mac: migrations 001–005 and synthetic Auth/Storage HTTP smoke checks passed on 2026-09-24
 - Restored local copy of the Nanny App SQL export: migrations 001–005 passed on
@@ -59,6 +59,12 @@ Baseline commit: `63ff249`
   confirmation, the server should verify the token and email, consume the
   invitation atomically, then request the caregiver's name. Do not silently
   join merely because someone typed the invited email in an unverified account.
+- The Vercel branch Preview embeds the production Supabase project reference
+  `mgbzsikninkwmlqtastg`; it is unsuitable for disposable accounts or photo
+  writes. Continue browser photo tests against the isolated local app. A parent
+  journal deletion previously left the photo object in Storage; the new flow
+  removes the private object first and shows failures instead of silently
+  hiding a remaining record. Local browser confirmation is still pending.
 - AI route now verifies the bearer session and an active household membership
   before provider calls; anonymous and removed-member requests are denied.
 - Migration 007 now limits paid AI requests in a locked database row to 20 per

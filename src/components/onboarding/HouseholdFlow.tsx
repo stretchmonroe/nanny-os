@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
-type Screen = "welcome" | "signup" | "signin" | "done";
+type Screen = "welcome" | "signup" | "signin" | "verify" | "done";
 
 const wrap: React.CSSProperties = {
   minHeight: "100dvh", background: "#F4EFE8",
@@ -55,15 +55,24 @@ export function HouseholdFlow() {
   const [password, setPassword] = useState("");
   const [error,    setError]    = useState("");
   const [loading,  setLoading]  = useState(false);
+  const [invited,  setInvited]  = useState(false);
+
+  function chooseAccount(isInvited: boolean) {
+    setInvited(isInvited);
+    if (isInvited) sessionStorage.setItem("ankur-invited-signup", "1");
+    else sessionStorage.removeItem("ankur-invited-signup");
+    setScreen("signup");
+  }
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error: err } = await supabase.auth.signUp({ email, password });
+    const { data, error: err } = await supabase.auth.signUp({ email, password });
     setLoading(false);
     if (err) { setError(err.message); return; }
-    // SIGNED_IN event fires → useAuthInit → /home
+    if (!data.session) { setScreen("verify"); return; }
+    // SIGNED_IN event routes an invited caregiver to /join.
     setScreen("done");
   }
 
@@ -71,10 +80,11 @@ export function HouseholdFlow() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (err) { setError(err.message); return; }
-    // SIGNED_IN event fires → useAuthInit → /home
+    if (!data.session) { setError("Could not start a session. Please try again."); return; }
+    // SIGNED_IN event routes a new account to household setup.
     setScreen("done");
   }
 
@@ -89,6 +99,21 @@ export function HouseholdFlow() {
     );
   }
 
+  if (screen === "verify") {
+    return (
+      <div style={wrap}>
+        <div style={card}>
+          <h1 style={heading}>Check your email</h1>
+          <p style={sub}>
+            Follow the confirmation link sent to {email}, then sign in to finish setting up your home.
+          </p>
+          <button style={btnPrimary} onClick={() => setScreen("signin")}>Sign in</button>
+          <button style={btnGhost} onClick={() => setScreen("welcome")}>Back</button>
+        </div>
+      </div>
+    );
+  }
+
   if (screen === "welcome") {
     return (
       <div style={wrap}>
@@ -98,8 +123,11 @@ export function HouseholdFlow() {
             <h1 style={heading}>Welcome to Ankur</h1>
             <p style={sub}>A shared space for everyone who cares for your little one.</p>
           </div>
-          <button style={btnPrimary} onClick={() => setScreen("signup")}>
+          <button style={btnPrimary} onClick={() => chooseAccount(false)}>
             Create an account
+          </button>
+          <button style={{ ...btnPrimary, background: "#EAF2EC", color: "#2A6965" }} onClick={() => chooseAccount(true)}>
+            I was invited to join
           </button>
           <button style={btnGhost} onClick={() => setScreen("signin")}>
             I already have an account
@@ -113,8 +141,8 @@ export function HouseholdFlow() {
     return (
       <div style={wrap}>
         <form style={card} onSubmit={handleSignUp}>
-          <h1 style={heading}>Create account</h1>
-          <p style={sub}>Enter your email and choose a password.</p>
+          <h1 style={heading}>{invited ? "Create caregiver account" : "Create account"}</h1>
+          <p style={sub}>{invited ? "Enter your email and choose a password. You’ll enter your invite code next." : "Enter your email and choose a password."}</p>
           <input
             style={inputStyle} type="email" placeholder="Email"
             value={email} onChange={(e) => setEmail(e.target.value)}

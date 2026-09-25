@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   const [{ data: profile }, { data: membership }] = await Promise.all([
     db.from("profiles").select("id, full_name, email").eq("id", user.id).single(),
-    db.from("household_members").select("household_id, role").eq("user_id", user.id).maybeSingle(),
+    db.from("household_members").select("household_id, role").eq("user_id", user.id).eq("status", "active").maybeSingle(),
   ]);
 
   let children: { id: string; name: string | null; full_name: string | null; birth_date: string | null }[] = [];

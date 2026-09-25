@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/memory/PrivatePhoto";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { weeklyMoments } from "@/lib/data/demo";
 import type { JournalMoment, JournalDay, JournalMomentType, ActivityCategory } from "@/lib/data/demo";
@@ -156,14 +156,12 @@ function DaySection({ dayData, dayIndex }: { dayData: JournalDay; dayIndex: numb
 }
 
 export default function WeekView({ childId }: { childId?: string | null }) {
-  const [realDays,   setRealDays]   = useState<JournalDay[]>([]);
-  const [status,     setStatus]     = useState<"idle" | "loading" | "done">("idle");
+  const [snapshot, setSnapshot] = useState<{ childId: string; weekOffset: number; days: JournalDay[] } | null>(null);
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = last week, etc.
 
   useEffect(() => {
-    if (!childId) { setStatus("idle"); return; }
-
-    setStatus("loading");
+    if (!childId) return;
+    let cancelled = false;
 
     const end   = new Date();
     end.setDate(end.getDate() + weekOffset * 7);
@@ -182,9 +180,9 @@ export default function WeekView({ childId }: { childId?: string | null }) {
       .lte("created_at", end.toISOString())
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        setRealDays(groupByDay(data ?? []));
-        setStatus("done");
+        if (!cancelled) setSnapshot({ childId, weekOffset, days: groupByDay(data ?? []) });
       });
+    return () => { cancelled = true; };
   }, [childId, weekOffset]);
 
   function weekLabel() {
@@ -211,7 +209,8 @@ export default function WeekView({ childId }: { childId?: string | null }) {
     );
   }
 
-  if (status !== "done") return null;
+  if (snapshot?.childId !== childId || snapshot.weekOffset !== weekOffset) return null;
+  const realDays = snapshot.days;
 
   const nav = (
     <div className="flex items-center justify-between px-5 mb-6">

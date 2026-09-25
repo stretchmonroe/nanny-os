@@ -40,12 +40,10 @@ export default function NoteComposeSheet({ open, childId, childName, onClose, on
   const isEdit = !!momentId;
 
   useEffect(() => {
-    if (open) {
-      setText(initialText ?? "");
-      setCategory(initialCategory ?? "play");
-      setTimeout(() => textareaRef.current?.focus(), 120);
-    }
-  }, [open, initialText, initialCategory]);
+    if (!open) return;
+    const timer = setTimeout(() => textareaRef.current?.focus(), 120);
+    return () => clearTimeout(timer);
+  }, [open]);
 
   async function save() {
     if (!text.trim()) return;

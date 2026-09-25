@@ -51,7 +51,7 @@ export default function NameGate({ open }: { open: boolean }) {
           <div className="w-full max-w-sm">
             <p className="text-[40px] mb-6">👋</p>
             <h1 className="text-[30px] font-black text-foreground tracking-tight leading-tight mb-2">
-              What's your name?
+              What&rsquo;s your name?
             </h1>
             <p className="text-[14px] text-muted-foreground leading-relaxed mb-8">
               Your name shows on notes and memories you log — so the whole care circle knows who added what.

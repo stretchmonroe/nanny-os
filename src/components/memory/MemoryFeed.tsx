@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import { moments as demoMoments } from "@/lib/data/demo";
-import Image from "next/image";
+import Image from "@/components/memory/PrivatePhoto";
 
 type Moment = {
   id: string;
@@ -18,11 +18,11 @@ type Moment = {
   image_url?: string;
 };
 
-function normalize(raw: any): Moment {
+function normalize(raw: Partial<Moment>): Moment {
   return {
-    id: raw.id,
-    type: raw.type,
-    content: raw.content,
+    id: raw.id ?? "",
+    type: raw.type ?? "note",
+    content: raw.content ?? "",
     time: raw.created_at
       ? new Date(raw.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
       : raw.time ?? "",

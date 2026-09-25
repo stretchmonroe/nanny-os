@@ -61,11 +61,11 @@ export async function POST(req: NextRequest) {
   const { data: { user }, error } = await db.auth.getUser(token);
   if (error || !user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-  const body = await req.json().catch(() => ({}));
-  const content: string = (body.content ?? "").trim();
-  const childId: string = (body.childId ?? "").trim();
+  const body = await req.json().catch(() => null);
+  const content = typeof body?.content === "string" ? body.content.trim() : "";
+  const childId = typeof body?.childId === "string" ? body.childId.trim() : "";
 
-  if (!content) return NextResponse.json({ error: "content required" }, { status: 400 });
+  if (!content || content.length > 5000) return NextResponse.json({ error: "Valid content required" }, { status: 400 });
   if (!childId) return NextResponse.json({ error: "childId required" }, { status: 400 });
 
   const membership = await verifyMembership(db, user.id, childId);
@@ -85,8 +85,8 @@ export async function POST(req: NextRequest) {
 
   if (insertErr || !note) {
     return NextResponse.json(
-      { error: "Could not save note", detail: insertErr?.message },
-      { status: 500 },
+      { error: "Could not save note" },
+      { status: 503 },
     );
   }
 

@@ -39,7 +39,7 @@ export default function HamburgerMenu({ open, onClose, showDot }: Props) {
   async function signOut() {
     onClose();
     await supabase.auth.signOut();
-    window.location.href = "/onboarding";
+    router.replace("/onboarding");
   }
 
   // ── Parent / new-user menu ──────────────────────────────────────────────────

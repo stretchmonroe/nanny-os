@@ -27,80 +27,75 @@ const roleEmoji: Record<string, string> = {
   grandparent: "👴",
 };
 
-function deriveCode(householdId: string) {
-  // First UUID segment (8 chars before first dash), uppercased.
-  const seg = householdId.split("-")[0].toUpperCase();
-  return `${seg.slice(0, 4)}-${seg.slice(4, 8)}`;
-}
-
 export default function CareCirclePage() {
   const { profileFullName, currentUserRole, activeChild } = useAppStore();
   const [members,     setMembers]     = useState<Member[]>([]);
-  const [householdId, setHouseholdId] = useState<string | null>(null);
   const [loading,     setLoading]     = useState(true);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviting,    setInviting]    = useState(false);
-  const [inviteErr,   setInviteErr]   = useState("");
-  const [inviteDone,  setInviteDone]  = useState(false);
+  const [inviteCode, setInviteCode]   = useState<string | null>(null);
+  const [codeExpiry, setCodeExpiry]   = useState<string | null>(null);
+  const [codeBusy,   setCodeBusy]     = useState(false);
+  const [codeError,  setCodeError]    = useState("");
   const [copied,      setCopied]      = useState(false);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !user) { if (!cancelled) setLoading(false); return; }
 
-  async function load() {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+      const res = await fetch("/api/care-circle", {
+        headers: { authorization: `Bearer ${session.access_token}` },
+      });
+      if (!cancelled && res.ok) {
+        const data = await res.json();
+        setMembers(data.members ?? []);
+        if (data.householdId && data.members?.some((member: Member) => member.is_me && member.role === "parent")) {
+          const codeRes = await fetch("/api/care-circle/code", {
+            headers: { authorization: `Bearer ${session.access_token}` },
+          });
+          if (!cancelled && codeRes.ok) {
+            const codeData = await codeRes.json();
+            setInviteCode(codeData.code ?? null);
+            setCodeExpiry(codeData.expiresAt ?? null);
+          } else if (!cancelled) setCodeError("Could not load the invite code. Refresh to try again.");
+        }
+      }
+      if (!cancelled) setLoading(false);
+    }
+    void load();
+    return () => { cancelled = true; };
+  }, []);
+
+  async function generateCode() {
+    setCodeError("");
+    setCodeBusy(true);
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session || !user) { setLoading(false); return; }
-
-    const res = await fetch("/api/care-circle", {
+    if (!session) { setCodeError("Sign in to manage invite codes."); setCodeBusy(false); return; }
+    const res = await fetch("/api/care-circle/code", {
+      method: "POST",
       headers: { authorization: `Bearer ${session.access_token}` },
     });
     if (res.ok) {
       const data = await res.json();
-      setMembers(data.members ?? []);
-      setHouseholdId(data.householdId ?? null);
-    }
-    setLoading(false);
-  }
-
-  async function sendInvite(e: React.FormEvent) {
-    e.preventDefault();
-    setInviteErr("");
-    setInviting(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { setInviting(false); return; }
-
-    const res = await fetch("/api/care-circle/invite", {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${session.access_token}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ email: inviteEmail }),
-    });
-
-    if (res.ok) {
-      setInviteDone(true);
-      setInviteEmail("");
+      setInviteCode(data.code);
+      setCodeExpiry(data.expiresAt);
     } else {
-      const body = await res.json().catch(() => ({}));
-      setInviteErr(body.error ?? "Something went wrong");
+      setCodeError("Could not generate an invite code. Please try again.");
     }
-    setInviting(false);
+    setCodeBusy(false);
   }
 
   function copyCode() {
-    if (!householdId) return;
-    const code = deriveCode(householdId);
-    navigator.clipboard.writeText(code).catch(() => {});
+    if (!inviteCode) return;
+    navigator.clipboard.writeText(inviteCode).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
   function shareCode() {
-    if (!householdId) return;
-    const code = deriveCode(householdId);
-    const text = `Join ${activeChild?.name ? `${activeChild.name}'s` : "our"} home on Ankur with code: ${code}`;
+    if (!inviteCode) return;
+    const text = `Join ${activeChild?.name ? `${activeChild.name}'s` : "our"} home on Ankur: ${window.location.origin}/onboarding — choose "I was invited to join" and enter code ${inviteCode.match(/.{1,4}/g)?.join("-")}.`;
     if (navigator.share) {
       navigator.share({ text }).catch(() => {});
     } else {
@@ -111,7 +106,6 @@ export default function CareCirclePage() {
   }
 
   const isParent = currentUserRole === "parent";
-  const inviteCode = householdId ? deriveCode(householdId) : null;
 
   return (
     <div className="min-h-screen bg-surface-page">
@@ -148,20 +142,19 @@ export default function CareCirclePage() {
         )}
 
         {/* Invite code — parents only */}
-        {!loading && isParent && inviteCode && (
+        {!loading && isParent && (
           <section>
             <p className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest mb-3">
-              Invite code
+              Caregiver invite code
             </p>
             <div className="bg-surface-card border-soft rounded-2xl px-5 py-5 shadow-card space-y-4">
               <div>
                 <p className="text-[13px] text-muted-foreground leading-relaxed mb-3">
-                  Share this code with your nanny. They enter it in the app when setting up their account.
+                  Share this code with a caregiver. They create an account with their own email, enter the code, and add their name. It expires after seven days.
                 </p>
-                {/* Code display */}
-                <div className="flex items-center justify-between bg-surface-raised rounded-2xl px-5 py-4">
-                  <span className="text-[28px] font-black text-foreground tracking-[0.12em] font-mono">
-                    {inviteCode}
+                {inviteCode && <div className="flex flex-wrap items-center justify-between gap-2 bg-surface-raised rounded-2xl px-4 py-4">
+                  <span className="text-[20px] font-black text-foreground tracking-[0.04em] font-mono">
+                    {inviteCode.match(/.{1,4}/g)?.join("-")}
                   </span>
                   <div className="flex items-center gap-2">
                     <button
@@ -184,60 +177,15 @@ export default function CareCirclePage() {
                       Share
                     </button>
                   </div>
-                </div>
+                </div>}
+                {codeExpiry && inviteCode && <p className="text-xs text-muted-foreground">Expires {new Date(codeExpiry).toLocaleDateString()}</p>}
+                {codeError && <p role="alert" className="text-sm text-red-600">{codeError}</p>}
+                <button onClick={generateCode} disabled={codeBusy}
+                  className="text-sm font-semibold text-sage disabled:opacity-40">
+                  {codeBusy ? "Generating…" : inviteCode ? "Generate a new code (old code stops working)" : "Generate invite code"}
+                </button>
               </div>
             </div>
-          </section>
-        )}
-
-        {/* Email invite — parents only */}
-        {!loading && isParent && (
-          <section>
-            <p className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-widest mb-3">
-              Invite by email
-            </p>
-            {inviteDone ? (
-              <div className="bg-surface-card border-soft rounded-2xl px-4 py-5 shadow-card text-center">
-                <p className="text-[22px] mb-1">🌱</p>
-                <p className="text-[14px] font-semibold text-foreground">Invite sent</p>
-                <p className="text-[13px] text-muted-foreground mt-1 leading-relaxed">
-                  Ask your caregiver to sign up with that email address.
-                </p>
-                <button
-                  onClick={() => setInviteDone(false)}
-                  className="mt-3 text-[13px] font-semibold text-muted-foreground underline"
-                >
-                  Invite another
-                </button>
-              </div>
-            ) : (
-              <form
-                onSubmit={sendInvite}
-                className="bg-surface-card border-soft rounded-2xl px-4 py-4 shadow-card space-y-3"
-              >
-                <p className="text-[13px] text-muted-foreground leading-relaxed">
-                  Enter your caregiver&apos;s email. They sign up with that address to join automatically.
-                </p>
-                <input
-                  type="email"
-                  required
-                  placeholder="caregiver@email.com"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full bg-muted rounded-xl px-4 py-3 text-[14px] font-medium text-foreground placeholder:text-muted-foreground/50 outline-none"
-                />
-                {inviteErr && (
-                  <p className="text-[13px] font-semibold text-red-500">{inviteErr}</p>
-                )}
-                <button
-                  type="submit"
-                  disabled={inviting || !inviteEmail.trim()}
-                  className="w-full bg-foreground text-white font-bold text-[14px] py-3 rounded-xl disabled:opacity-40 transition-opacity"
-                >
-                  {inviting ? "Sending…" : "Send invite"}
-                </button>
-              </form>
-            )}
           </section>
         )}
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/memory/PrivatePhoto";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { weeklyMoments } from "@/lib/data/demo";
 import type { JournalMoment, JournalMomentType, ActivityCategory } from "@/lib/data/demo";
@@ -11,6 +11,8 @@ import ReactionBar from "@/components/memory/ReactionBar";
 import ReplyThread from "@/components/memory/ReplyThread";
 import NoteComposeSheet from "@/components/memory/NoteComposeSheet";
 import { supabase } from "@/lib/supabase/client";
+import { photoPath } from "@/lib/supabase/photo-path";
+import { deleteJournalMoment } from "@/lib/supabase/delete-journal-moment";
 import { useAppStore } from "@/store/useAppStore";
 
 const today = weeklyMoments[0];
@@ -249,17 +251,17 @@ function NoteCard({ moment, authorName, actions }: { moment: JournalMoment; auth
 }
 
 export default function TodayJournal({ childId, refreshKey }: { childId?: string | null; refreshKey?: number }) {
-  const [realMoments, setRealMoments] = useState<JournalMoment[]>([]);
-  const [status,      setStatus]      = useState<"idle" | "loading" | "done">("idle");
+  const [snapshot, setSnapshot] = useState<{ childId: string; refreshKey?: number; moments: JournalMoment[] } | null>(null);
   const [editing,     setEditing]     = useState<JournalMoment | null>(null);
   const [deleteId,    setDeleteId]    = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { profileFullName, currentUserRole } = useAppStore();
   const isParent = currentUserRole === "parent";
 
   useEffect(() => {
-    if (!childId) { setStatus("idle"); return; }
-
-    setStatus("loading");
+    if (!childId) return;
+    let cancelled = false;
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -271,9 +273,9 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
       .gte("created_at", startOfDay.toISOString())
       .order("created_at", { ascending: true })
       .then(({ data }) => {
-        setRealMoments((data ?? []).map(normalizeMoment));
-        setStatus("done");
+        if (!cancelled) setSnapshot({ childId, refreshKey, moments: (data ?? []).map(normalizeMoment) });
       });
+    return () => { cancelled = true; };
   }, [childId, refreshKey]);
 
   // Demo mode
@@ -299,7 +301,8 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
   }
 
   // Loading
-  if (status !== "done") return null;
+  if (snapshot?.childId !== childId || snapshot.refreshKey !== refreshKey) return null;
+  const realMoments = snapshot.moments;
 
   // Real — empty
   if (realMoments.length === 0) {
@@ -315,9 +318,26 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
   }
 
   async function confirmDelete(id: string) {
-    await supabase.from("memory_events").delete().eq("id", id);
-    setRealMoments((prev) => prev.filter((m) => m.id !== id));
-    setDeleteId(null);
+    const moment = realMoments.find((entry) => entry.id === id);
+    if (!moment || deleting) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      let path: string | undefined;
+      if (moment.type === "photo") {
+        path = moment.imageUrl && photoPath(moment.imageUrl, process.env.NEXT_PUBLIC_SUPABASE_URL ?? "") || undefined;
+        if (!path || !childId || !path.startsWith(`${childId}/`)) {
+          throw new Error("Could not verify photo ownership; please try again");
+        }
+      }
+      await deleteJournalMoment(supabase, id, path);
+      setSnapshot((prev) => prev && ({ ...prev, moments: prev.moments.filter((m) => m.id !== id) }));
+      setDeleteId(null);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Could not delete moment; please try again");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   // Real — has moments
@@ -333,7 +353,7 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
             <MomentMenu
               canEdit={withinEditWindow(moment.createdAt)}
               onEdit={() => setEditing(moment)}
-              onDelete={() => setDeleteId(moment.id)}
+              onDelete={() => { setDeleteError(null); setDeleteId(moment.id); }}
             />
           ) : undefined;
           return (
@@ -354,6 +374,7 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
 
       {/* Edit sheet */}
       <NoteComposeSheet
+        key={editing?.id ?? "closed"}
         open={!!editing}
         childId={childId ?? null}
         momentId={editing?.id}
@@ -363,10 +384,10 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
         onSaved={() => {
           setEditing(null);
           // Refresh by re-fetching
-          setStatus("loading");
+          setSnapshot(null);
           const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
           supabase.from("memory_events").select("*").eq("child_id", childId!).in("type", ["note","photo","milestone"]).gte("created_at", startOfDay.toISOString()).order("created_at", { ascending: true })
-            .then(({ data }) => { setRealMoments((data ?? []).map(normalizeMoment)); setStatus("done"); });
+            .then(({ data }) => { setSnapshot({ childId, refreshKey, moments: (data ?? []).map(normalizeMoment) }); });
         }}
       />
 
@@ -378,7 +399,7 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
               key="del-backdrop"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm"
-              onClick={() => setDeleteId(null)}
+              onClick={() => { if (!deleting) setDeleteId(null); }}
             />
             <motion.div
               key="del-sheet"
@@ -389,16 +410,19 @@ export default function TodayJournal({ childId, refreshKey }: { childId?: string
               <div className="w-10 h-1 rounded-full bg-border mx-auto mb-6" />
               <p className="text-[17px] font-bold text-foreground mb-1">Delete this moment?</p>
               <p className="text-[13px] text-muted-foreground mb-6">This can&apos;t be undone.</p>
+              {deleteError && <p role="alert" className="text-[13px] text-red-500 mb-4">{deleteError}</p>}
               <div className="space-y-2.5">
                 <button
                   onClick={() => confirmDelete(deleteId)}
-                  className="w-full bg-red-500 text-white font-bold text-[15px] py-4 rounded-2xl active:scale-[0.98] transition-all"
+                  disabled={deleting}
+                  className="w-full bg-red-500 text-white font-bold text-[15px] py-4 rounded-2xl active:scale-[0.98] transition-all disabled:opacity-50"
                 >
-                  Delete
+                  {deleting ? "Deleting…" : "Delete"}
                 </button>
                 <button
                   onClick={() => setDeleteId(null)}
-                  className="w-full bg-surface-raised text-foreground font-semibold text-[15px] py-4 rounded-2xl active:scale-[0.98] transition-all"
+                  disabled={deleting}
+                  className="w-full bg-surface-raised text-foreground font-semibold text-[15px] py-4 rounded-2xl active:scale-[0.98] transition-all disabled:opacity-50"
                 >
                   Cancel
                 </button>

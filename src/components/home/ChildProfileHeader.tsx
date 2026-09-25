@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { child, schedule, focusAreas } from "@/lib/data/demo";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,11 @@ function formatToday() {
   });
 }
 
+function subscribeClock(onChange: () => void) {
+  const timer = setInterval(onChange, 60_000);
+  return () => clearInterval(timer);
+}
+
 interface Props {
   focus: FocusArea;
   onFocusChange: (f: FocusArea) => void;
@@ -32,18 +37,13 @@ interface Props {
 }
 
 export default function ChildProfileHeader({ focus, onFocusChange, onSetupOpen, showFocusSelector = true }: Props) {
-  const [greeting, setGreeting] = useState("Good morning");
-  const [today, setToday] = useState("");
+  const greeting = useSyncExternalStore(subscribeClock, getGreeting, () => "Good morning");
+  const today = useSyncExternalStore(subscribeClock, formatToday, () => "");
   const [focusOpen, setFocusOpen] = useState(false);
 
   // Use real child name from store if available, fall back to demo data.
   const activeChild = useAppStore((s) => s.activeChild);
   const childName = activeChild?.name || child.name;
-
-  useEffect(() => {
-    setGreeting(getGreeting());
-    setToday(formatToday());
-  }, []);
 
   const done = schedule.filter((s) => s.done).length;
   const total = schedule.length;

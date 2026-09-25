@@ -16,11 +16,12 @@ export async function GET(req: NextRequest) {
   const { data: { user }, error } = await db.auth.getUser(token);
   if (error || !user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-  // Get the user's household membership (no status filter — create-home inserts without status).
+  // Only active members may access the household.
   const { data: myMembership } = await db
     .from("household_members")
     .select("household_id, role")
     .eq("user_id", user.id)
+    .eq("status", "active")
     .maybeSingle();
 
   if (!myMembership) return NextResponse.json({ members: [], householdId: null });
@@ -30,8 +31,9 @@ export async function GET(req: NextRequest) {
   // All members who have actually joined (user_id is set).
   const { data: rows } = await db
     .from("household_members")
-    .select("user_id, role, invited_email, created_at")
+    .select("user_id, role, created_at")
     .eq("household_id", householdId)
+    .eq("status", "active")
     .not("user_id", "is", null)
     .order("created_at", { ascending: true });
 
@@ -52,7 +54,7 @@ export async function GET(req: NextRequest) {
   const members = (rows ?? []).map((r) => ({
     role:         r.role as string,
     display_name: profileMap[r.user_id]?.full_name ?? null,
-    email:        profileMap[r.user_id]?.email ?? r.invited_email ?? null,
+    email:        profileMap[r.user_id]?.email ?? null,
     is_me:        r.user_id === user.id,
   }));
 

@@ -38,6 +38,7 @@ export default function VoiceRecorder({ context, onSave, variant = "pill", class
         className={className}
       />
       <VoiceInputModal
+        key={voice.state === "idle" || voice.state === "unsupported" ? "closed" : "active"}
         state={voice.state}
         transcript={voice.transcript}
         interim={voice.interim}

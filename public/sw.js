@@ -12,16 +12,19 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url ?? "/";
+  const candidate = event.notification.data?.url;
+  const path = typeof candidate === "string" && candidate.startsWith("/") &&
+    !candidate.startsWith("//") && !/[\\\u0000-\u001f\u007f]/.test(candidate) ? candidate : "/";
+  const url = new URL(path, self.location.origin);
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
       for (const client of list) {
-        if (client.url.includes(self.location.origin) && "focus" in client) {
-          client.navigate(url);
+        if (new URL(client.url).origin === self.location.origin && "focus" in client) {
+          client.navigate(url.href);
           return client.focus();
         }
       }
-      return clients.openWindow(url);
+      return clients.openWindow(url.href);
     })
   );
 });

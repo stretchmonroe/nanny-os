@@ -12,6 +12,9 @@ export default function SetupPage() {
   const { currentUserRole, activeChild, authReady } = useAppStore();
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
+  const [createDismissed, setCreateDismissed] = useState(false);
+  // A newly signed-in user sees the role choice as soon as their membership loads.
+  const showCreate = createOpen || (!createDismissed && authReady && !currentUserRole && !activeChild);
 
   // Caregivers cannot manage household setup — send them back to the app shell.
   useEffect(() => {
@@ -235,7 +238,7 @@ export default function SetupPage() {
       </div>
 
       {/* CreateHomeFlow for data entry */}
-      <CreateHomeFlow open={createOpen} onClose={() => setCreateOpen(false)} />
+      <CreateHomeFlow open={showCreate} onClose={() => { setCreateOpen(false); setCreateDismissed(true); }} />
     </div>
   );
 }

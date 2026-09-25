@@ -29,24 +29,21 @@ interface Props {
 }
 
 export default function VoiceInputModal({ state, transcript, interim, context, onStop, onSave, onCancel }: Props) {
-  const [editText, setEditText] = useState("")
+  const [editedText, setEditedText] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const areaRef = useRef<HTMLTextAreaElement>(null)
 
   const visible   = state !== "idle" && state !== "unsupported"
   const listening = state === "listening"
   const done      = state === "done" || state === "error"
+  const editText  = editedText ?? transcript
 
   useEffect(() => {
     if (done && transcript) {
-      setEditText(transcript)
-      setTimeout(() => areaRef.current?.focus(), 250)
+      const timer = setTimeout(() => areaRef.current?.focus(), 250)
+      return () => clearTimeout(timer)
     }
   }, [done, transcript])
-
-  useEffect(() => {
-    if (!visible) { setEditText(""); setSaved(false) }
-  }, [visible])
 
   function handleSave() {
     if (!editText.trim()) return
@@ -144,7 +141,7 @@ export default function VoiceInputModal({ state, transcript, interim, context, o
                   <textarea
                     ref={areaRef}
                     value={editText}
-                    onChange={e => setEditText(e.target.value)}
+                    onChange={e => setEditedText(e.target.value)}
                     rows={3}
                     placeholder={HINTS[context]}
                     className="w-full resize-none text-[15px] font-medium text-foreground leading-relaxed bg-transparent outline-none placeholder:text-muted-foreground/35 placeholder:italic placeholder:font-normal"

@@ -13,31 +13,37 @@ type Item = { id: string; name: string; completed: boolean };
 
 export default function ListsPage() {
   const activeChild = useAppStore((s) => s.activeChild);
+  const activeChildId = activeChild?.id;
   const [items, setItems] = useState<Item[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loadedChildId, setLoadedChildId] = useState<string | null>(null);
+  const [fetching, setFetching] = useState(true);
+  const loading = fetching || (activeChildId ?? null) !== loadedChildId;
+  const visibleItems = loading ? [] : items;
 
   useEffect(() => {
-    load();
-  // Re-load when the active child changes.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeChild?.id]);
-
-  async function load() {
-    setLoading(true);
-    if (!activeChild) {
-      setItems(demoItems);
-      setLoading(false);
-      return;
+    let cancelled = false;
+    async function load() {
+      if (!activeChildId) {
+        setItems(demoItems);
+        setLoadedChildId(null);
+        setFetching(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("grocery_items")
+        .select("*")
+        .eq("child_id", activeChildId)
+        .order("created_at", { ascending: true });
+      if (!cancelled) {
+        setItems(data ?? []);
+        setLoadedChildId(activeChildId);
+        setFetching(false);
+      }
     }
-    const { data } = await supabase
-      .from("grocery_items")
-      .select("*")
-      .eq("child_id", activeChild.id)
-      .order("created_at", { ascending: true });
-    setItems(data ?? []);
-    setLoading(false);
-  }
+    void load();
+    return () => { cancelled = true; };
+  }, [activeChildId]);
 
   async function addItem(name?: string) {
     const n = (name ?? input).trim();
@@ -74,9 +80,9 @@ export default function ListsPage() {
     }
   }
 
-  const remaining = items.filter((i) => !i.completed).length;
-  const pending = items.filter((i) => !i.completed);
-  const done = items.filter((i) => i.completed);
+  const remaining = visibleItems.filter((i) => !i.completed).length;
+  const pending = visibleItems.filter((i) => !i.completed);
+  const done = visibleItems.filter((i) => i.completed);
 
   return (
     <div className="min-h-screen bg-surface-page flex flex-col">
@@ -95,7 +101,7 @@ export default function ListsPage() {
 
       {/* List */}
       <div className="flex-1 px-4 pt-4 pb-4 space-y-1.5">
-        {!loading && activeChild && items.length === 0 && (
+        {!loading && activeChild && visibleItems.length === 0 && (
           <div className="pt-12 flex flex-col items-center gap-2 text-center">
             <span className="text-4xl">🛒</span>
             <p className="text-[15px] font-semibold text-foreground mt-2">List is empty</p>
@@ -132,6 +138,7 @@ export default function ListsPage() {
           <div className="flex-1 flex items-center gap-2 bg-surface-card border-soft rounded-2xl px-4 py-2.5 shadow-card">
             <input
               value={input}
+              disabled={loading}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addItem()}
               placeholder="Add item…"
@@ -139,7 +146,7 @@ export default function ListsPage() {
             />
             <button
               onClick={() => addItem()}
-              disabled={!input.trim()}
+              disabled={loading || !input.trim()}
               className="w-8 h-8 rounded-xl bg-foreground text-background flex items-center justify-center disabled:opacity-25 transition-all active:scale-90 duration-150"
             >
               <ArrowUp size={14} strokeWidth={2.5} />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useAppStore } from "@/store/useAppStore";
 import type { UserRole, ActiveChild } from "@/store/useAppStore";
@@ -17,6 +17,7 @@ function isPublic(path: string) {
 
 export function useAuthInit() {
   const pathname = usePathname();
+  const router = useRouter();
   const {
     setAuthReady,
     setProfileFullName,
@@ -28,11 +29,14 @@ export function useAuthInit() {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
+      setProfileFullName(null);
+      setCurrentUserRole(null);
+      setActiveChild(null);
       setAuthReady(true);
       if (!isPublic(pathname) && !_navigating) {
         _navigating = true;
         console.log("[auth] no session → /onboarding");
-        window.location.href = "/onboarding";
+        router.replace("/onboarding");
       }
       return;
     }
@@ -40,15 +44,17 @@ export function useAuthInit() {
     console.log("[auth] session ok →", session.user.id);
 
     // Fetch real data — non-blocking. Failures are safe; app uses demo fallbacks.
+    let needsHouseholdSetup = false;
     try {
       const res = await fetch("/api/me", {
         headers: { authorization: `Bearer ${session.access_token}` },
       });
       if (res.ok) {
         const { profile, membership, children } = await res.json();
+        needsHouseholdSetup = !membership;
 
-        if (profile?.full_name)  setProfileFullName(profile.full_name);
-        if (membership?.role)    setCurrentUserRole(membership.role as UserRole);
+        setProfileFullName(profile?.full_name ?? null);
+        setCurrentUserRole(membership?.role ? membership.role as UserRole : null);
 
         const child = children?.[0];
         if (child) {
@@ -58,22 +64,31 @@ export function useAuthInit() {
             birthDate: child.birth_date ?? null,
           };
           setActiveChild(childData);
+        } else {
+          setActiveChild(null);
         }
 
         console.log("[auth] /api/me populated — profile:", profile?.full_name, "children:", children?.length);
+      } else {
+        setProfileFullName(null);
+        setCurrentUserRole(null);
+        setActiveChild(null);
       }
     } catch (err) {
       console.warn("[auth] /api/me failed (non-fatal):", err);
+      setProfileFullName(null);
+      setCurrentUserRole(null);
+      setActiveChild(null);
     }
 
     setAuthReady(true);
 
-    if ((pathname === "/" || isPublic(pathname)) && !_navigating) {
+    if ((pathname === "/" || isPublic(pathname) || (pathname === "/home" && needsHouseholdSetup)) && !_navigating) {
       _navigating = true;
-      console.log("[auth] authenticated → /home");
-      window.location.href = "/home";
+      const invited = typeof window !== "undefined" && sessionStorage.getItem("ankur-invited-signup") === "1";
+      router.replace(needsHouseholdSetup ? (invited ? "/join" : "/setup") : "/home");
     }
-  }, [pathname, setAuthReady, setProfileFullName, setCurrentUserRole, setActiveChild]);
+  }, [pathname, router, setAuthReady, setProfileFullName, setCurrentUserRole, setActiveChild]);
 
   useEffect(() => {
     check();

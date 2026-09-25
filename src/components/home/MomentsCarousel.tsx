@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { moments } from "@/lib/data/demo";
-import Image from "next/image";
+import Image from "@/components/memory/PrivatePhoto";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 
@@ -60,11 +60,11 @@ function MomentCard({ item, i }: { item: Moment; i: number }) {
 }
 
 export default function MomentsCarousel({ childId }: { childId?: string | null }) {
-  const [realMoments, setRealMoments] = useState<Moment[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [snapshot, setSnapshot] = useState<{ childId: string; items: Moment[] } | null>(null);
 
   useEffect(() => {
-    if (!childId) { setLoaded(true); return; }
+    if (!childId) return;
+    let cancelled = false;
 
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -77,13 +77,13 @@ export default function MomentsCarousel({ childId }: { childId?: string | null }
       .gte("created_at", startOfDay.toISOString())
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        setRealMoments((data ?? []).map(normalize));
-        setLoaded(true);
+        if (!cancelled) setSnapshot({ childId, items: (data ?? []).map(normalize) });
       });
+    return () => { cancelled = true; };
   }, [childId]);
 
-  const items   = childId ? realMoments : moments.map(normalize);
-  const isReal  = !!childId && loaded;
+  const items   = childId ? (snapshot?.childId === childId ? snapshot.items : []) : moments.map(normalize);
+  const isReal  = !!childId && snapshot?.childId === childId;
   const count   = items.length;
 
   if (isReal && count === 0) return null;

@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ankur
 
-## Getting Started
+Ankur is a shared care workspace for parents and caregivers. It combines a daily schedule, journal and photos, household lists, care-circle membership, AI-assisted summaries, voice capture, and web push notifications.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 App Router with TypeScript
+- React 19, Tailwind CSS 4, and Base UI/ShadCN components
+- Supabase Auth, Postgres, Storage, and row-level security
+- Anthropic API for optional AI-assisted plans and summaries
+- Vercel deployment
+
+The app has demo fallbacks for much of the UI, but authenticated household flows require Supabase configuration.
+
+## Local setup
+
+1. Install Node.js 20.9 or later.
+2. Install dependencies with `npm ci`.
+3. Copy `.env.example` to `.env.local` and supply the required values.
+4. Start the app with `npm run dev`.
+
+For a browser rehearsal against the dedicated isolated Supabase stack, first
+start it with `bash scripts/start-local-supabase.sh`, install app dependencies
+with `npm ci` if needed, then run
+`node scripts/run-app-with-local-supabase.mjs`. The launcher uses only local
+Supabase keys and displays the local browser URL without printing credentials.
+
+Do not commit `.env.local` or any service-role, VAPID private, or Anthropic keys.
+
+## Quality gates
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run lint
+npx tsc --noEmit
+npm run build
+npm audit
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The production build, TypeScript checks and full lint gate pass on the draft stabilization branch; see `docs/STABILIZATION_AUDIT.md` for remaining release work.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Data and authorization
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Supabase setup assets live under `supabase/`. Server routes using the service-role key must explicitly authenticate and authorize every request because the service role bypasses RLS. Never trust a child ID, household ID, role, or invite code supplied by the client without checking it against the authenticated user.
 
-## Learn More
+## Project map
 
-To learn more about Next.js, take a look at the following resources:
+- `src/app/` — pages and server route handlers
+- `src/components/` — product and design-system components
+- `src/lib/` — Supabase, AI, push, voice, and utility modules
+- `src/store/` — persisted client state
+- `supabase/` — seed data and RLS definitions
+- `progress.md` — historical feature inventory from the original build
+- `docs/STABILIZATION_AUDIT.md` — current takeover findings and priorities
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The live app is deployed on Vercel and redirects to `https://ankurcare.vercel.app`. Supabase project configuration and Vercel environment values must stay aligned. Validate authenticated flows in a non-production household before promoting authorization or schema changes.
+# Schema stabilization status
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Invitation/schema reconciliation is prepared on the draft stabilization PR, not
+deployed. See [rollout and remaining blockers](docs/SCHEMA_ROLLOUT.md).
+Run `npm test` for local PostgreSQL authorization regression tests.

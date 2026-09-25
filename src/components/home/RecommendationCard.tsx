@@ -60,6 +60,7 @@ export default function RecommendationCard({ childName, childBirthDate }: Props)
   const [approval, setApproval] = useState<ApprovalState>("idle");
 
   useEffect(() => {
+    let cancelled = false;
     const lastDone = schedule.filter((s) => s.done).at(-1);
     const name = childName ?? "the child";
     const age  = ageLabel(childBirthDate);
@@ -70,7 +71,7 @@ export default function RecommendationCard({ childName, childBirthDate }: Props)
       childName:    name,
       childAge:     age,
     }).then((res) => {
-      if (!res) return;
+      if (!res || cancelled) return;
       const parsed = parseAIJson<RichRecommendation>(res.result, demo);
       if (!parsed.recommendation) return;
       if (parsed.guidanceSource && !isValidGuidanceSource(parsed.guidanceSource)) {
@@ -79,7 +80,8 @@ export default function RecommendationCard({ childName, childBirthDate }: Props)
       setAction(parsed);
       if (parsed.flagForApproval) setApproval("awaiting");
     });
-  }, []);
+    return () => { cancelled = true; };
+  }, [childName, childBirthDate]);
 
   return (
     <div className="mx-4 rounded-[1.5rem] overflow-hidden bg-gradient-to-br from-trust-light via-surface-card to-amber-50/20 dark:from-trust-light dark:via-surface-raised dark:to-amber-950/20 border-soft shadow-elevated">

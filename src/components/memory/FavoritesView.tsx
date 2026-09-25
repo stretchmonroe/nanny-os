@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/memory/PrivatePhoto";
 import { Heart } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import AuthorBadge from "@/components/ui/AuthorBadge";
@@ -29,13 +29,12 @@ async function unfavorite(id: string) {
 }
 
 export default function FavoritesView({ childId }: { childId?: string | null }) {
-  const [moments, setMoments] = useState<JournalMoment[]>([]);
-  const [status,  setStatus]  = useState<"idle" | "loading" | "done">("idle");
+  const [snapshot, setSnapshot] = useState<{ childId: string; moments: JournalMoment[] } | null>(null);
   const { profileFullName, currentUserRole } = useAppStore();
 
   useEffect(() => {
-    if (!childId) { setStatus("idle"); return; }
-    setStatus("loading");
+    if (!childId) return;
+    let cancelled = false;
     supabase
       .from("memory_events")
       .select("*")
@@ -43,14 +42,14 @@ export default function FavoritesView({ childId }: { childId?: string | null }) 
       .eq("is_favorite", true)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
-        setMoments((data ?? []).map(normalizeMoment));
-        setStatus("done");
+        if (!cancelled) setSnapshot({ childId, moments: (data ?? []).map(normalizeMoment) });
       });
+    return () => { cancelled = true; };
   }, [childId]);
 
   function removeFavorite(id: string) {
     unfavorite(id);
-    setMoments((prev) => prev.filter((m) => m.id !== id));
+    setSnapshot((prev) => prev && ({ ...prev, moments: prev.moments.filter((m) => m.id !== id) }));
   }
 
   // Demo mode
@@ -66,7 +65,8 @@ export default function FavoritesView({ childId }: { childId?: string | null }) 
     );
   }
 
-  if (status !== "done") return null;
+  if (snapshot?.childId !== childId) return null;
+  const moments = snapshot.moments;
 
   if (moments.length === 0) {
     return (

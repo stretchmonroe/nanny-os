@@ -105,10 +105,13 @@ function buildRealFeed(routineItems: RoutineItem[]): FeedItem[] {
 export default function DailyFlowPage() {
   const activeChild   = useAppStore((s) => s.activeChild);
   const [routine, setRoutine] = useState<RoutineItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadedChildId, setLoadedChildId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const isDemo = !activeChild;
+  const childId = activeChild?.id;
+  const loading = !isDemo && (loadedChildId !== childId || refreshing);
 
   async function toggleDone(id: string) {
     const item = routine.find((r) => r.id === id);
@@ -121,7 +124,7 @@ export default function DailyFlowPage() {
 
   async function loadRoutine() {
     if (!activeChild) return;
-    setLoading(true);
+    setRefreshing(true);
     const today = new Date().toISOString().split("T")[0];
     const { data } = await supabase
       .from("schedule_items")
@@ -130,24 +133,28 @@ export default function DailyFlowPage() {
       .eq("scheduled_date", today)
       .order("time", { ascending: true });
     setRoutine(data ? withActive(data.map(normalize)) : []);
-    setLoading(false);
+    setLoadedChildId(activeChild.id);
+    setRefreshing(false);
   }
 
   useEffect(() => {
-    if (isDemo) { setLoading(false); return; }
+    if (!childId) return;
+    let cancelled = false;
     (async () => {
-      setLoading(true);
       const today = new Date().toISOString().split("T")[0];
       const { data } = await supabase
         .from("schedule_items")
         .select("*")
-        .eq("child_id", activeChild!.id)
+        .eq("child_id", childId)
         .eq("scheduled_date", today)
         .order("time", { ascending: true });
-      setRoutine(data ? withActive(data.map(normalize)) : []);
-      setLoading(false);
+      if (!cancelled) {
+        setRoutine(data ? withActive(data.map(normalize)) : []);
+        setLoadedChildId(childId);
+      }
     })();
-  }, [activeChild?.id, isDemo]);
+    return () => { cancelled = true; };
+  }, [childId]);
 
   const feed: FeedItem[] = isDemo
     ? DEMO_FEED

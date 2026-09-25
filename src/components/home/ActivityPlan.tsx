@@ -50,6 +50,7 @@ export default function ActivityPlan({ focus, childName, childBirthDate, childId
   // Demo mode: call AI for suggestions
   useEffect(() => {
     if (childId) return;
+    let cancelled = false;
     const done = schedule.filter((s) => s.done).map((s) => s.title);
     const name = childName ?? "Mateo";
     const age  = ageLabel(childBirthDate);
@@ -60,7 +61,7 @@ export default function ActivityPlan({ focus, childName, childBirthDate, childId
       completedToday: done,
       timeOfDay:      new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
     }).then((res) => {
-      if (!res) return;
+      if (!res || cancelled) return;
       const parsed = parseAIJson<{ activities: PlannedActivity[] }>(res.result, { activities: [] });
       if (!parsed.activities?.length) return;
       const validated = parsed.activities.slice(0, 3).map((a, i) => ({
@@ -74,7 +75,8 @@ export default function ActivityPlan({ focus, childName, childBirthDate, childId
       }));
       setActivities(validated);
     });
-  }, [focus, childId]);
+    return () => { cancelled = true; };
+  }, [focus, childId, childName, childBirthDate]);
 
   function setStatus(id: string, status: PlannedActivity["status"]) {
     setActivities((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));

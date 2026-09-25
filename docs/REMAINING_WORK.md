@@ -55,9 +55,11 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
 
 ## 3. Product and maintenance work after the safety gates
 
-- Use the [competitive scan](COMPETITIVE_LANDSCAPE.md) to test the proposed
-  care-to-household-action handoff with real families. Daily logs, photo sharing,
-  invite codes, grocery lists and AI summaries already appear in competitors.
+- Use the [competitive scan](COMPETITIVE_LANDSCAPE.md) and
+  [product hypothesis](PRODUCT_DIRECTION.md) to test a brief caregiver handoff
+  that leads to useful parent decisions and household actions with real pairs.
+  Daily logs, photos, invite codes, groceries and AI summaries already appear
+  in competitors.
 - Build true email invitations: deliver a single-use link bound to the invited
   address, verify the signed-in email before consuming it, then collect the
   caregiver's name. The current UI supports share codes; email is not sent.

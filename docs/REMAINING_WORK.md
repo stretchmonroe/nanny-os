@@ -29,8 +29,11 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
 - Run real browser checks for private existing-photo rendering, upload,
   deletion, anonymous denial, removed caregiver denial and cross-household
   denial. Synthetic Storage checks already pass but did not copy photo bytes.
-- Trace callers of the 27 policy-less public tables and inspect live helper
-  functions and grants before deciding which tables need new policies.
+- Static app-source scan found no direct `.from(...)` calls to any of the 27
+  policy-less public tables in the exported baseline. They remain RLS-enabled;
+  do not add blanket policies or delete their existing rows. Inspect live SQL
+  functions/triggers, grants and any external clients before declaring them
+  unused or deciding which need policies.
 
 ## 2. Controlled production release (blocking)
 

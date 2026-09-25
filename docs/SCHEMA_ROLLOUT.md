@@ -257,7 +257,10 @@ cutover. Do not change the bucket manually as a substitute for the migration.
 ## Evidence and decisions
 
 The user-provided metadata export contains 38 public tables, all with RLS enabled.
-27 have no policies (client access fails closed; server-only usage must be traced).
+27 have no policies. A static scan of the current app's `.from(...)` calls found
+no direct references to these tables, so current direct client access fails
+closed. This does not rule out SQL functions, triggers or external clients;
+preserve their rows and review the live dependencies and grants before changes.
 Memberships have a composite user/household primary key, required user_id,
 roles parent/nanny, and active/invited/removed status. They have no id or
 invited_email. Existing invitation and Care Circle queries therefore drifted.

@@ -64,7 +64,8 @@ Baseline commit: `63ff249`
   writes. Continue browser photo tests against the isolated local app. A parent
   journal deletion previously left the photo object in Storage; the new flow
   removes the private object first and shows failures instead of silently
-  hiding a remaining record. Local browser confirmation is still pending.
+  hiding a remaining record. The owner confirmed local parent photo upload,
+  caregiver display, parent deletion and disappearance after caregiver refresh.
 - AI route now verifies the bearer session and an active household membership
   before provider calls; anonymous and removed-member requests are denied.
 - Migration 007 now limits paid AI requests in a locked database row to 20 per

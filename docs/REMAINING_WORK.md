@@ -12,13 +12,13 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
   and eight photo metadata rows. Neither local app accounts nor production
   changed.
 - All 62 automated tests, lint and production build pass locally. GitHub Actions
-  passed at the previous draft-branch head; the photo-deletion fix still needs
-  CI. Production schema and app are unchanged.
+  passed at the photo-deletion branch head. Production schema and app are unchanged.
 - Privileged-route review closed a notification URL redirect, stopped returning
   database errors to clients, and removed the unused public `/api/upload` stub.
 - Deleting a photo now removes its private Storage object before its journal
   row and reports a failed deletion, leaving the row available for retry if
-  Storage denies access. Browser checks on the isolated local app are pending.
+  Storage denies access. The owner confirmed local parent upload, caregiver
+  display, parent deletion and disappearance after caregiver refresh.
 
 ## 1. Complete the release rehearsal (blocking)
 
@@ -55,6 +55,9 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
 
 ## 3. Product and maintenance work after the safety gates
 
+- Use the [competitive scan](COMPETITIVE_LANDSCAPE.md) to test the proposed
+  care-to-household-action handoff with real families. Daily logs, photo sharing,
+  invite codes, grocery lists and AI summaries already appear in competitors.
 - Build true email invitations: deliver a single-use link bound to the invited
   address, verify the signed-in email before consuming it, then collect the
   caregiver's name. The current UI supports share codes; email is not sent.
@@ -65,10 +68,10 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
 - Trace AI input fields to the selected child and centralize service-role
   authorization. Maintain backup, restore and data-retention procedures.
 
-**Next concrete action:** complete browser photo upload, signed display and
-deletion checks with parent/caregiver accounts on the isolated local app, then
-review the live signup hook and the production deployment controls without
-sharing secrets. The earlier live photo-policy expression and public-byte
+**Next concrete action:** review the live signup hook and the production
+deployment controls without sharing secrets. The local browser photo flow now
+passes, but eight existing production photo bytes still have not been tested
+under private Storage. The earlier live photo-policy expression and public-byte
 checks passed; refresh them just before release. The SQL export omits managed
 policy customizations and Storage object bytes. No production write is
 authorized by the rehearsal result.

@@ -21,6 +21,10 @@ Migration 007 adds persistent AI request limits of 20 per hour and 100 per day
 per active member. It is tested in PGlite but has not yet been rehearsed on a
 refreshed isolated staging copy. It must be present before the updated AI
 endpoint can serve paid requests; a missing quota function fails closed.
+Run `bash scripts/backup-live-for-staging.sh --rehearse` from the updated
+checkout for a new private read-only backup followed by an isolated full
+001–007 migration rehearsal. The dedicated refreshed database uses port 57322
+and refuses to overwrite the older staging copy or local app accounts.
 
 ## Release gate snapshot
 

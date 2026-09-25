@@ -3,6 +3,19 @@
 # Keep the SQL files on the owner's Mac; they contain private household data.
 set -euo pipefail
 umask 077
+if [ "$#" -gt 1 ] || { [ "$#" -eq 1 ] && [ "$1" != '--rehearse' ]; }; then
+  echo 'Usage: bash scripts/backup-live-for-staging.sh [--rehearse]'
+  exit 1
+fi
+rehearse_after_backup=false
+if [ "${1:-}" = '--rehearse' ]; then rehearse_after_backup=true; fi
+repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
+if [ "$rehearse_after_backup" = true ] &&
+   { [ -e "$repo_dir/tests/production-staging-refresh/runtime" ] ||
+     docker container inspect supabase_db_ankur-production-refresh >/dev/null 2>&1; }; then
+  echo 'Refreshed local copy already exists. No backup or production query was started.'
+  exit 1
+fi
 
 command -v node >/dev/null || { echo "Node.js is required."; exit 1; }
 command -v docker >/dev/null || { echo "Docker Desktop is required."; exit 1; }
@@ -35,6 +48,11 @@ unset db_url_template db_password
 project_ref="${parsed%%$'\n'*}"
 db_url="${parsed#*$'\n'}"
 unset parsed
+if [ "$rehearse_after_backup" = true ] && [ "$project_ref" != 'mgbzsikninkwmlqtastg' ]; then
+  unset db_url
+  echo 'This is not the reviewed Nanny App project reference. Nothing was exported.'
+  exit 1
+fi
 
 echo "Connection refers to project $project_ref. Compare this with Nanny App's dashboard URL."
 IFS= read -r -p "Type its project reference to confirm: " confirmation
@@ -47,7 +65,6 @@ fi
 backup_dir="$(mktemp -d "$HOME/Downloads/ankur-staging.XXXXXX")"
 chmod 700 "$backup_dir"
 log="$backup_dir/dump.log"
-repo_dir="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_dir"
 
 echo "Exporting roles, schema and data read-only to a private Downloads folder."
@@ -72,3 +89,6 @@ done
 echo "DATABASE BACKUP READY: $backup_dir"
 echo "Production was read only. Storage photo bytes are separate and not backed up by this script."
 echo "Keep the SQL files private; share only the DATABASE BACKUP READY line."
+if [ "$rehearse_after_backup" = true ]; then
+  bash scripts/rehearse-refreshed-staging.sh "$backup_dir"
+fi

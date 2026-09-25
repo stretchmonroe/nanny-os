@@ -53,4 +53,15 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
 
 **Next concrete action:** prepare and run the refreshed isolated staging
 rehearsal on all seven migrations. It uses the owner's private backup and local
-Docker database. No production write is part of that rehearsal.
+Docker database. After pulling the audit branch, one Mac command performs the
+read-only backup and separate local restore and rehearsal:
+
+```bash
+bash scripts/backup-live-for-staging.sh --rehearse
+```
+
+The URI and password prompts are hidden. Confirm the project reference shown
+matches Nanny App. Only share the final `REFRESHED LOCAL MIGRATION REHEARSAL`
+line and its aggregate counts; do not paste SQL, passwords or private logs.
+This script refuses to overwrite the previous local production copy or the
+local app database. No production write is part of the rehearsal.

@@ -1,0 +1,7 @@
+project_id = "ankur-production-refresh"
+[db]
+port = 57322
+shadow_port = 57320
+major_version = 17
+[db.seed]
+enabled = false

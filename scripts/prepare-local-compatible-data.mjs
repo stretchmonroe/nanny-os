@@ -8,9 +8,25 @@ import { join } from 'node:path';
 const backupArg = process.argv[2];
 const runtime = process.argv[3];
 const alignStorage = process.argv[4] === '--align-storage';
-if ((process.argv.length !== 4 && process.argv.length !== 5) ||
-    (process.argv.length === 5 && !alignStorage) || !backupArg || !runtime) {
-  console.error('Usage: node scripts/prepare-local-compatible-data.mjs backup-dir private-runtime [--align-storage]');
+const refresh = process.argv[5] === '--refresh';
+if ((process.argv.length !== 4 && process.argv.length !== 5 && process.argv.length !== 6) ||
+    (process.argv.length >= 5 && !alignStorage) ||
+    (process.argv.length === 6 && !refresh) || !backupArg || !runtime) {
+  console.error('Usage: node scripts/prepare-local-compatible-data.mjs backup-dir private-runtime [--align-storage [--refresh]]');
+  process.exit(1);
+}
+const expectedRuntime = realpathSync(join(import.meta.dirname, '..', 'tests',
+  refresh ? 'production-staging-refresh' : 'production-staging'));
+let container = 'supabase_db_ankur-production-copy';
+try {
+  if (realpathSync(runtime) !== join(expectedRuntime, 'runtime')) throw Error();
+  if (refresh) {
+    const config = readFileSync(join(runtime, 'supabase', 'config.toml'), 'utf8');
+    if (!/^project_id = "ankur-production-refresh"$/m.test(config)) throw Error();
+    container = 'supabase_db_ankur-production-refresh';
+  }
+} catch {
+  console.error('Expected the dedicated isolated private runtime. Nothing was changed.');
   process.exit(1);
 }
 let backup;
@@ -28,13 +44,13 @@ try {
 let existing;
 let managedColumns;
 try {
-  const output = execFileSync('docker', ['exec', 'supabase_db_ankur-production-copy',
+  const output = execFileSync('docker', ['exec', container,
     'psql', '-X', '-A', '-t', '-U', 'supabase_admin', '-d', 'postgres', '-c',
     "select n.nspname || '.' || c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind in ('r','p')"],
   { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
   existing = new Set(output.trim().split('\n'));
   if (alignStorage) {
-    const catalog = execFileSync('docker', ['exec', 'supabase_db_ankur-production-copy',
+    const catalog = execFileSync('docker', ['exec', container,
       'psql', '-X', '-A', '-t', '-U', 'supabase_admin', '-d', 'postgres', '-c',
       "select n.nspname || '.' || c.relname || '.' || a.attname from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace where c.relkind in ('r','p') and a.attnum>0 and not a.attisdropped and n.nspname in ('auth','storage')"],
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });

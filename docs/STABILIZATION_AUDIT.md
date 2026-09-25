@@ -42,9 +42,10 @@ Baseline commit: `63ff249`
   a parent-generated 12-character share code and the caregiver's name before
   showing Home. Migration 006 adds an expiring, parent-rotatable code and a
   server-only claim RPC. Legacy email-registered claims remain compatible.
-  PGlite invitation tests passed; the new migration and browser flow still
-  need testing on the owner's isolated local Supabase database and then on a
-  refreshed staging copy before any production rollout.
+  On 2026-09-25 the owner applied migration 006 to the isolated local app,
+  created a fresh caregiver without preregistering their email, and confirmed
+  the new browser flow worked. PGlite checks and GitHub Actions also passed.
+  A refreshed staging-copy rehearsal is still needed before production rollout.
 - True email-link invitations are not yet implemented: existing email
   registration did not send email. The planned link should carry a one-time
   random token bound to the invited email and expiry; after sign-in and email
@@ -53,6 +54,10 @@ Baseline commit: `63ff249`
   join merely because someone typed the invited email in an unverified account.
 - AI route now verifies the bearer session and an active household membership
   before provider calls; anonymous and removed-member requests are denied.
+- Migration 007 now limits paid AI requests in a locked database row to 20 per
+  hour and 100 per day per active user. Quota failures return 429 or fail closed
+  at 503 before provider calls. PGlite and route tests pass; the updated
+  endpoint needs migration 007 applied before paid AI can run in production.
 - Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
 - Rollout: see SCHEMA_ROLLOUT.md; production migrations and end-to-end verification pending
@@ -112,8 +117,10 @@ The earlier AI endpoint accepted unauthenticated calls. It now checks the
 verified Supabase user and active household membership before sending a prompt,
 bounds request and prompt size, and logs no API key prefix or provider response
 body. Local development disables outbound AI; regression tests cover anonymous,
-removed and active users. Add durable per-user rate limiting before production
-exposes a paid AI key, and review input fields against child-level authorization.
+removed and active users. Migration 007 adds atomic limits of 20/hour and
+100/day; if the migration is missing, the endpoint fails closed before the
+provider call. Rehearse 007 on the refreshed staging copy before deployment and
+review input fields against child-level authorization.
 The existing public production deployment may still run the older endpoint until
 these application changes are deployed; the status of its AI key is unverified.
 

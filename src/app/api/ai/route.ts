@@ -71,6 +71,14 @@ export async function POST(req: Request) {
 
     if (prompt.length > 16000) return Response.json({ error: "too_large" }, { status: 413 });
 
+    // Consume the database-backed allowance before any paid provider request.
+    const { error: quotaError } = await db.rpc("consume_ai_request_quota", { p_user_id: user.id });
+    if (quotaError) {
+      if (quotaError.code === "P0001") return Response.json({ error: "rate_limited" }, { status: 429 });
+      if (quotaError.code === "P0002") return Response.json({ error: "forbidden" }, { status: 403 });
+      return Response.json({ error: "unavailable" }, { status: 503 });
+    }
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {

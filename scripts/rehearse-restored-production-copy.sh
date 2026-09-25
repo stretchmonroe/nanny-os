@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rehearse six guarded migrations against the owner's isolated local SQL copy.
+# Rehearse seven guarded migrations against the owner's isolated local SQL copy.
 # Does not link to or connect to a remote project.
 set -euo pipefail
 umask 077
@@ -70,7 +70,8 @@ for migration in \
   202609180003_private_photos \
   202609190004_active_membership \
   202609230005_one_active_household \
-  202609250001_household_join_codes; do
+  202609250001_household_join_codes \
+  202609250002_ai_request_quota; do
   echo "Applying $migration only to the local copy."
   if ! docker exec -i "$container" psql -X -q -v ON_ERROR_STOP=1 -U postgres \
     -d postgres -f /dev/stdin < "supabase/migrations/$migration.sql" \
@@ -90,6 +91,7 @@ do $$ begin
     or (select public from storage.buckets where id='photos') is distinct from false
     or to_regclass('public.household_invitations') is null
     or to_regclass('public.household_join_codes') is null
+    or to_regclass('public.ai_request_quotas') is null
     or to_regclass('public.household_members_one_active_per_user') is null
     or (select count(*) from pg_policies where schemaname='storage' and tablename='objects'
       and policyname in ('photos:household_read','photos:household_upload','photos:household_delete')) <> 3

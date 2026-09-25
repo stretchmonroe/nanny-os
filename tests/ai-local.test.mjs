@@ -133,6 +133,11 @@ test('active household member can request a bounded AI response', async () => {
         assert.equal(token, 'valid');
         return { data: { user: { id: 'user-1' } }, error: null };
       } },
+      async rpc(name, args) {
+        assert.equal(name, 'consume_ai_request_quota');
+        assert.deepEqual(args, { p_user_id: 'user-1' });
+        return { error: null };
+      },
       from(table) {
         assert.equal(table, 'household_members');
         const filters = [];
@@ -156,6 +161,44 @@ test('active household member can request a bounded AI response', async () => {
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { result: 'synthetic response' });
     assert.equal(providerCalls, 1);
+  } finally {
+    globalThis.fetch = previousFetch;
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
+test('a denied or unavailable AI quota never reaches the paid provider', async () => {
+  const previous = Object.fromEntries(['LOCAL_AI_DISABLED', 'NEXT_PUBLIC_SUPABASE_URL',
+    'SUPABASE_SERVICE_ROLE_KEY', 'ANTHROPIC_API_KEY'].map(k => [k, process.env[k]]));
+  const previousFetch = globalThis.fetch;
+  try {
+    delete process.env.LOCAL_AI_DISABLED;
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://localhost:55321';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'synthetic-service';
+    process.env.ANTHROPIC_API_KEY = 'synthetic-provider';
+    globalThis.fetch = async () => { throw Error('Provider must not be called'); };
+    let code = 'P0001';
+    const db = {
+      auth: { async getUser() { return { data: { user: { id: 'verified-user' } }, error: null }; } },
+      from() { return { select() { return this; }, eq() { return this; },
+        async maybeSingle() { return { data: { household_id: 'home' }, error: null }; } }; },
+      async rpc() { return { error: { code } }; },
+    };
+    const { POST } = await load('../src/app/api/ai/route.ts', {
+      '@/lib/ai/prompts/systemPrompt': { systemPrompt: 'test' },
+      '@/lib/ai/prompts/insights': { insightsPrompt: () => 'synthetic' },
+      '@supabase/supabase-js': { createClient: () => db },
+    });
+    const request = () => new Request('http://localhost:3000/api/ai', {
+      method: 'POST', headers: { authorization: 'Bearer valid' },
+      body: JSON.stringify({ type: 'insights', input: { childName: 'synthetic' } }),
+    });
+    assert.equal((await POST(request())).status, 429);
+    code = '42P01';
+    assert.equal((await POST(request())).status, 503);
   } finally {
     globalThis.fetch = previousFetch;
     for (const [key, value] of Object.entries(previous)) {

@@ -15,7 +15,9 @@ baseline.sql reconstructs the 38 public tables' columns, checks, indexes, polici
 and three inspected helpers from the supplied metadata. It contains no user rows.
 It deliberately omits foreign keys, unseen functions and triggers. It is a
 migration/security fixture, not a production backup or a complete schema dump.
-Migration files 001–006 run after this fixture on first startup.
+Migration files 001–007 run after this fixture on first startup. Migration 007
+adds durable AI rate limits; local app rehearsal disables all AI calls, so its
+existing browser accounts do not need that migration to keep testing.
 
 If the app and its local test accounts already exist, apply only the additive
 share-code migration while preserving the local data:

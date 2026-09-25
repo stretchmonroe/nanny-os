@@ -7,19 +7,23 @@ active memberships, no photo path was unmapped, and the local photos bucket
 became private. Synthetic Auth/Storage HTTP smoke checks passed. Production
 was untouched. All eight live photo objects returned image bytes from their
 public URLs; PR remains draft.
+The owner's refreshed read-only backup then passed an isolated 001–007
+rehearsal, retaining six Auth users, six active memberships and eight photo
+metadata rows and leaving both existing local databases unchanged. Production
+remains untouched.
 
 Migration 006 adds a parent-generated caregiver share code and is additive to
 the five migrations already rehearsed. PGlite checks pass; the owner applied
 006 to the isolated local app and completed the new caregiver browser flow on
-2026-09-25. A refreshed staging-copy rehearsal is still pending.
+2026-09-25. The refreshed staging-copy rehearsal also passed.
 For existing local app accounts, run `bash scripts/apply-local-join-codes.sh`
 from the updated checkout; this preserves local users and does not connect to
 production. New accounts choose “I was invited” before signup and supply the
 code after signing in. The separate email-link workflow requires token issuance,
 delivery and verified-email redemption and is not yet available.
 Migration 007 adds persistent AI request limits of 20 per hour and 100 per day
-per active member. It is tested in PGlite but has not yet been rehearsed on a
-refreshed isolated staging copy. It must be present before the updated AI
+per active member. It passed in PGlite and on the refreshed isolated staging
+copy. It must be present before the updated AI
 endpoint can serve paid requests; a missing quota function fails closed.
 Run `bash scripts/backup-live-for-staging.sh --rehearse` from the updated
 checkout for a new private read-only backup followed by an isolated full
@@ -30,9 +34,9 @@ and refuses to overwrite the older staging copy or local app accounts.
 
 | Gate | Result | Remaining action |
 | --- | --- | --- |
-| Migrations 001–005 on copied records | Passed locally; six users, six active memberships, eight photo metadata rows retained | Refresh the private backup before release |
-| Migration 006 share-code table and claim | PGlite tests, isolated local app signup and join passed | Rehearse on refreshed staging copy |
-| Migration 007 AI quota | PGlite and route tests pass; absent function returns 503 | Rehearse on refreshed staging copy and deploy before enabling paid AI |
+| Migrations 001–005 on copied records | Passed twice locally; six users, six active memberships, eight photo metadata rows retained | Refresh the private backup again immediately before release |
+| Migration 006 share-code table and claim | PGlite tests, isolated local app signup/join and refreshed-copy rehearsal passed | Verify a live signup after controlled rollout |
+| Migration 007 AI quota | PGlite, route tests and refreshed-copy rehearsal passed; absent function returns 503 | Deploy before enabling paid AI |
 | Existing photo policy baseline | Live names, roles and exact expressions match | Apply guarded migration 003 only after the signed-photo client is deployed |
 | Existing photo objects | All eight publicly served image bytes | Test those objects using private signed URLs, and verify anonymous denial after cutover |
 | Auth signup hook | Restored function present; direct reference to profiles, none to household membership or Storage | Review the function body and test a fresh parent/caregiver signup |
@@ -285,8 +289,8 @@ comparison casts to text without rewriting existing records.
 
 1. Run npm test, npx tsc --noEmit, targeted ESLint, npm run build.
 2. Back up the target database and rehearse all seven migrations on a staging copy.
-   Migrations 001–005 passed on the isolated SQL copy on 2026-09-24;
-   006–007 still require a refreshed-copy rehearsal.
+   Completed on the new isolated copy; refresh the backup again immediately
+   before any production release.
    Local tests use actual embedded PostgreSQL (PGlite), but do not reproduce
    all production RLS helper functions, Auth, concurrency, or application routes.
 3. Inspect my_household_id(), my_role(), in_my_household() and table grants.

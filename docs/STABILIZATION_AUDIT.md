@@ -17,6 +17,11 @@ Baseline commit: `63ff249`
   six Auth users, six active memberships and eight photo metadata rows; no
   duplicate active user memberships or unmapped photo paths; bucket private
   after migration. Production was not changed.
+- The owner refreshed the read-only Nanny App backup and rehearsed migrations
+  001–007 on a **new isolated local database**. All seven passed; six Auth users,
+  six active memberships and eight photo metadata rows were retained, the
+  bucket became private, and the join-code and AI-quota functions were present.
+  The previous local staging copy and local app accounts were not changed.
 - Live read-only preflight: photos bucket remains public; eight photo metadata
   rows, six active memberships, zero users with multiple active households,
   three legacy photo policies with expected names, roles and exact expressions.
@@ -46,7 +51,8 @@ Baseline commit: `63ff249`
   On 2026-09-25 the owner applied migration 006 to the isolated local app,
   created a fresh caregiver without preregistering their email, and confirmed
   the new browser flow worked. PGlite checks and GitHub Actions also passed.
-  A refreshed staging-copy rehearsal is still needed before production rollout.
+  A refreshed staging-copy rehearsal passed; managed photo-policy parity and
+  existing photo bytes still need live release checks.
 - True email-link invitations are not yet implemented: existing email
   registration did not send email. The planned link should carry a one-time
   random token bound to the invited email and expiry; after sign-in and email
@@ -59,6 +65,7 @@ Baseline commit: `63ff249`
   hour and 100 per day per active user. Quota failures return 429 or fail closed
   at 503 before provider calls. PGlite and route tests pass; the updated
   endpoint needs migration 007 applied before paid AI can run in production.
+  Migration 007 passed on the refreshed isolated copy; no production change.
 - Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed
 - Production schema: user export reviewed; incompatible invitation assumptions confirmed and revised
 - Rollout: see SCHEMA_ROLLOUT.md and REMAINING_WORK.md; production migrations

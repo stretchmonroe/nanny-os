@@ -7,16 +7,18 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
 - Local parent signup, child creation and caregiver signup with a parent-issued
   code completed in separate browser sessions. The caregiver saw the household.
 - The owner applied migration 006 only to the isolated local Supabase project.
-  The restored copy of production rows previously passed migrations 001–005.
+  The owner then refreshed the read-only backup and passed a separate local
+  rehearsal of all seven migrations on six Auth users, six active memberships
+  and eight photo metadata rows. Neither local app accounts nor production
+  changed.
 - All 56 automated tests, lint, production build and GitHub Actions passed at
   the current draft-branch head. Production schema and app are unchanged.
 
 ## 1. Complete the release rehearsal (blocking)
 
-- Refresh the read-only Nanny App backup on the owner's Mac, then restore it to a
-  separate isolated database and rehearse **all seven** migrations against its
-  current rows. Verify Auth users, active memberships, photos, policy identities,
-  new share-code RPC and AI quota function. Do not paste backup data or secrets.
+- Refreshed-copy rehearsal of **all seven** migrations passed. Immediately
+  before any production release, take another backup and preflight to account
+  for live changes since the rehearsal. Keep SQL and credentials private.
 - Review the live `public.handle_new_user()` signup hook and confirm a genuine
   parent and caregiver signup behaves correctly in a safe test environment.
 - Confirm Vercel Preview's Supabase target before creating Preview accounts;
@@ -51,17 +53,8 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
 - Trace AI input fields to the selected child and centralize service-role
   authorization. Maintain backup, restore and data-retention procedures.
 
-**Next concrete action:** prepare and run the refreshed isolated staging
-rehearsal on all seven migrations. It uses the owner's private backup and local
-Docker database. After pulling the audit branch, one Mac command performs the
-read-only backup and separate local restore and rehearsal:
-
-```bash
-bash scripts/backup-live-for-staging.sh --rehearse
-```
-
-The URI and password prompts are hidden. Confirm the project reference shown
-matches Nanny App. Only share the final `REFRESHED LOCAL MIGRATION REHEARSAL`
-line and its aggregate counts; do not paste SQL, passwords or private logs.
-This script refuses to overwrite the previous local production copy or the
-local app database. No production write is part of the rehearsal.
+**Next concrete action:** verify live managed photo-policy parity, image-byte
+availability and the deployment environment, then prepare the coordinated
+private-photo release order for review. The SQL export omits managed policy
+customizations and Storage object bytes. No production write is authorized by
+the rehearsal result.

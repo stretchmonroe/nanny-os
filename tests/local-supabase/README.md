@@ -15,7 +15,19 @@ baseline.sql reconstructs the 38 public tables' columns, checks, indexes, polici
 and three inspected helpers from the supplied metadata. It contains no user rows.
 It deliberately omits foreign keys, unseen functions and triggers. It is a
 migration/security fixture, not a production backup or a complete schema dump.
-Migration files 001–005 run after this fixture on first startup.
+Migration files 001–006 run after this fixture on first startup.
+
+If the app and its local test accounts already exist, apply only the additive
+share-code migration while preserving the local data:
+
+```bash
+bash scripts/apply-local-join-codes.sh
+```
+
+It verifies the isolated project's ID, checks that it is not linked to a remote
+project, and uses only its dedicated local Docker database. Running the script
+again is safe. Restart the app after pulling the code; do not reset the local
+database if you want to keep your test accounts.
 
 If you already started this isolated stack before migration 005 was added,
 refresh only its local database and rerun the Auth/Storage checks:

@@ -85,7 +85,8 @@ export function useAuthInit() {
 
     if ((pathname === "/" || isPublic(pathname) || (pathname === "/home" && needsHouseholdSetup)) && !_navigating) {
       _navigating = true;
-      router.replace(needsHouseholdSetup ? "/setup" : "/home");
+      const invited = typeof window !== "undefined" && sessionStorage.getItem("ankur-invited-signup") === "1";
+      router.replace(needsHouseholdSetup ? (invited ? "/join" : "/setup") : "/home");
     }
   }, [pathname, router, setAuthReady, setProfileFullName, setCurrentUserRole, setActiveChild]);
 

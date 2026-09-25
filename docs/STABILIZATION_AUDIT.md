@@ -38,6 +38,19 @@ Baseline commit: `63ff249`
 - Local app rehearsal exposed a dummy AI key reaching the external provider and
   receiving 401. The launcher and client now skip AI requests in local rehearsal;
   the server also rejects them, and no key prefix or provider body is logged.
+- Caregiver onboarding now offers "I was invited" before signup, then requests
+  a parent-generated 12-character share code and the caregiver's name before
+  showing Home. Migration 006 adds an expiring, parent-rotatable code and a
+  server-only claim RPC. Legacy email-registered claims remain compatible.
+  PGlite invitation tests passed; the new migration and browser flow still
+  need testing on the owner's isolated local Supabase database and then on a
+  refreshed staging copy before any production rollout.
+- True email-link invitations are not yet implemented: existing email
+  registration did not send email. The planned link should carry a one-time
+  random token bound to the invited email and expiry; after sign-in and email
+  confirmation, the server should verify the token and email, consume the
+  invitation atomically, then request the caregiver's name. Do not silently
+  join merely because someone typed the invited email in an unverified account.
 - AI route now verifies the bearer session and an active household membership
   before provider calls; anonymous and removed-member requests are denied.
 - Migration 005 prevents concurrent active-household duplicates; PGlite and local Docker rehearsals passed

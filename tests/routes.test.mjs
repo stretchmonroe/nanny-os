@@ -42,6 +42,44 @@ test('claim uses authenticated identity, never the supplied user ID',async()=>{
   assert.equal((await POST(request({code:'abcd-ef12',user_id:'victim'}))).status,200);
   assert.deepEqual(args,{p_user_id:'verified-user',p_code:'ABCDEF12'});
 });
+test('share-code claim uses verified identity and the new server-only function',async()=>{
+  let args;
+  const chain={select(){return this;},eq(){return this;},async limit(){return {data:[{id:'child-2'}]};}};
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'caregiver-2',email_confirmed_at:'2026-09-25'}}};}},
+    async rpc(name,params){assert.equal(name,'claim_household_join_code');args=params;return {data:'home-2'};},
+    from(){return chain;}
+  };
+  const {POST}=await handler('invite/claim',db);
+  assert.equal((await POST(request({code:'ABCD-EFGH-JKLM',user_id:'victim'}))).status,200);
+  assert.deepEqual(args,{p_user_id:'caregiver-2',p_code:'ABCDEFGHJKLM'});
+});
+test('only an active parent can generate a household share code',async()=>{
+  let stored;
+  const db={
+    auth:{async getUser(){return {data:{user:{id:'verified-parent'}}};}},
+    from(table){
+      if(table==='household_members') return {
+        select(){return this;},eq(){return this;},
+        async maybeSingle(){return {data:{household_id:'home-1',role:'parent'}};}
+      };
+      assert.equal(table,'household_join_codes');
+      return {async upsert(value){stored=value;return {error:null};}};
+    }
+  };
+  const {POST}=await handler('care-circle/code',db,{'node:crypto':{randomBytes:()=>Buffer.alloc(12,0)}});
+  const req=new Request('https://example.test/api/care-circle/code',{method:'POST',headers:{authorization:'Bearer valid'}});
+  const res=await POST(req);
+  assert.equal(res.status,200);
+  assert.equal((await res.json()).code,'AAAAAAAAAAAA');
+  assert.equal(stored.household_id,'home-1');
+  assert.equal(stored.created_by,'verified-parent');
+  stored=undefined;
+  db.from=()=>({select(){return this;},eq(){return this;},async maybeSingle(){return {data:{household_id:'home-1',role:'nanny'}};}});
+  const denied=await POST(req);
+  assert.equal(denied.status,403);
+  assert.equal(stored,undefined);
+});
 test('claim rejects unverified email and malformed input before RPC',async()=>{
   const db={auth:{async getUser(){return {data:{user:{id:'u'}}};}},rpc(){throw new Error('Must not call');}};
   const {POST}=await handler('invite/claim',db);

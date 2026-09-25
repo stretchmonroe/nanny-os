@@ -11,11 +11,11 @@ import { registerPush } from "@/lib/push/client";
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   useAuthInit();
 
-  const { authReady, profileFullName } = useAppStore();
+  const { authReady, profileFullName, currentUserRole } = useAppStore();
   const pathname = usePathname();
   const isPublic = pathname?.startsWith("/onboarding");
 
-  const showNameGate = authReady && !profileFullName && !isPublic;
+  const showNameGate = authReady && !!currentUserRole && !profileFullName && !isPublic;
 
   // Auto-renew push subscription on load when permission is already granted
   useEffect(() => {

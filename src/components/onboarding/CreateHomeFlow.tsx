@@ -89,7 +89,7 @@ export default function CreateHomeFlow({ open, onClose }: Props) {
       const res  = await fetch("/api/invite/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json", authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ code: code.replace(/-/g, "") }),
+        body: JSON.stringify({ code: code.replace(/[\s-]/g, "") }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.child) throw new Error(json.error ?? `Request failed (${res.status})`);
@@ -219,7 +219,7 @@ export default function CreateHomeFlow({ open, onClose }: Props) {
               <div className="space-y-5">
                 <p className="text-[15px] text-muted-foreground leading-relaxed">
                   The parent can find their invite code in the Care Circle screen. It looks like{" "}
-                  <span className="font-bold text-foreground font-mono">ABCD-1234</span>.
+                  <span className="font-bold text-foreground font-mono">ABCD-EFGH-JKLM</span>.
                 </p>
                 <div>
                   <label className="block text-[11px] font-bold text-muted-foreground/60 uppercase tracking-wider mb-2">
@@ -229,8 +229,8 @@ export default function CreateHomeFlow({ open, onClose }: Props) {
                     autoFocus
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    placeholder="ABCD-1234"
-                    maxLength={9}
+                    placeholder="ABCD-EFGH-JKLM"
+                    maxLength={19}
                     className="w-full bg-surface-card border border-border rounded-2xl px-4 py-4 text-[22px] font-black text-foreground placeholder:text-muted-foreground/35 outline-none tracking-[0.12em] font-mono uppercase"
                   />
                 </div>
@@ -292,7 +292,7 @@ export default function CreateHomeFlow({ open, onClose }: Props) {
             <div className="px-5 pb-12 pt-4">
               <button
                 onClick={claimInvite}
-                disabled={code.replace(/-/g, "").length < 8}
+                disabled={!([8, 12].includes(code.replace(/[\s-]/g, "").length))}
                 className="w-full bg-foreground text-white font-bold text-[15px] py-4 rounded-2xl disabled:opacity-25 flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
               >
                 Join home

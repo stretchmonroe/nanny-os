@@ -26,10 +26,53 @@ async function fixture() {
     insert into public.household_members values ('${parent}','${home}','parent','active');
   `);
   await db.exec(await readFile(new URL('../supabase/migrations/202609180001_household_invitations.sql', import.meta.url), 'utf8'));
+  await db.exec(await readFile(new URL('../supabase/migrations/202609250001_household_join_codes.sql', import.meta.url), 'utf8'));
   await db.query('insert into public.household_invitations(household_id, invited_email, created_by) values ($1,$2,$3)', [home, 'nanny@example.test', parent]);
   return db;
 }
 const claim = (db, user = nanny, code = 'ABCDEF12') => db.query('select public.claim_household_invitation($1,$2) as household', [user, code]);
+const shareCode = 'ABCDEFGHJKLM';
+const join = (db, user = other, code = shareCode) => db.query('select public.claim_household_join_code($1,$2) as household', [user, code]);
+const issue = (db) => db.query('insert into public.household_join_codes(household_id,code,created_by,expires_at) values ($1,$2,$3,now()+interval \'7 days\')', [home,shareCode,parent]);
+
+test('shared code joins a verified caregiver without preregistering their email', async () => {
+  const db = await fixture();
+  try {
+    await issue(db);
+    assert.equal((await join(db)).rows[0].household, home);
+    assert.equal((await db.query('select role from household_members where user_id=$1',[other])).rows[0].role,'nanny');
+    await assert.rejects(join(db));
+  } finally { await db.close(); }
+});
+test('shared codes reject invalid, expired, removed-parent and removed-member claims', async () => {
+  const db = await fixture();
+  try {
+    await issue(db);
+    await assert.rejects(join(db, other, 'AAAAAAAAAAAA'));
+    await assert.rejects(join(db, other, 'ABCDEFGHJKLMXX'));
+    await db.exec("update household_join_codes set expires_at=now()-interval '1 second'");
+    await assert.rejects(join(db));
+    await db.exec("update household_join_codes set expires_at=now()+interval '1 day'");
+    await db.query('update household_members set status=$1 where user_id=$2',['removed',parent]);
+    await assert.rejects(join(db));
+    await db.query('update household_members set status=$1 where user_id=$2',['active',parent]);
+    await db.query('insert into household_members values ($1,$2,$3,$4)',[other,home,'nanny','removed']);
+    await assert.rejects(join(db));
+    assert.equal((await db.query('select status from household_members where user_id=$1',[other])).rows[0].status,'removed');
+  } finally { await db.close(); }
+});
+test('rotating a shared code invalidates the old code; unverified users cannot join', async () => {
+  const db = await fixture();
+  try {
+    await issue(db);
+    await db.query('update household_join_codes set code=$1',["MNPRSTUVWXYZ"]);
+    await assert.rejects(join(db));
+    await db.query('update auth.users set email_confirmed_at=null where id=$1',[other]);
+    await assert.rejects(join(db, other, "MNPRSTUVWXYZ"));
+    await db.query('update auth.users set email_confirmed_at=now() where id=$1',[other]);
+    assert.equal((await join(db, other, "MNPRSTUVWXYZ")).rows[0].household,home);
+  } finally { await db.close(); }
+});
 test('AI policies isolate households and restrict inserts to active parents', async () => {
   const db = await fixture();
   const child = '20000000-0000-0000-0000-000000000001';
@@ -96,7 +139,9 @@ test('client roles cannot invoke privileged claim or read invitations', async ()
     for (const role of ['anon','authenticated']) {
       await db.exec('set role '+role);
       await assert.rejects(claim(db));
+      await assert.rejects(join(db));
       await assert.rejects(db.query('select * from household_invitations'));
+      await assert.rejects(db.query('select * from household_join_codes'));
       await db.exec('reset role');
     }
   } finally { await db.close(); }

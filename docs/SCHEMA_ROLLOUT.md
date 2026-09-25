@@ -8,11 +8,21 @@ became private. Synthetic Auth/Storage HTTP smoke checks passed. Production
 was untouched. All eight live photo objects returned image bytes from their
 public URLs; PR remains draft.
 
+Migration 006 adds a parent-generated caregiver share code and is additive to
+the five migrations already rehearsed. PGlite checks pass; applying 006 to the
+owner's isolated local stack and refreshed staging copy is still pending.
+For existing local app accounts, run `bash scripts/apply-local-join-codes.sh`
+from the updated checkout; this preserves local users and does not connect to
+production. New accounts choose “I was invited” before signup and supply the
+code after signing in. The separate email-link workflow requires token issuance,
+delivery and verified-email redemption and is not yet available.
+
 ## Release gate snapshot
 
 | Gate | Result | Remaining action |
 | --- | --- | --- |
 | Migrations 001–005 on copied records | Passed locally; six users, six active memberships, eight photo metadata rows retained | Refresh the private backup before release |
+| Migration 006 share-code table and claim | PGlite migration and guarded-claim tests passed; local app pending | Apply additively to isolated stack and rehearse on refreshed staging copy |
 | Existing photo policy baseline | Live names, roles and exact expressions match | Apply guarded migration 003 only after the signed-photo client is deployed |
 | Existing photo objects | All eight publicly served image bytes | Test those objects using private signed URLs, and verify anonymous denial after cutover |
 | Auth signup hook | Restored function present; direct reference to profiles, none to household membership or Storage | Review the function body and test a fresh parent/caregiver signup |
@@ -264,14 +274,14 @@ comparison casts to text without rewriting existing records.
 ## Test and release gate
 
 1. Run npm test, npx tsc --noEmit, targeted ESLint, npm run build.
-2. Back up the target database and rehearse all five migrations on a staging copy.
+2. Back up the target database and rehearse all six migrations on a staging copy.
    Completed on the isolated SQL copy on 2026-09-24; refresh the backup at release.
    Local tests use actual embedded PostgreSQL (PGlite), but do not reproduce
    all production RLS helper functions, Auth, concurrency, or application routes.
 3. Inspect my_household_id(), my_role(), in_my_household() and table grants.
    Verify removed members cannot access other tables and all required client
    features have appropriate policies.
-4. Apply migrations 001 through 005 in version order only after review/approval. These scripts
+4. Apply migrations 001 through 006 in version order only after review/approval. These scripts
    expect the exported baseline and intentionally fail on unexpected existing
    objects. Do not blindly replay old rls.sql or infer an existing migration history.
 5. Deploy application changes after the invitation migration. Test parent
@@ -295,8 +305,9 @@ comparison casts to text without rewriting existing records.
 
 ## Recovery
 
-All five migrations are transactional; 003 changes bucket privacy and policies,
-004 changes access grants and policies, and 005 adds active-household uniqueness. A failure
+All six migrations are transactional; 003 changes bucket privacy and policies,
+004 changes access grants and policies, 005 adds active-household uniqueness, and
+006 adds expiring share codes. A failure
 inside either transaction rolls that migration back. After a successful rollout,
 retain invitation rows and membership data; do not drop the invitation table or
 restore broad AI policies as a casual rollback. Prefer a forward fix or temporarily

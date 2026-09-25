@@ -106,6 +106,17 @@ try {
     { p_user_id: people.caregiver.id, p_code: code }), 'replayed invitation');
   console.log('PASS: verified invitation, wrong email and replay');
 
+  const shareCode = 'ABCDEFGHJKLM';
+  ok(await json('POST', '/rest/v1/household_join_codes', service, {
+    household_id: homeA, code: shareCode, created_by: people.parentA.id,
+    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  }), 'create synthetic share code');
+  denied(await json('POST', '/rest/v1/rpc/claim_household_join_code', service,
+    { p_user_id: people.outsider.id, p_code: 'AAAAAAAAAAAA' }), 'wrong share code');
+  assert.equal(ok(await json('POST', '/rest/v1/rpc/claim_household_join_code', service,
+    { p_user_id: people.outsider.id, p_code: shareCode }), 'share-code claim without email preregistration'), homeA);
+  console.log('PASS: share code joins verified caregiver without email preregistration');
+
   const caregiver = people.caregiver.token;
   const parentA = people.parentA.token;
   const parentB = people.parentB.token;
@@ -152,6 +163,7 @@ try {
 } finally {
   // All writes are in the isolated local stack. Cleanup is best effort so errors stay visible.
   const cleanup = [
+    () => json('DELETE', `/rest/v1/household_join_codes?household_id=eq.${homeA}`, service),
     () => uploaded && json('DELETE', `/storage/v1/object/photos`, service, { prefixes: [`${childA}/${file}`] }),
     () => json('DELETE', `/rest/v1/ai_plans?child_id=eq.${childA}`, service),
     () => json('DELETE', `/rest/v1/household_invitations?household_id=eq.${homeA}`, service),

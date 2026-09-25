@@ -8,10 +8,11 @@ export async function POST(req: NextRequest) {
   const { data: { user }, error } = await db.auth.getUser(token);
   if (error || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => null);
-  const code = typeof body?.code === "string" ? body.code.trim().toUpperCase().replace(/-/g, "") : "";
-  if (!/^[0-9A-F]{8}$/.test(code)) return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
+  const code = typeof body?.code === "string" ? body.code.trim().toUpperCase().replace(/[\s-]/g, "") : "";
+  const legacy = /^[0-9A-F]{8}$/.test(code);
+  if (!legacy && !/^[A-HJ-NP-Z2-9]{12}$/.test(code)) return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
   if (!user.email_confirmed_at) return NextResponse.json({ error: "Verify your email first" }, { status: 403 });
-  const { data: householdId, error: claimError } = await db.rpc("claim_household_invitation", {
+  const { data: householdId, error: claimError } = await db.rpc(legacy ? "claim_household_invitation" : "claim_household_join_code", {
     p_user_id: user.id, p_code: code,
   });
   if (claimError) {

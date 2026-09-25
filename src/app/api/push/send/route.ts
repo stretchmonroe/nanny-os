@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
       typeof body !== 'string' || !body.trim() || body.length > 1000) {
     return NextResponse.json({ error: "Invalid notification content" }, { status: 400 });
   }
-  if (typeof url !== 'string' || !url.startsWith('/') || url.startsWith('//') || url.length > 250) {
+  if (typeof url !== 'string' || !url.startsWith('/') || url.startsWith('//') ||
+      /[\\\u0000-\u001f\u007f]/.test(url) || url.length > 250) {
     return NextResponse.json({ error: "Invalid notification URL" }, { status: 400 });
   }
 

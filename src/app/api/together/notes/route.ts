@@ -85,8 +85,8 @@ export async function POST(req: NextRequest) {
 
   if (insertErr || !note) {
     return NextResponse.json(
-      { error: "Could not save note", detail: insertErr?.message },
-      { status: 500 },
+      { error: "Could not save note" },
+      { status: 503 },
     );
   }
 

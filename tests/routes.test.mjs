@@ -320,6 +320,18 @@ test('push delivery denies cross-household and removed senders before loading re
   assert.equal((await POST(request({childId:'child-b',targetRole:'parent',title:'Update',body:'Photo'}))).status,403);
   assert.equal(recipientsRead,false);
 });
+test('push delivery rejects external and ambiguous notification URLs before database access',async()=>{
+  let authCalls=0;
+  const db={auth:{getUser(){authCalls++;return {data:{user:null}};}}};
+  const {POST}=await handler('push/send',db,{'web-push':{default:{}}});
+  for (const url of ['//evil.example', '/\\evil.example', '/memory\nLocation: evil',
+    'https://evil.example', '/memory\u007f']) {
+    const result=await POST(request({childId:'child-a',targetRole:'parent',title:'Update',body:'Photo',url}));
+    assert.equal(result.status,400,url);
+  }
+  assert.equal(authCalls,0);
+  assert.equal((await POST(request({childId:'child-a',targetRole:'parent',title:'Update',body:'Photo',url:'/memory?view=day'}))).status,401);
+});
 test('push delivery selects only active target-role recipients in the child household',async()=>{
   let sent=0;
   const filters=[];

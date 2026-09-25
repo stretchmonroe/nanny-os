@@ -19,13 +19,12 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Server config error";
     console.error("[create-home]", msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: "Server unavailable" }, { status: 503 });
   }
 
   const { data: { user }, error: userErr } = await db.auth.getUser(token);
   if (userErr || !user) {
-    console.error("[create-home] getUser failed:", userErr?.message ?? "no user");
-    return NextResponse.json({ error: `Auth failed: ${userErr?.message ?? "no user"}` }, { status: 401 });
+    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 
   // Parse body early — needed regardless of which path we take.
@@ -100,8 +99,8 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (hhErr || !household) {
-      console.error("[create-home] household insert failed:", hhErr);
-      return NextResponse.json({ error: `Failed to create household: ${hhErr?.message ?? "unknown"}` }, { status: 500 });
+      console.error("[create-home] household insert failed", hhErr?.code ?? "unknown");
+      return NextResponse.json({ error: "Could not create household" }, { status: 503 });
     }
 
     // Create membership.
@@ -110,7 +109,7 @@ export async function POST(req: NextRequest) {
       .insert({ user_id: user.id, household_id: household.id, role: "parent", status: "active" });
 
     if (memErr) {
-      console.error("[create-home] membership insert failed:", memErr);
+      console.error("[create-home] membership insert failed", memErr.code ?? "unknown");
       await db.from("households").delete().eq("id", household.id);
       return NextResponse.json({ error: "Could not create household membership" }, { status: 503 });
     }
@@ -126,8 +125,8 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (childErr || !child) {
-    console.error("[create-home] child insert failed:", childErr);
-    return NextResponse.json({ error: `Failed to create child: ${childErr?.message ?? "unknown"}` }, { status: 500 });
+    console.error("[create-home] child insert failed", childErr?.code ?? "unknown");
+    return NextResponse.json({ error: "Could not create child" }, { status: 503 });
   }
 
   return NextResponse.json({ child });

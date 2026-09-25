@@ -10,7 +10,7 @@ Baseline commit: `63ff249`
 - Dependency audit: 0 known vulnerabilities after upgrading Next.js and safe transitive fixes
 - Lint: passes with no errors or warnings after correcting effect-driven state,
   child-specific loading snapshots, navigation and unused values
-- Automated tests: 56 passing, including local PostgreSQL invitation/AI/storage,
+- Automated tests: 59 passing, including local PostgreSQL invitation/AI/storage,
   photo-path validation, and isolated API-handler tests
 - Local Supabase on user's Mac: migrations 001–005 and synthetic Auth/Storage HTTP smoke checks passed on 2026-09-24
 - Restored local copy of the Nanny App SQL export: migrations 001–005 passed on
@@ -155,7 +155,11 @@ after verifying no deployed clients still use it.
 - Add structured error reporting and privacy-safe observability.
 - Add request throttling for AI, invite, upload, and push endpoints.
 - Verify VAPID, Anthropic, Supabase, redirect URLs, and allowed origins in Vercel.
-- Replace the placeholder upload route or remove it.
+- The unused placeholder upload route was removed; browser photos upload via
+  authenticated Supabase Storage policies. Push notification URLs now reject
+  backslashes and control characters at delivery and again on click; notification
+  windows require an exact same-origin match. Privileged API errors no longer
+  return raw database messages to clients.
 - Add backup/restore and data-retention guidance.
 
 ## Recommended sequence

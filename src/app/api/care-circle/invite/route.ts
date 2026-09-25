@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (insertErr || !invite) {
-    return NextResponse.json({ error: "Could not create invite", detail: insertErr?.message }, { status: 500 });
+    return NextResponse.json({ error: "Could not create invite" }, { status: 503 });
   }
 
   return NextResponse.json({ invite });

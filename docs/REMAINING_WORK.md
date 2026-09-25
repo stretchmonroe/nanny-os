@@ -11,8 +11,11 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
   rehearsal of all seven migrations on six Auth users, six active memberships
   and eight photo metadata rows. Neither local app accounts nor production
   changed.
-- All 56 automated tests, lint, production build and GitHub Actions passed at
-  the current draft-branch head. Production schema and app are unchanged.
+- All 59 automated tests, lint and production build pass locally. GitHub Actions
+  passed at the previous draft-branch head; the latest changes still need CI.
+  Production schema and app are unchanged.
+- Privileged-route review closed a notification URL redirect, stopped returning
+  database errors to clients, and removed the unused public `/api/upload` stub.
 
 ## 1. Complete the release rehearsal (blocking)
 
@@ -26,13 +29,14 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
 - Run real browser checks for private existing-photo rendering, upload,
   deletion, anonymous denial, removed caregiver denial and cross-household
   denial. Synthetic Storage checks already pass but did not copy photo bytes.
-- Trace callers of the 27 policy-less public tables, check current helper
-  functions and grants, and finish the remaining privileged route review.
+- Trace callers of the 27 policy-less public tables and inspect live helper
+  functions and grants before deciding which tables need new policies.
 
 ## 2. Controlled production release (blocking)
 
-- Agree on the coordinated application/database order for signed-photo clients
-  and private-bucket migration 003 so existing photos do not break mid-release.
+- Confirm the coordinated application/database order in `SCHEMA_ROLLOUT.md`
+  and a short maintenance window so signed-photo clients are active before
+  private-bucket migration 003. The numbered migrations still run in order.
 - Capture a fresh backup and live preflight, apply reviewed migrations 001–007
   and deploy the audited app under that plan. Keep paid AI disabled until
   migration 007 is active. The draft PR is not ready to merge until this gate.
@@ -53,8 +57,8 @@ Status: 2026-09-25. Draft PR: https://github.com/stretchmonroe/nanny-os/pull/1
 - Trace AI input fields to the selected child and centralize service-role
   authorization. Maintain backup, restore and data-retention procedures.
 
-**Next concrete action:** verify live managed photo-policy parity, image-byte
-availability and the deployment environment, then prepare the coordinated
-private-photo release order for review. The SQL export omits managed policy
-customizations and Storage object bytes. No production write is authorized by
-the rehearsal result.
+**Next concrete action:** verify the Vercel Preview Supabase target and the
+production deployment controls, without sharing secret values. The earlier
+live photo-policy expression and public-byte checks passed; refresh them just
+before release. The SQL export omits managed policy customizations and Storage
+object bytes. No production write is authorized by the rehearsal result.

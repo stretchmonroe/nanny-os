@@ -245,10 +245,14 @@ end-to-end validation. The eight live objects are readable today, and legacy
 policy definitions match. Production execution remains blocked on actual
 private-photo behavior, Auth registration and explicit release review.
 
-Deployment order: rehearse 001/002 in staging, deploy the signed-photo application,
-then rehearse/apply guarded 003. Test existing photos and uploads with two
-households, anonymous requests and removed members. Never deploy old photo clients
-after cutover. Do not change the bucket manually as a substitute for the migration.
+Deployment order: rehearse 001–007 in staging, then schedule a coordinated
+production window. Back up and recheck the live baseline; apply 001/002, deploy
+the signed-photo application, and confirm it serves existing photos. Apply
+guarded 003 and then 004–007 in version order. Until 006/007 are applied,
+new caregiver joins and paid AI fail closed; keep those features unavailable
+during the window. Test existing photos and uploads with two households,
+anonymous requests and removed members. Never deploy old photo clients after
+cutover. Do not change the bucket manually as a substitute for the migration.
 
 ## Evidence and decisions
 
@@ -296,12 +300,16 @@ comparison casts to text without rewriting existing records.
 3. Inspect my_household_id(), my_role(), in_my_household() and table grants.
    Verify removed members cannot access other tables and all required client
    features have appropriate policies.
-4. Apply migrations 001 through 007 in version order only after review/approval. These scripts
-   expect the exported baseline and intentionally fail on unexpected existing
-   objects. Do not blindly replay old rls.sql or infer an existing migration history.
-5. Deploy application changes after the invitation migration. Test parent
-   registration, verified caregiver join, wrong email/code, expiration, replay,
-   removed members, Care Circle and push with two separate households.
+4. In the coordinated window, apply 001/002, deploy and check the signed-photo
+   app, then apply 003–007 in version order. This requires a reviewed phased
+   migration procedure: a single automatic `db push` would apply 003 before
+   the new photo client is deployed. Keep the window short and monitor app
+   errors; the join and paid-AI actions fail closed until 006/007 exist.
+   These scripts expect the exported baseline and fail on unexpected objects.
+   Do not blindly replay old rls.sql or infer an existing migration history.
+5. Test parent registration, verified caregiver join, wrong email/code,
+   expiration, replay, removed members, Care Circle and push with two separate
+   households after all seven migrations complete.
 6. Keep PR draft until staging smoke tests and privacy blockers are resolved.
 
 ## Still blocking full release
